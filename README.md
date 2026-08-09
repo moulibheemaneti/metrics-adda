@@ -26,6 +26,33 @@ types is sent anywhere.
 
 ---
 
+## Design
+
+Indigo on cool slate, with Sora for headings and Inter for everything else.
+Both fonts are self-hosted from `public/fonts/` — see the README there.
+
+Colours live as CSS custom properties in `app/assets/scss/base/_global.scss`,
+with the dark counterpart of every one in `app/assets/scss/themes/_dark.scss`.
+Two rules worth knowing before changing them:
+
+- **The accent is two tokens, not one.** `--accent` is the ink (links, active
+  nav, hairlines) and lifts in dark mode so it stays readable; `--accent-solid`
+  is the fill (buttons, checked boxes) and deliberately holds still, so
+  `--accent-contrast` keeps its 6.7:1. Using `--accent` as a fill will fail
+  contrast in dark mode.
+- **Indigo is load-bearing.** The password strength meter uses red / amber /
+  green semantically. A brand colour from any of those families would make a
+  meter state indistinguishable from ordinary chrome.
+
+Theme preference is system / light / dark, stored in `localStorage` under
+`ma-theme`, where "system" is the *absence* of the key and of the `data-theme`
+attribute. An inline script in `nuxt.config.ts` applies a stored choice before
+first paint; without it, dark-mode visitors get a white flash on every load.
+
+Both themes are audited with axe-core at WCAG 2.1 AA on every route.
+
+---
+
 ## Tech Stack
 
 - **Framework** — [Nuxt 4](https://nuxt.com)
