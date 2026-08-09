@@ -6,7 +6,6 @@ export default defineNuxtConfig({
       "@nuxt/fonts",
       "@nuxt/image",
       "@nuxtjs/seo",
-      "@nuxtjs/i18n",
       // Vercel Analytics + Speed Insights load `/_vercel/*` scripts that only
       // exist on the Vercel platform. Running the production build locally
       // (e.g. `bun run .output/server/index.mjs`) makes them 404 and log
@@ -24,8 +23,11 @@ export default defineNuxtConfig({
 
    app: {
       head: {
-         // title, description and htmlAttrs.lang are managed by Nuxt SEO
-         // (site config) and @nuxtjs/i18n. Keep only what they don't own.
+         // title and description are managed by Nuxt SEO (site config).
+         // `lang` is set explicitly: the site is single-locale, and with no
+         // i18n module in play nothing else would emit it — a missing lang
+         // is a screen-reader pronunciation bug and an a11y audit failure.
+         htmlAttrs: { lang: "en" },
          meta: [
             { name: "viewport", content: "width=device-width, initial-scale=1" },
          ],
@@ -54,10 +56,9 @@ export default defineNuxtConfig({
       // preset: an explicit `preset` overrides Nitro's provider auto-detection
       // (`_name = kebabCase(name) || provider`), so hardcoding "bun" makes the
       // Vercel build emit a Bun server instead of `.vercel/output/`. Vercel
-      // then can't run it and falls back to serving the static SPA shell — no
-      // SSR and, critically, the `/_i18n/**` message routes 404 to the SPA
-      // fallback, so @nuxtjs/i18n's lazy loader merges HTML into vue-i18n and
-      // throws "Invalid value", leaving every locale untranslated.
+      // then can't run it and falls back to serving the static SPA shell, so
+      // nothing server-rendered survives — no SSR HTML, and every route that
+      // Nitro was meant to handle 404s into the SPA fallback instead.
       // Leaving preset unset on Vercel lets Nitro auto-detect the `vercel`
       // preset (via the VERCEL env var) and deploy real serverless functions.
       ...(process.env.VERCEL ? {} : { preset: "bun" }),
@@ -79,37 +80,6 @@ export default defineNuxtConfig({
    // `assets/scss/base/_global.scss` applies meanwhile.
    fonts: {
       families: [],
-   },
-
-   // English at "/", any future language prefixed. Add a locale here and drop
-   // the matching `i18n/locales/<code>.json` beside `en.json` — nothing else
-   // needs to change.
-   i18n: {
-      strategy: "prefix_except_default",
-      defaultLocale: "en",
-      // Absolute base URL so in-head hreflang/canonical are fully-qualified
-      // (Google requires absolute URLs for hreflang annotations).
-      baseUrl: process.env.NUXT_SITE_URL || "https://www.metricsadda.com",
-      locales: [
-         { code: "en", language: "en-IN", name: "English", file: "en.json" },
-      ],
-      // locale files resolve from <rootDir>/i18n/locales/*.json (v10 default)
-
-      // Treat the chosen language as a sticky preference stored in a cookie.
-      // `alwaysRedirect` + `redirectOn: "all"` enforce that preference on every
-      // navigation, so pressing Back to a URL carrying an older locale prefix
-      // redirects to the preferred locale. The cookie is updated by i18n
-      // whenever the locale is switched, so manual switches don't fight the
-      // redirect.
-      detectBrowserLanguage: {
-         useCookie: true,
-         cookieKey: "ma_locale",
-         alwaysRedirect: true,
-         redirectOn: "all",
-         // Don't infer from Accept-Language on the very first visit; honour the
-         // URL the user actually landed on until they pick a language.
-         fallbackLocale: "en",
-      },
    },
 
    // Dynamic Open Graph images. Use the Satori renderer (via the installed

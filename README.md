@@ -1,6 +1,6 @@
 # Metrics Adda
 
-> One-line description of what this project does.
+> Fast, free unit converters and everyday text tools — no sign-up, no ads.
 
 ---
 
@@ -69,7 +69,6 @@ App runs at `http://localhost:3000`
 │   ├── layouts/         # Nuxt layouts
 │   ├── pages/           # File-based routing
 │   └── utils/           # Auto-imported utility functions
-├── i18n/locales/        # Translation message files
 ├── public/              # Publicly served static files
 ├── scripts/seo/         # SEO smoke test + Lighthouse CI runners
 ├── test/

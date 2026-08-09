@@ -3,7 +3,7 @@ import { mountSuspended } from "@nuxt/test-utils/runtime"
 import SiteFooter from "../../app/components/SiteFooter.vue"
 
 /// Smoke test for the app shell, run inside the real Nuxt environment so
-/// auto-imports (`useI18n`, `SITE_EMAIL`) resolve exactly as they do at
+/// auto-imports (`COPY`, `SITE_EMAIL`) resolve exactly as they do at
 /// runtime — a broken auto-import fails here rather than in production.
 
 describe("SiteFooter", () => {

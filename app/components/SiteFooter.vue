@@ -1,17 +1,15 @@
 <template>
    <footer class="site-footer">
       <p class="site-footer__line">
-         © {{ year }} {{ t("site.name") }}. {{ t("footer.rights") }}
+         © {{ year }} {{ COPY.site.name }}. {{ COPY.footer.rights }}
       </p>
       <a class="site-footer__contact" :href="`mailto:${SITE_EMAIL}`">
-         {{ t("footer.contact") }}
+         {{ COPY.footer.contact }}
       </a>
    </footer>
 </template>
 
 <script lang="ts" setup>
-const { t } = useI18n()
-
 // Rendered on the server first, so this is the deploy's year on a cached
 // page — close enough for a copyright line, and it avoids a hydration
 // mismatch from computing it twice.

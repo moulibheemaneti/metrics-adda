@@ -9,9 +9,10 @@ interface AppSeoOptions {
 
 /**
  * Centralises per-page SEO: title/description, Open Graph and Twitter cards.
- * Pass already-translated strings (e.g. from `useI18n().t(...)`) so the meta
- * stays in sync with the active locale. Canonical URLs and hreflang alternates
- * are handled automatically by nuxt-seo-utils + @nuxtjs/i18n.
+ * Pass the strings from `utils/copy.ts` (see `SEO`), where the wording lives
+ * and where the SERP length budgets are enforced. Canonical URLs are handled
+ * automatically by nuxt-seo-utils; the site is single-locale, so there are no
+ * hreflang alternates to emit.
  */
 export function useAppSeo(options: AppSeoOptions) {
    const { title, description, ogType = "website" } = options

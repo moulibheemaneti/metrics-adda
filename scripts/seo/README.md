@@ -8,10 +8,10 @@ Local checks for the Nuxt SEO setup. Both scripts build the production output
 Asserts every SEO surface renders, with a pass/fail summary:
 
 - `robots.txt` is dynamic, indexable, and references the sitemap
-- `sitemap_index.xml` lists every locale sitemap
+- `sitemap.xml` is served and has entries
 - for each route in `$ROUTES` (default `/`): `<title>`, meta description,
-  canonical, `og:*`, `twitter:*`, in-head hreflang with absolute URLs,
-  Schema.org JSON-LD, presence in the sitemap, and a rendered OG PNG
+  canonical, `og:*`, `twitter:*`, `<html lang>`, Schema.org JSON-LD, presence
+  in the sitemap, and a rendered OG PNG
 
 ```bash
 scripts/seo/verify.sh                 # build if needed, boot, check
@@ -24,8 +24,8 @@ BASE_URL=https://<preview>.vercel.app scripts/seo/verify.sh   # check a remote d
 Exit code = number of failed checks (`0` = all green). Also runnable as
 `bun run seo:verify`.
 
-When a locale is added to `nuxt.config.ts`, add its BCP-47 tag to the
-`LOCALES` array at the top of `verify.sh` so its sitemap is asserted too.
+When a page is added, add its route to the `ROUTES` default at the top of
+`verify.sh` so its metadata is asserted on every run.
 
 ## `lighthouse.sh` — Lighthouse CI (SSR-aware)
 

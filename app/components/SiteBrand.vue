@@ -1,13 +1,10 @@
 <template>
-   <NuxtLink class="site-brand" :to="localePath('/')">
-      {{ t("site.name") }}
+   <NuxtLink class="site-brand" to="/">
+      {{ COPY.site.name }}
    </NuxtLink>
 </template>
 
-<script lang="ts" setup>
-const { t } = useI18n()
-const localePath = useLocalePath()
-</script>
+<script lang="ts" setup></script>
 
 <style scoped lang="scss">
 .site-brand {

@@ -1,20 +1,18 @@
 <template>
    <main class="home">
       <h1 class="home__title">
-         {{ t("home.heading") }}
+         {{ COPY.home.heading }}
       </h1>
       <p class="home__tagline">
-         {{ t("home.tagline") }}
+         {{ COPY.home.tagline }}
       </p>
    </main>
 </template>
 
 <script lang="ts" setup>
-const { t } = useI18n()
-
 useAppSeo({
-   title: t("seo.home.title"),
-   description: t("seo.home.description"),
+   title: SEO.home.title,
+   description: SEO.home.description,
 })
 
 // The home title already leads with the brand, and nuxt-seo-utils appends
@@ -23,8 +21,8 @@ useAppSeo({
 useHead({ titleTemplate: "%s" })
 
 defineOgImage("Home", {
-   title: t("home.heading"),
-   subtitle: t("home.tagline"),
+   title: COPY.home.heading,
+   subtitle: COPY.home.tagline,
 })
 
 useSchemaOrg([

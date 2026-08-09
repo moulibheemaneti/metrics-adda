@@ -21,9 +21,6 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 
 PORT="${PORT:-3123}"
-# Every locale configured in nuxt.config.ts, as BCP-47 tags. Add a language
-# there and add it here — the sitemap assertions below widen automatically.
-LOCALES=(en-IN)
 # Routes checked for the full meta/canonical/OG/JSON-LD set.
 ROUTES="${ROUTES:-/}"
 SERVER_PID=""
@@ -78,8 +75,9 @@ fi
 
 # ── fetch once, reuse ────────────────────────────────────────────────────────
 ROBOTS="$(curl -s "$BASE/robots.txt")"
-SITEMAP_INDEX="$(curl -s "$BASE/sitemap_index.xml")"
-SITEMAP_EN="$(curl -s "$BASE/__sitemap__/en-IN.xml")"
+# Single-locale site, so @nuxtjs/sitemap serves one flat sitemap here rather
+# than an index fanning out to per-language files.
+SITEMAP="$(curl -s "$BASE/sitemap.xml")"
 
 # ── robots ───────────────────────────────────────────────────────────────────
 section "robots.txt"
@@ -89,11 +87,8 @@ assert_contains "site is indexable"        "$ROBOTS" "User-agent: \*"
 
 # ── sitemap ──────────────────────────────────────────────────────────────────
 section "sitemap"
-assert_contains "sitemap index served" "$SITEMAP_INDEX" "<sitemapindex"
-for loc in "${LOCALES[@]}"; do
-   assert_contains "index lists ${loc}" "$SITEMAP_INDEX" "__sitemap__/${loc}\.xml"
-done
-assert_contains "en-IN sitemap has entries" "$SITEMAP_EN" "<loc>https?://"
+assert_contains "sitemap served"     "$SITEMAP" "<urlset"
+assert_contains "sitemap has entries" "$SITEMAP" "<loc>https?://"
 
 # ── per-route checks ─────────────────────────────────────────────────────────
 for route in $ROUTES; do
@@ -106,10 +101,11 @@ for route in $ROUTES; do
    assert_contains "og:title"             "$HTML" "property=\"og:title\""
    assert_contains "og:image"             "$HTML" "property=\"og:image\""
    assert_contains "twitter summary card" "$HTML" "name=\"twitter:card\" content=\"summary_large_image\""
-   assert_contains "hreflang x-default"   "$HTML" "hreflang=\"x-default\""
-   assert_contains "hreflang absolute"    "$HTML" "href=\"https://[^\"]+\"[^>]*hreflang="
+   # No hreflang assertions: the site is single-locale, and hreflang annotates
+   # alternates. Emitting it with nothing to point at would be the bug.
+   assert_contains "declares lang"        "$HTML" "<html[^>]*lang=\"en\""
    assert_contains "schema.org JSON-LD"   "$HTML" "application/ld\+json"
-   assert_contains "listed in sitemap"    "$SITEMAP_EN" "<loc>[^<]*${route%/}/?</loc>"
+   assert_contains "listed in sitemap"    "$SITEMAP" "<loc>[^<]*${route%/}/?</loc>"
 
    # The OG card must actually render, not just be linked.
    OG_PATH="$(grep -oiE 'property="og:image" content="[^"]*"' <<<"$HTML" \
