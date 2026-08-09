@@ -75,11 +75,32 @@ export default defineNuxtConfig({
       },
    },
 
-   // Self-hosted webfonts (no runtime Google requests). Left empty until the
-   // typeface choice lands — the browser default stack in
-   // `assets/scss/base/_global.scss` applies meanwhile.
+   // Self-hosted webfonts, no runtime Google requests and — because each
+   // family names an explicit `src` — no provider lookup at build time
+   // either, so builds work offline and reproducibly.
+   //
+   // `fallbacks` is the load-bearing part: it makes the module emit
+   // metric-override fallback faces (size-adjust, ascent-override…) so the
+   // system font stands in at the same measurements as the webfont. Without
+   // them the text reflows the moment the webfont swaps in, which is exactly
+   // the layout shift the Lighthouse CLS budget fails the build over.
+   //
+   // Files live in `public/fonts/` — see the README there before changing.
    fonts: {
-      families: [],
+      families: [
+         {
+            name: "Inter",
+            src: "/fonts/inter-latin-variable.woff2",
+            weight: "400 700",
+            fallbacks: ["system-ui", "-apple-system", "Segoe UI", "sans-serif"],
+         },
+         {
+            name: "Sora",
+            src: "/fonts/sora-latin-variable.woff2",
+            weight: "500 700",
+            fallbacks: ["system-ui", "-apple-system", "Segoe UI", "sans-serif"],
+         },
+      ],
    },
 
    // Dynamic Open Graph images. Use the Satori renderer (via the installed
