@@ -28,6 +28,27 @@ export function formatQuantity(value: number, significantDigits = DEFAULT_SIGNIF
    }).format(value)
 }
 
+/**
+ * Read a number back out of a text field — the inverse of
+ * `formatQuantity`, so a value this module printed can be re-parsed.
+ *
+ * Returns `null` rather than `NaN` for anything that is not yet a number,
+ * which lets a converter tell "still typing" (`"-"`, `"1."`, `""`) apart
+ * from "genuinely invalid" and avoids flashing an error at someone
+ * mid-keystroke.
+ */
+export function parseQuantity(text: string): number | null {
+   // Grouping separators and stray spaces come straight from formatted
+   // output being pasted back in.
+   const cleaned = text.replace(/[\s,]/gu, "")
+
+   if (cleaned === "") return null
+
+   const value = Number(cleaned)
+
+   return Number.isFinite(value) ? value : null
+}
+
 /** Format a whole-number count (word counts, character counts). */
 export function formatCount(value: number): string {
    if (!Number.isFinite(value)) return "0"
