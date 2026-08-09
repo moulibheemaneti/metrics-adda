@@ -117,6 +117,14 @@
    // `base/_reset.scss` disables all of it under prefers-reduced-motion.
    --ease: cubic-bezier(0.2, 0.6, 0.3, 1);
    --duration: 160ms;
+
+   /// Form control glyphs. The reset removes the native select arrow and
+   /// checkbox tick along with `appearance`, so both are drawn back as
+   /// background images. They live here as whole `url()` tokens because a
+   /// data URI cannot read a custom property — the colour is baked into
+   /// the SVG, so it has to be redeclared per theme rather than inherited.
+   /// The fill below is `--muted`; keep the two in step.
+   --select-arrow: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23616a80' d='M1.4 0 6 4.6 10.6 0 12 1.4 6 7.4 0 1.4z'/%3E%3C/svg%3E");
 }
 
 body {

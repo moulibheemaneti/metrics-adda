@@ -1,13 +1,17 @@
 <template>
    <main class="page stack stack--loose">
-      <header class="page-header">
-         <h1 class="page-header__title">
-            {{ COPY.home.heading }}
+      <section class="hero">
+         <p class="hero__eyebrow">
+            {{ COPY.home.eyebrow }}
+         </p>
+         <h1 class="hero__title">
+            {{ COPY.home.headingLead }}
+            <span class="hero__accent">{{ COPY.home.headingAccent }}</span>
          </h1>
-         <p class="page-header__lede">
+         <p class="hero__lede">
             {{ COPY.home.tagline }}
          </p>
-      </header>
+      </section>
 
       <section class="stack stack--tight">
          <h2 class="section-heading">
@@ -35,7 +39,7 @@ useHead({ titleTemplate: "%s" })
 
 defineOgImage("Home", {
    title: COPY.site.name,
-   subtitle: COPY.home.tagline,
+   subtitle: COPY.site.tagline,
 })
 
 useSchemaOrg([
@@ -51,9 +55,3 @@ useSchemaOrg([
    }),
 ])
 </script>
-
-<style scoped lang="scss">
-.page-header__title {
-   max-inline-size: 20ch;
-}
-</style>

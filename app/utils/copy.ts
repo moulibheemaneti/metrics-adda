@@ -265,8 +265,13 @@ export const COPY = {
       faqHeading: "Common questions",
    },
    home: {
-      heading: "Free unit converters and text tools",
-      tagline: "No sign-up, no ads, nothing to install. Everything runs in your browser.",
+      eyebrow: "Five tools, no sign-up",
+      // The headline is split so one phrase can carry the brand gradient
+      // while the rest stays solid — see `.hero__accent`.
+      headingLead: "Everyday converters that are",
+      headingAccent: "instant and exact",
+      heading: "Everyday converters that are instant and exact",
+      tagline: "Weight, height and temperature converters, a word counter and a password generator. Nothing to install, and nothing you type ever leaves your browser.",
       toolsHeading: "All tools",
    },
    converter: {

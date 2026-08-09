@@ -22,11 +22,11 @@
 
    &__head {
       color: var(--muted);
-      font-size: px-to-rem(13);
+      font-size: px-to-rem(11);
       font-weight: var(--weight-label);
       text-align: start;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.06em;
    }
 
    &__cell {
@@ -37,9 +37,17 @@
    }
 
    &__cell--value {
-      font-family: var(--font-mono);
       font-variant-numeric: tabular-nums;
+      font-weight: var(--weight-strong);
       text-align: end;
+   }
+
+   &__row {
+      transition: background-color var(--duration) var(--ease);
+
+      &:hover {
+         background-color: var(--surface-raised);
+      }
    }
 
    &__row--active {
@@ -50,9 +58,15 @@
       .data-table__unit {
          color: var(--ink-soft);
       }
+
+      // Keep the active row distinct from a plain hover.
+      &:hover {
+         background-color: var(--accent-soft);
+      }
    }
 
    &__unit {
       color: var(--muted);
+      font-weight: var(--weight-body);
    }
 }

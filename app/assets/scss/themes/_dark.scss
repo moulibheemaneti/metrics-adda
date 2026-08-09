@@ -62,6 +62,11 @@
 
    // Built from the lifted accent so the ring stays visible on dark.
    --focus-ring: 0 0 0 3px rgb(129 140 248 / 36%);
+
+   // Redrawn in the dark `--muted`. The colour is baked into the data URI
+   // — see the note in base/_global.scss — so the light arrow would sit at
+   // roughly 3:1 on a dark field and fail the non-text contrast rule.
+   --select-arrow: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238b93a7' d='M1.4 0 6 4.6 10.6 0 12 1.4 6 7.4 0 1.4z'/%3E%3C/svg%3E");
 }
 
 @media (prefers-color-scheme: dark) {

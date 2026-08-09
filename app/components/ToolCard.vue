@@ -1,6 +1,9 @@
 <template>
    <NuxtLink class="tool-card" :to="tool.path">
-      <span class="tool-card__name">{{ copy.name }}</span>
+      <span class="tool-card__name">
+         {{ copy.name }}
+         <span aria-hidden="true" class="tool-card__arrow">→</span>
+      </span>
       <span class="tool-card__tagline">{{ copy.tagline }}</span>
    </NuxtLink>
 </template>

@@ -1,5 +1,5 @@
 <template>
-   <div class="text-stats stack stack--tight">
+   <div class="text-stats card card--panel stack stack--tight">
       <div class="field">
          <label class="field__label" :for="`${uid}-text`">
             {{ COPY.stats.inputLabel }}

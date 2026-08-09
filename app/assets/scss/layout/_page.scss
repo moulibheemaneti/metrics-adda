@@ -2,8 +2,8 @@
 /// layout/_page.scss
 /// --------------------------------------------------
 /// Page-level scaffolding shared by the hub and every tool page: the
-/// centred content column, the section rhythm, the hub's tool grid and
-/// the prose defaults for ledes and FAQ answers.
+/// centred content column, the section rhythm, the hero, the hub's tool
+/// grid and the prose defaults for ledes and FAQ answers.
 /// --------------------------------------------------
 
 @use "../abstracts" as *;
@@ -37,21 +37,92 @@
    gap: var(--space-2xs);
 
    &__title {
-      font-size: clamp(#{px-to-rem(28)}, 5vw, #{px-to-rem(42)});
-      line-height: 1.15;
+      font-size: clamp(#{px-to-rem(30)}, 5vw, #{px-to-rem(44)});
+      line-height: 1.1;
    }
 
    &__lede {
       max-inline-size: var(--measure);
       color: var(--ink-soft);
       font-size: px-to-rem(17);
+      line-height: 1.6;
+   }
+}
+
+/// The hub's opening block. Sits in its own stacking context so the glow
+/// below can be positioned against it.
+.hero {
+   position: relative;
+   display: flex;
+   flex-direction: column;
+   gap: var(--space-sm);
+   padding-block: var(--space-lg) var(--space-2xs);
+   text-align: center;
+
+   /// A soft brand-coloured wash behind the headline. `pointer-events:
+   /// none` keeps it from swallowing clicks, and it is clipped by the
+   /// page container rather than allowed to widen the document — a
+   /// decorative element that triggers a horizontal scrollbar on a phone
+   /// is a bug, not a flourish.
+   &::before {
+      content: "";
+      position: absolute;
+      inset-block-start: 0;
+      inset-inline-start: 50%;
+      z-index: -1;
+      inline-size: min(#{px-to-rem(680)}, 100%);
+      block-size: px-to-rem(320);
+      transform: translateX(-50%);
+      background-image: radial-gradient(
+         ellipse at center,
+         rgb(99 91 255 / 16%) 0%,
+         rgb(124 58 237 / 8%) 45%,
+         transparent 70%
+      );
+      pointer-events: none;
+   }
+
+   &__eyebrow {
+      align-self: center;
+      padding: var(--space-3xs) var(--space-xs);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-pill);
+      background-color: var(--surface-raised);
+      color: var(--ink-soft);
+      font-size: px-to-rem(13);
+      font-weight: var(--weight-strong);
+   }
+
+   &__title {
+      max-inline-size: 18ch;
+      margin-inline: auto;
+      font-size: clamp(#{px-to-rem(34)}, 6.5vw, #{px-to-rem(60)});
+      line-height: 1.05;
+   }
+
+   /// Gradient applied to a single emphasised phrase rather than the whole
+   /// headline: the rest stays solid `--ink` so the contrast audit always
+   /// has a real colour to measure.
+   &__accent {
+      background-image: var(--gradient-brand);
+      background-clip: text;
+      color: transparent;
+   }
+
+   &__lede {
+      max-inline-size: 52ch;
+      margin-inline: auto;
+      color: var(--ink-soft);
+      font-size: px-to-rem(18);
+      line-height: 1.6;
    }
 }
 
 .section-heading {
    font-family: var(--font-display);
-   font-size: px-to-rem(20);
-   font-weight: var(--weight-heading);
+   font-size: px-to-rem(19);
+   font-weight: var(--weight-label);
+   letter-spacing: -0.01em;
 }
 
 /// Responsive card grid — the hub's tool list and the "other tools" block.
@@ -59,7 +130,12 @@
 /// reflow on their own.
 .card-grid {
    display: grid;
-   grid-template-columns: repeat(auto-fit, minmax(#{px-to-rem(240)}, 1fr));
+   // 320px settles into three columns at the page's maximum width, so five
+   // tools read as 3 + 2 rather than as 4 + 1 orphan. The `min(100%, …)`
+   // guard stops the track from overflowing a container narrower than the
+   // floor — a bare minmax(320px, …) forces a horizontal scrollbar on a
+   // 300px viewport.
+   grid-template-columns: repeat(auto-fit, minmax(min(100%, #{px-to-rem(320)}), 1fr));
    gap: var(--space-sm);
    list-style: none;
 }
@@ -74,13 +150,14 @@
    &__question {
       margin-block-end: var(--space-3xs);
       font-family: var(--font-display);
-      font-size: px-to-rem(17);
+      font-size: px-to-rem(16);
       font-weight: var(--weight-label);
    }
 
    &__answer {
       max-inline-size: var(--measure);
       color: var(--ink-soft);
+      line-height: 1.65;
    }
 }
 

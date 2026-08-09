@@ -21,8 +21,9 @@
 
    &__label {
       color: var(--ink-soft);
-      font-size: px-to-rem(14);
+      font-size: px-to-rem(13);
       font-weight: var(--weight-label);
+      letter-spacing: 0.01em;
    }
 
    &__hint {
@@ -39,13 +40,17 @@
 
 .control {
    inline-size: 100%;
-   min-block-size: px-to-rem(44);
+   min-block-size: px-to-rem(48);
    padding: var(--space-2xs) var(--space-xs);
    border: 1px solid var(--line-strong);
    border-radius: var(--radius-md);
    background-color: var(--surface);
+   box-shadow: var(--shadow-sm);
    color: var(--ink);
    font-family: inherit;
+   transition:
+      border-color var(--duration) var(--ease),
+      box-shadow var(--duration) var(--ease);
 
    &::placeholder {
       color: var(--muted);
@@ -56,38 +61,41 @@
    }
 
    &:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 1px;
+      outline: none; // Replaced by the ring below, which hugs the radius.
       border-color: var(--accent);
+      box-shadow: var(--focus-ring);
    }
 
    &--numeric {
-      // Tabular figures stop the value jittering as digits change.
-      font-family: var(--font-mono);
-      font-size: px-to-rem(18);
+      // Set in the body face, not a mono one: mono figures are a
+      // developer-tool idiom, while tabular numerals give the same
+      // non-jittering columns without the change of voice.
+      font-size: px-to-rem(20);
       font-variant-numeric: tabular-nums;
+      font-weight: var(--weight-strong);
+      letter-spacing: -0.01em;
    }
 
    &--select {
       // The reset removed the native arrow along with `appearance`, so it
-      // is drawn back as a background image. Encoded inline: a CSS url()
-      // cannot reference a custom property, and this avoids an extra file.
+      // is drawn back from the themed token — see base/_global.scss.
       padding-inline-end: var(--space-lg);
-      background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b7280' d='M1.4 0 6 4.6 10.6 0 12 1.4 6 7.4 0 1.4z'/%3E%3C/svg%3E");
+      background-image: var(--select-arrow);
       background-repeat: no-repeat;
       background-position: right var(--space-xs) center;
       cursor: pointer;
    }
 
    &--textarea {
-      min-block-size: px-to-rem(220);
+      min-block-size: px-to-rem(240);
       padding: var(--space-xs);
-      line-height: 1.6;
+      font-size: px-to-rem(16);
+      line-height: 1.7;
       resize: vertical;
    }
 
    &--readonly {
-      background-color: var(--surface-sunken);
+      background-color: var(--surface-raised);
    }
 }
 
@@ -109,10 +117,17 @@
       border-radius: var(--radius-sm);
       background-color: var(--surface);
       cursor: pointer;
+      transition:
+         background-color var(--duration) var(--ease),
+         border-color var(--duration) var(--ease);
 
       &:checked {
-         border-color: var(--accent-strong);
-         background-color: var(--accent);
+         // Filled with `--accent-solid`, which holds still across themes,
+         // so the white tick baked into the SVG below stays legible. The
+         // stroke must match `--accent-contrast`; a data URI cannot read
+         // a custom property, so the two are kept in step by hand.
+         border-color: transparent;
+         background-color: var(--accent-solid);
          background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='10' viewBox='0 0 12 10'%3E%3Cpath fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M1 5l3.5 3.5L11 1.5'/%3E%3C/svg%3E");
          background-repeat: no-repeat;
          background-position: center;
@@ -162,18 +177,18 @@
       margin-block-start: px-to-rem(-7);
       inline-size: px-to-rem(20);
       block-size: px-to-rem(20);
-      border: 2px solid #ffffff;
+      border: 2px solid var(--surface);
       border-radius: 50%;
-      background-color: var(--accent);
+      background-color: var(--accent-solid);
       box-shadow: var(--shadow-sm);
    }
 
    &::-moz-range-thumb {
       inline-size: px-to-rem(20);
       block-size: px-to-rem(20);
-      border: 2px solid #ffffff;
+      border: 2px solid var(--surface);
       border-radius: 50%;
-      background-color: var(--accent);
+      background-color: var(--accent-solid);
    }
 }
 
@@ -189,7 +204,7 @@
       margin-block-end: var(--space-3xs);
       padding: 0;
       color: var(--ink-soft);
-      font-size: px-to-rem(14);
+      font-size: px-to-rem(13);
       font-weight: var(--weight-label);
    }
 }

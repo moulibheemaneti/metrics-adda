@@ -1,6 +1,7 @@
 <template>
    <div class="converter stack stack--tight">
-      <div class="converter__row">
+      <div class="card card--panel converter__panel">
+         <div class="converter__row">
          <div class="field converter__value">
             <label class="field__label" :for="`${uid}-from-value`">
                {{ COPY.converter.valueLabel }}
@@ -64,17 +65,18 @@
                </option>
             </select>
          </div>
+         </div>
+
+         <p v-if="invalid" class="field__error converter__error">
+            {{ COPY.converter.invalid }}
+         </p>
+
+         <!-- Announced on change, so the conversion is not silent for anyone
+              who cannot see the second field update. -->
+         <p class="visually-hidden" aria-live="polite">
+            {{ spokenResult }}
+         </p>
       </div>
-
-      <p v-if="invalid" class="field__error">
-         {{ COPY.converter.invalid }}
-      </p>
-
-      <!-- Announced on change, so the conversion is not silent for anyone
-           who cannot see the second field update. -->
-      <p class="visually-hidden" aria-live="polite">
-         {{ spokenResult }}
-      </p>
 
       <section class="stack stack--tight">
          <h2 class="section-heading">
@@ -96,6 +98,7 @@
                   <tr
                      v-for="unit in activeDimension.units"
                      :key="unit.id"
+                     class="data-table__row"
                      :class="{ 'data-table__row--active': unit.id === toUnit }"
                   >
                      <th class="data-table__cell" scope="row">
@@ -219,6 +222,8 @@ convertForwards()
 </script>
 
 <style scoped lang="scss">
+@use "../assets/scss/abstracts" as *;
+
 .converter {
    &__row {
       display: grid;
@@ -227,8 +232,25 @@ convertForwards()
       align-items: end;
    }
 
+   &__error {
+      margin-block-start: var(--space-sm);
+   }
+
+   // Round rather than square, and set on the accent: it is the one
+   // control between the two halves of the conversion, so it reads as the
+   // hinge of the panel rather than as another button in a row.
    &__swap {
       justify-self: start;
+      inline-size: px-to-rem(44);
+      border-color: var(--accent-soft);
+      border-radius: 50%;
+      color: var(--accent);
+      font-size: px-to-rem(18);
+
+      &:hover {
+         border-color: var(--accent);
+         transform: translateY(-1px) rotate(180deg);
+      }
    }
 
    @media (width >= 48rem) {
@@ -238,7 +260,11 @@ convertForwards()
       }
 
       &__swap {
+         // Nudged up so it centres against the inputs rather than their
+         // labels, which only the outer columns have.
+         align-self: end;
          justify-self: center;
+         margin-block-end: px-to-rem(2);
       }
    }
 }

@@ -1,5 +1,5 @@
 <template>
-   <div class="height-converter">
+   <div class="height-converter card card--panel">
       <div class="field">
          <label class="field__label" :for="`${uid}-cm`">
             {{ COPY.converter.centimetresLabel }}

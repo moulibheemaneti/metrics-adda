@@ -1,5 +1,5 @@
 <template>
-   <div class="password stack stack--tight">
+   <div class="password card card--panel stack stack--tight">
       <div class="field">
          <label class="field__label" :for="`${uid}-password`">
             {{ COPY.password.outputLabel }}
@@ -65,11 +65,19 @@
 
       <div class="meter">
          <div class="meter__track">
-            <div class="meter__fill" :style="{ inlineSize: fillWidth, backgroundColor: fillColour }" />
+            <div
+               class="meter__fill"
+               :style="{ inlineSize: fillWidth, backgroundColor: fillColour, boxShadow: fillGlow }"
+            />
          </div>
          <p class="meter__label">
-            <span>{{ COPY.password.strengthLabel }}: {{ strengthLabel }}</span>
-            <span>{{ COPY.password.entropyLabel }}: {{ roundedBits }} {{ COPY.password.entropyUnit }}</span>
+            <span>
+               {{ COPY.password.strengthLabel }}:
+               <span class="meter__strength">{{ strengthLabel }}</span>
+            </span>
+            <span class="meter__value">
+               {{ COPY.password.entropyLabel }}: {{ roundedBits }} {{ COPY.password.entropyUnit }}
+            </span>
          </p>
       </div>
    </div>
@@ -135,6 +143,10 @@ const fillColour = computed(() => {
    return "var(--success)"
 })
 
+// A bloom in the bar's own colour. Set inline alongside the fill because
+// it has to track the same computed strength.
+const fillGlow = computed(() => `0 0 12px ${fillColour.value}`)
+
 // Generation is client-only, and deliberately so: a password produced
 // during server rendering would be baked into the HTML, where a cache or
 // CDN could hand the identical "random" password to every visitor.
@@ -144,11 +156,20 @@ watch(options, regenerate)
 </script>
 
 <style scoped lang="scss">
+@use "../assets/scss/abstracts" as *;
+
 .password {
    &__output {
       display: flex;
       gap: var(--space-2xs);
       align-items: stretch;
+   }
+
+   // The generated password is the thing the whole page exists to show,
+   // so it is set larger than any other field on the site.
+   :deep(.control--readonly) {
+      font-size: px-to-rem(22);
+      letter-spacing: 0.02em;
    }
 }
 </style>
