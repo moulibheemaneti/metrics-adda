@@ -1,19 +1,20 @@
 <template>
    <div class="app-shell">
       <header class="app-shell__topbar">
-         <SiteBrand />
-         <ToolNav />
+         <SiteBrand class="app-shell__brand" />
+         <ToolNav class="app-shell__nav" />
          <!-- The toggle's selected option comes from localStorage, which the
               server cannot see, so rendering it during SSR would hydrate
               wrong. The fallback reserves the identical footprint — without
               it the header reflows on hydration, which is precisely the
               layout shift the CLS budget fails builds over. -->
          <ClientOnly>
-            <ThemeToggle />
+            <ThemeToggle class="app-shell__toggle" />
             <template #fallback>
-               <div aria-hidden="true" class="app-shell__toggle-placeholder" />
+               <div aria-hidden="true" class="app-shell__toggle app-shell__toggle-placeholder" />
             </template>
          </ClientOnly>
+         <SiteMenu class="app-shell__menu" />
       </header>
       <slot />
       <SiteFooter />
@@ -24,6 +25,19 @@
 
 <style scoped lang="scss">
 @use "../assets/scss/abstracts" as *;
+
+/// The width at which brand, nav and toggle stop competing for one row.
+/// Measured, not guessed: the nav's five links come to 770px, the brand to
+/// 127px and the toggle to 216px, plus two 24px gaps and two 32px gutters —
+/// 1225px before anything has to give. Below this the header splits into
+/// two rows rather than squeezing the nav into whatever is left over.
+$single-row: 78rem;
+
+/// Below this the nav and the theme control live in the sheet behind the
+/// hamburger instead of in the header: at 320px the brand, a hamburger
+/// and the toggle already come to more than the 288px available, and the
+/// nav needs a row to itself on top of that.
+$compact: 40rem;
 
 .app-shell {
    // Column shell so the footer is pushed to the bottom of short pages
@@ -36,16 +50,27 @@
       flex: 1;
    }
 
+   /// The topbar is a grid rather than a wrapping flex row because the
+   /// arrangements it needs are different placements of the same items,
+   /// not one arrangement that happens to wrap. Left to wrap, a phone got
+   /// three stacked rows — brand, nav, toggle — on a sticky header, which
+   /// is a lot of viewport spent on chrome. There are three widths:
+   ///
+   /// - phone: brand and a hamburger, one row. The links and the theme
+   ///   control move into the sheet that button opens.
+   /// - between: brand and the theme control on one row, the nav on a
+   ///   full-width row of its own beneath, scrolling if it must.
+   /// - `$single-row` and up: all three side by side, as before.
    &__topbar {
       position: sticky;
       inset-block-start: 0;
       z-index: 10;
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-areas: "brand menu";
+      grid-template-columns: 1fr auto;
       align-items: center;
-      justify-content: space-between;
       gap: var(--space-2xs) var(--space-md);
-      padding: var(--space-xs) var(--page-gutter);
+      padding: var(--space-2xs) var(--page-gutter);
       border-block-end: 1px solid var(--line);
       // Translucent over scrolling content. `--surface-veil` carries the
       // alpha; the solid background-color underneath is the fallback for
@@ -53,6 +78,18 @@
       // show through.
       background-color: var(--surface);
       backdrop-filter: blur(12px);
+
+      @media (width >= $compact) {
+         grid-template-areas:
+            "brand toggle"
+            "nav   nav";
+      }
+
+      @media (width >= $single-row) {
+         grid-template-areas: "brand nav toggle";
+         grid-template-columns: auto 1fr auto;
+         padding-block: var(--space-xs);
+      }
    }
 
    @supports (backdrop-filter: blur(12px)) {
@@ -61,15 +98,61 @@
       }
    }
 
+   &__brand {
+      grid-area: brand;
+   }
+
+   // The nav and the theme control are in the sheet at phone widths, so
+   // the header versions are dropped rather than hidden — one copy of
+   // each is reachable at any width.
+   &__nav,
+   &__toggle {
+      display: none;
+   }
+
+   &__menu {
+      grid-area: menu;
+      justify-self: end;
+   }
+
+   @media (width >= $compact) {
+      &__nav {
+         display: block;
+         grid-area: nav;
+         // Grid tracks size to content by default, which would let the nav
+         // push the row wider than the viewport instead of scrolling.
+         min-inline-size: 0;
+      }
+
+      &__toggle {
+         display: flex;
+         grid-area: toggle;
+         justify-self: end;
+      }
+
+      &__menu {
+         display: none;
+      }
+   }
+
+   // Centred between the brand and the toggle, as the old space-between
+   // row had it. The cap is what keeps a nav too wide for the middle
+   // column scrolling inside it instead of overflowing both ways and
+   // printing itself over its neighbours.
+   @media (width >= $single-row) {
+      &__nav {
+         justify-self: center;
+         max-inline-size: 100%;
+      }
+   }
+
    // Matches ThemeToggle's rendered box: 3px padding + 1px border either
-   // side, around a 24px row.
+   // side, around a 24px row of options. Measured from the mounted
+   // control; keep it in step with that padding, or hydration moves the
+   // nav sideways under the reader.
    &__toggle-placeholder {
       block-size: px-to-rem(32);
-      inline-size: px-to-rem(232);
-
-      @media (width < 40rem) {
-         inline-size: px-to-rem(112);
-      }
+      inline-size: px-to-rem(216);
    }
 }
 </style>
