@@ -1,0 +1,72 @@
+/// --------------------------------------------------
+/// components/_data-table.scss
+/// --------------------------------------------------
+/// The "every unit at once" table under each converter.
+///
+/// Wrapped in an overflow container rather than allowed to widen the page:
+/// a table that pushes the body sideways on a phone is both unusable and a
+/// layout-shift problem.
+/// --------------------------------------------------
+
+@use "../abstracts" as *;
+
+.data-table {
+   inline-size: 100%;
+   overflow-x: auto;
+
+   &__table {
+      inline-size: 100%;
+      border-collapse: collapse;
+      text-align: start;
+   }
+
+   &__head {
+      color: var(--muted);
+      font-size: px-to-rem(11);
+      font-weight: var(--weight-label);
+      text-align: start;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+   }
+
+   &__cell {
+      padding: var(--space-2xs) var(--space-xs);
+      border-block-end: 1px solid var(--line);
+      text-align: start;
+      white-space: nowrap;
+   }
+
+   &__cell--value {
+      font-variant-numeric: tabular-nums;
+      font-weight: var(--weight-strong);
+      text-align: end;
+   }
+
+   &__row {
+      transition: background-color var(--duration) var(--ease);
+
+      &:hover {
+         background-color: var(--surface-raised);
+      }
+   }
+
+   &__row--active {
+      background-color: var(--accent-soft);
+
+      // --muted on the tinted row is only 3.96:1, under the 4.5:1 minimum
+      // for body text. The darker ink clears it comfortably.
+      .data-table__unit {
+         color: var(--ink-soft);
+      }
+
+      // Keep the active row distinct from a plain hover.
+      &:hover {
+         background-color: var(--accent-soft);
+      }
+   }
+
+   &__unit {
+      color: var(--muted);
+      font-weight: var(--weight-body);
+   }
+}

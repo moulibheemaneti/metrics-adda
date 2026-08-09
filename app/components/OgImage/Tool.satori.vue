@@ -20,7 +20,7 @@ withDefaults(defineProps<{
    subtitle?: string
 }>(), {
    title: "Metrics Adda",
-   subtitle: "Fast, free converters and text tools.",
+   subtitle: "Free unit converters and text tools",
 })
 </script>
 
@@ -43,16 +43,17 @@ withDefaults(defineProps<{
    font-family: sans-serif;
 }
 
-/* Pushed well off-canvas on purpose: Satori has no blur, so a circle
+/* Brand wash bled in from the corner, so the card is not a flat block.
+   Pushed well off-canvas on purpose: Satori has no blur, so a circle
    sitting fully in frame reads as a hard disc rather than a glow — only
    an arc of it should be visible. */
 .og__glow {
    position: absolute;
-   top: -340px;
-   right: -280px;
-   width: 800px;
-   height: 800px;
-   border-radius: 800px;
+   top: -300px;
+   right: -300px;
+   width: 760px;
+   height: 760px;
+   border-radius: 760px;
    background-image: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
    opacity: 0.42;
 }
@@ -77,9 +78,9 @@ withDefaults(defineProps<{
 }
 
 .og__title {
-   font-size: 76px;
+   font-size: 68px;
    font-weight: 800;
-   line-height: 1.03;
+   line-height: 1.05;
    letter-spacing: -2px;
 }
 

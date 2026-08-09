@@ -1,0 +1,198 @@
+/// --------------------------------------------------
+/// components/_card.scss
+/// --------------------------------------------------
+/// Surfaces: the hub's tool cards, the panels wrapping each tool, and the
+/// small stat tiles the word counter reports into.
+/// --------------------------------------------------
+
+@use "../abstracts" as *;
+
+.card {
+   padding: var(--space-md);
+   border: 1px solid var(--line);
+   border-radius: var(--radius-lg);
+   background-color: var(--surface);
+   box-shadow: var(--shadow-sm);
+
+   &--raised {
+      background-color: var(--surface-raised);
+   }
+
+   &--flush {
+      padding: 0;
+   }
+
+   // The panel each tool sits in: a little more presence than a plain card.
+   &--panel {
+      padding: var(--space-lg);
+      box-shadow: var(--shadow-md);
+
+      @media (width < 40rem) {
+         padding: var(--space-sm);
+      }
+   }
+}
+
+/// Tool cards on the hub. The whole card is a link, so the focus ring goes
+/// on the anchor itself rather than on an inner element.
+
+.tool-card {
+   position: relative;
+   display: flex;
+   flex-direction: column;
+   gap: var(--space-3xs);
+   block-size: 100%;
+   padding: var(--space-md);
+   border: 1px solid var(--line);
+   border-radius: var(--radius-lg);
+   background-color: var(--surface);
+   box-shadow: var(--shadow-sm);
+   overflow: hidden;
+   transition:
+      border-color var(--duration) var(--ease),
+      box-shadow var(--duration) var(--ease),
+      transform var(--duration) var(--ease);
+
+   // A brand-gradient hairline along the top edge, revealed on hover.
+   // Drawn as a pseudo-element rather than a border so it can animate
+   // without shifting the card's box by a pixel.
+   &::before {
+      content: "";
+      position: absolute;
+      inset-block-start: 0;
+      inset-inline: 0;
+      block-size: 3px;
+      background-image: var(--gradient-brand);
+      opacity: 0;
+      transition: opacity var(--duration) var(--ease);
+   }
+
+   &:hover {
+      border-color: var(--line-strong);
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-3px);
+   }
+
+   &:hover::before {
+      opacity: 1;
+   }
+
+   &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+   }
+
+   // Not flex: the arrow has to sit after the last word of a wrapping
+   // title, and a flex row would strand it vertically centred beside two
+   // lines of text instead.
+   &__name {
+      color: var(--ink);
+      font-family: var(--font-display);
+      font-size: px-to-rem(17);
+      font-weight: var(--weight-label);
+      letter-spacing: -0.01em;
+   }
+
+   &__tagline {
+      color: var(--muted);
+      font-size: px-to-rem(14);
+      line-height: 1.5;
+   }
+
+   // Arrow affordance; slides out on hover to signal the card is a link.
+   // `inline-block` so the transform applies — transforms are ignored on
+   // inline boxes.
+   &__arrow {
+      display: inline-block;
+      margin-inline-start: var(--space-3xs);
+      color: var(--accent);
+      transition: transform var(--duration) var(--ease);
+   }
+
+   &:hover &__arrow {
+      transform: translateX(3px);
+   }
+}
+
+/// Stat tiles — one per statistic in the word counter.
+
+.stat {
+   display: flex;
+   flex-direction: column;
+   gap: var(--space-3xs);
+   padding: var(--space-sm);
+   border: 1px solid var(--line);
+   border-radius: var(--radius-md);
+   background-color: var(--surface-raised);
+
+   &__value {
+      color: var(--ink);
+      font-family: var(--font-display);
+      font-size: px-to-rem(26);
+      font-variant-numeric: tabular-nums;
+      font-weight: var(--weight-heading);
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+   }
+
+   &__label {
+      color: var(--muted);
+      font-size: px-to-rem(12);
+      font-weight: var(--weight-strong);
+      letter-spacing: 0.02em;
+   }
+}
+
+/// Strength meter for the password generator. The fill width and colour
+/// are set inline from the component, since both depend on computed
+/// entropy rather than on a fixed set of states.
+
+.meter {
+   display: flex;
+   flex-direction: column;
+   gap: var(--space-2xs);
+
+   &__track {
+      block-size: px-to-rem(8);
+      border-radius: var(--radius-pill);
+      background-color: var(--surface-sunken);
+      overflow: hidden;
+   }
+
+   &__fill {
+      block-size: 100%;
+      border-radius: var(--radius-pill);
+      transition:
+         inline-size var(--duration) var(--ease),
+         background-color var(--duration) var(--ease);
+   }
+
+   &__label {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: var(--space-2xs);
+      color: var(--muted);
+      font-size: px-to-rem(13);
+   }
+
+   &__strength {
+      color: var(--ink);
+      font-weight: var(--weight-label);
+   }
+
+   &__value {
+      font-variant-numeric: tabular-nums;
+   }
+}
+
+/// Inline notice, used for "select at least one character set".
+
+.notice {
+   padding: var(--space-2xs) var(--space-xs);
+   border: 1px solid var(--danger);
+   border-radius: var(--radius-md);
+   background-color: var(--danger-soft);
+   color: var(--danger);
+   font-size: px-to-rem(14);
+}

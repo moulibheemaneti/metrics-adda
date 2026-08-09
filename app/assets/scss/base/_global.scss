@@ -1,39 +1,86 @@
 /// --------------------------------------------------
 /// base/_global.scss
 /// --------------------------------------------------
-/// Foundational, project-wide styles layered on top of the reset:
-/// the design tokens (palette, typography scale, surfaces) exposed as
-/// custom properties, plus base typography. Components reference these
-/// custom properties rather than hardcoding hex values, so the theme
-/// stays consistent and themable from one place.
+/// The design tokens, exposed as custom properties, plus base typography.
+/// Components reference these rather than hardcoding values, which is what
+/// lets the whole site re-theme from one place — see `themes/_dark.scss`
+/// for the dark counterpart of every colour below.
 ///
-/// The values below are neutral placeholders — replace them when the
-/// Metrics Adda visual language lands.
+/// Palette: indigo on cool slate. Indigo is deliberately clear of the
+/// three status hues (red / amber / green) because the password strength
+/// meter uses those semantically — a green or amber brand colour would
+/// make "strong" or "fair" indistinguishable from ordinary site chrome.
 /// --------------------------------------------------
 
+@use "../abstracts" as *;
+
 :root {
+   // Tells the browser to render native scrollbars, form controls and
+   // autofill in the light palette. The dark theme flips it.
+   color-scheme: light;
+
    // Surfaces.
    --surface: #ffffff;
-   --surface-raised: #f7f8fa;
-   --surface-sunken: #eef0f4;
+   --surface-raised: #f7f8fc;
+   --surface-sunken: #eef0f7;
+   // Translucent, for the sticky topbar sitting over scrolling content.
+   --surface-veil: rgb(255 255 255 / 72%);
 
    // Text.
-   --ink: #111318;
-   --ink-soft: #3c414b;
-   --muted: #6b7280;
+   --ink: #0b1020;
+   --ink-soft: #3b4255;
+   --muted: #616a80;
 
-   // Accents.
-   --accent: #2563eb;
-   --accent-strong: #1d4ed8;
-   --accent-soft: #dbeafe;
+   /// Accent splits into two roles, and conflating them breaks dark mode:
+   /// an indigo readable as *text* on a dark background is too pale to put
+   /// white text on, and an indigo dark enough to carry white text is too
+   /// dark to read against one. So `--accent` is the ink (links, active
+   /// nav, hairlines) and `--accent-solid` is the fill (buttons, checked
+   /// boxes) with `--accent-contrast` as its foreground. Only `--accent`
+   /// changes between themes.
+   --accent: #4f46e5;
+   --accent-strong: #4338ca;
+   --accent-solid: #4f46e5;
+   --accent-solid-hover: #4338ca;
+   --accent-contrast: #ffffff;
+   --accent-soft: #eef0ff;
 
    // Lines.
-   --line: #e3e6ec;
-   --line-strong: #c9cfda;
+   --line: #e5e8f0;
+   --line-strong: #cbd2e0;
 
-   // Typography.
-   --font-display: system-ui, -apple-system, "Segoe UI", sans-serif;
-   --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+   // Status. Used by the password strength meter and validation messages.
+   --danger: #b42318;
+   --danger-soft: #fef3f2;
+   --warn: #b54708;
+   --warn-soft: #fffaeb;
+   --success: #067647;
+   --success-soft: #ecfdf3;
+
+   /// Brand gradient. Indigo into violet — used on the hero, the meter and
+   /// the OG cards. Kept to two adjacent hues on purpose: gradients read as
+   /// cheap the moment they cross the colour wheel.
+   --gradient-brand: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+
+   /// Elevation. Two stacked shadows per level — a tight contact shadow
+   /// plus a soft ambient one — because a single blur reads as a smudge
+   /// rather than as height.
+   --shadow-sm: 0 1px 2px rgb(11 16 32 / 6%), 0 1px 1px rgb(11 16 32 / 4%);
+   --shadow-md: 0 4px 8px rgb(11 16 32 / 5%), 0 12px 24px rgb(11 16 32 / 8%);
+   --shadow-lg: 0 8px 16px rgb(11 16 32 / 7%), 0 24px 48px rgb(11 16 32 / 12%);
+
+   /// Focus. The reset strips `outline` from every form control, so this is
+   /// the only thing standing between keyboard users and an invisible
+   /// cursor. Translucent rather than a solid tint, so it reads on any
+   /// surface in either theme.
+   --focus-ring: 0 0 0 3px rgb(79 70 229 / 32%);
+
+   // Typography. The webfonts are self-hosted and declared in nuxt.config;
+   // `@nuxt/fonts` picks these up because the custom property names start
+   // with `--font` (its `processCSSVariables: "font-prefixed-only"`
+   // default), and generates metric-matched fallbacks for the stacks below.
+   --font-display: "Sora", system-ui, -apple-system, "Segoe UI", sans-serif;
+   --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
    --font-mono: ui-monospace, "SF Mono", "Cascadia Code", monospace;
 
    // Weights. Tune the whole site's typographic colour from these four.
@@ -41,6 +88,43 @@
    --weight-strong: 500;
    --weight-label: 600;
    --weight-heading: 700;
+
+   // Spacing scale. One ratio for the whole site, so gaps between unrelated
+   // components still line up.
+   --space-3xs: #{px-to-rem(4)};
+   --space-2xs: #{px-to-rem(8)};
+   --space-xs: #{px-to-rem(12)};
+   --space-sm: #{px-to-rem(16)};
+   --space-md: #{px-to-rem(24)};
+   --space-lg: #{px-to-rem(32)};
+   --space-xl: #{px-to-rem(48)};
+   --space-2xl: #{px-to-rem(72)};
+
+   // Corners.
+   --radius-sm: #{px-to-rem(8)};
+   --radius-md: #{px-to-rem(12)};
+   --radius-lg: #{px-to-rem(18)};
+   --radius-pill: 999px;
+
+   // Reading measure for prose blocks (ledes, FAQ answers).
+   --measure: 68ch;
+
+   // Page gutter and maximum content width.
+   --page-max: #{px-to-rem(1120)};
+   --page-gutter: clamp(#{px-to-rem(16)}, 4vw, #{px-to-rem(32)});
+
+   // Motion. Referenced by every transition so timing stays consistent —
+   // `base/_reset.scss` disables all of it under prefers-reduced-motion.
+   --ease: cubic-bezier(0.2, 0.6, 0.3, 1);
+   --duration: 160ms;
+
+   /// Form control glyphs. The reset removes the native select arrow and
+   /// checkbox tick along with `appearance`, so both are drawn back as
+   /// background images. They live here as whole `url()` tokens because a
+   /// data URI cannot read a custom property — the colour is baked into
+   /// the SVG, so it has to be redeclared per theme rather than inherited.
+   /// The fill below is `--muted`; keep the two in step.
+   --select-arrow: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23616a80' d='M1.4 0 6 4.6 10.6 0 12 1.4 6 7.4 0 1.4z'/%3E%3C/svg%3E");
 }
 
 body {
@@ -48,6 +132,9 @@ body {
    color: var(--ink);
    font-family: var(--font-body);
    font-weight: var(--weight-body);
+   // Variable fonts carry their own weights; without this the browser may
+   // still synthesise a faux bold on top, which smears the letterforms.
+   font-synthesis-weight: none;
 }
 
 h1,
@@ -56,4 +143,12 @@ h3,
 h4 {
    font-family: var(--font-display);
    font-weight: var(--weight-heading);
+   // Display type is set large, where the default tracking looks loose.
+   letter-spacing: -0.02em;
+   text-wrap: balance;
+}
+
+::selection {
+   background-color: var(--accent-soft);
+   color: var(--accent-strong);
 }

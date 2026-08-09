@@ -1,0 +1,210 @@
+/// --------------------------------------------------
+/// components/_field.scss
+/// --------------------------------------------------
+/// Form controls: text inputs, number inputs, selects, textareas,
+/// checkboxes and range sliders.
+///
+/// These styles are mandatory rather than cosmetic. The reset removes
+/// `appearance`, `border`, `background`, `padding` and `outline` from
+/// every form element, so an unstyled <select> here renders as bare text
+/// with no affordance at all. It also sets `appearance: textfield` on
+/// number inputs, which is why no spinner shows up.
+/// --------------------------------------------------
+
+@use "../abstracts" as *;
+
+.field {
+   display: flex;
+   flex-direction: column;
+   gap: var(--space-3xs);
+   min-inline-size: 0; // Lets the control shrink inside a grid track.
+
+   &__label {
+      color: var(--ink-soft);
+      font-size: px-to-rem(13);
+      font-weight: var(--weight-label);
+      letter-spacing: 0.01em;
+   }
+
+   &__hint {
+      color: var(--muted);
+      font-size: px-to-rem(13);
+   }
+
+   &__error {
+      color: var(--danger);
+      font-size: px-to-rem(13);
+      font-weight: var(--weight-strong);
+   }
+}
+
+.control {
+   inline-size: 100%;
+   min-block-size: px-to-rem(48);
+   padding: var(--space-2xs) var(--space-xs);
+   border: 1px solid var(--line-strong);
+   border-radius: var(--radius-md);
+   background-color: var(--surface);
+   box-shadow: var(--shadow-sm);
+   color: var(--ink);
+   font-family: inherit;
+   transition:
+      border-color var(--duration) var(--ease),
+      box-shadow var(--duration) var(--ease);
+
+   &::placeholder {
+      color: var(--muted);
+   }
+
+   &:hover {
+      border-color: var(--muted);
+   }
+
+   &:focus-visible {
+      outline: none; // Replaced by the ring below, which hugs the radius.
+      border-color: var(--accent);
+      box-shadow: var(--focus-ring);
+   }
+
+   &--numeric {
+      // Set in the body face, not a mono one: mono figures are a
+      // developer-tool idiom, while tabular numerals give the same
+      // non-jittering columns without the change of voice.
+      font-size: px-to-rem(20);
+      font-variant-numeric: tabular-nums;
+      font-weight: var(--weight-strong);
+      letter-spacing: -0.01em;
+   }
+
+   &--select {
+      // The reset removed the native arrow along with `appearance`, so it
+      // is drawn back from the themed token — see base/_global.scss.
+      padding-inline-end: var(--space-lg);
+      background-image: var(--select-arrow);
+      background-repeat: no-repeat;
+      background-position: right var(--space-xs) center;
+      cursor: pointer;
+   }
+
+   &--textarea {
+      min-block-size: px-to-rem(240);
+      padding: var(--space-xs);
+      font-size: px-to-rem(16);
+      line-height: 1.7;
+      resize: vertical;
+   }
+
+   &--readonly {
+      background-color: var(--surface-raised);
+   }
+}
+
+/// Checkbox rows. `appearance: none` from the reset means the native tick
+/// is gone, so the box is drawn here and the tick comes back via
+/// `:checked`.
+
+.checkbox {
+   display: flex;
+   align-items: center;
+   gap: var(--space-2xs);
+   cursor: pointer;
+
+   &__box {
+      flex: none;
+      inline-size: px-to-rem(20);
+      block-size: px-to-rem(20);
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-sm);
+      background-color: var(--surface);
+      cursor: pointer;
+      transition:
+         background-color var(--duration) var(--ease),
+         border-color var(--duration) var(--ease);
+
+      &:checked {
+         // Filled with `--accent-solid`, which holds still across themes,
+         // so the white tick baked into the SVG below stays legible. The
+         // stroke must match `--accent-contrast`; a data URI cannot read
+         // a custom property, so the two are kept in step by hand.
+         border-color: transparent;
+         background-color: var(--accent-solid);
+         background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='10' viewBox='0 0 12 10'%3E%3Cpath fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M1 5l3.5 3.5L11 1.5'/%3E%3C/svg%3E");
+         background-repeat: no-repeat;
+         background-position: center;
+      }
+
+      &:focus-visible {
+         outline: 2px solid var(--accent);
+         outline-offset: 2px;
+      }
+   }
+
+   &__label {
+      color: var(--ink-soft);
+      font-size: px-to-rem(15);
+   }
+}
+
+/// Range slider. Track and thumb need vendor-specific selectors; they
+/// cannot be combined into one rule because an unknown pseudo-element
+/// invalidates the whole selector list in every browser.
+
+.slider {
+   inline-size: 100%;
+   block-size: px-to-rem(24);
+   background: transparent;
+   cursor: pointer;
+
+   &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 4px;
+   }
+
+   &::-webkit-slider-runnable-track {
+      block-size: px-to-rem(6);
+      border-radius: var(--radius-pill);
+      background-color: var(--surface-sunken);
+   }
+
+   &::-moz-range-track {
+      block-size: px-to-rem(6);
+      border-radius: var(--radius-pill);
+      background-color: var(--surface-sunken);
+   }
+
+   &::-webkit-slider-thumb {
+      appearance: none;
+      margin-block-start: px-to-rem(-7);
+      inline-size: px-to-rem(20);
+      block-size: px-to-rem(20);
+      border: 2px solid var(--surface);
+      border-radius: 50%;
+      background-color: var(--accent-solid);
+      box-shadow: var(--shadow-sm);
+   }
+
+   &::-moz-range-thumb {
+      inline-size: px-to-rem(20);
+      block-size: px-to-rem(20);
+      border: 2px solid var(--surface);
+      border-radius: 50%;
+      background-color: var(--accent-solid);
+   }
+}
+
+/// Fieldsets used as option groups (the password character sets).
+
+.option-group {
+   display: flex;
+   flex-direction: column;
+   gap: var(--space-2xs);
+   border: none;
+
+   &__legend {
+      margin-block-end: var(--space-3xs);
+      padding: 0;
+      color: var(--ink-soft);
+      font-size: px-to-rem(13);
+      font-weight: var(--weight-label);
+   }
+}

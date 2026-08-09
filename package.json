@@ -35,7 +35,6 @@
       "@nuxt/fonts": "^0.14.0",
       "@nuxt/image": "^2.1.0",
       "@nuxt/test-utils": "^4.1.0",
-      "@nuxtjs/i18n": "^10.6.0",
       "@nuxtjs/seo": "^5.3.10",
       "@resvg/resvg-js": "^2.6.2",
       "@semantic-release/changelog": "^7.0.0",

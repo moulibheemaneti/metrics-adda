@@ -1,0 +1,80 @@
+/// --------------------------------------------------
+/// themes/_dark.scss
+/// --------------------------------------------------
+/// The dark counterpart of every colour token in `base/_global.scss`.
+/// Only colours are redefined — spacing, radii, typography and motion are
+/// theme-independent and stay where they are.
+///
+/// Three selectors, covering the three states the toggle can be in:
+///
+///   1. `prefers-color-scheme: dark` with no explicit choice → dark
+///      (the `:not([data-theme="light"])` guard lets an explicit light
+///      choice win over the OS setting)
+///   2. `[data-theme="dark"]` → dark regardless of the OS
+///   3. `[data-theme="light"]` → falls through to the light tokens
+///
+/// "System" is represented by the *absence* of the attribute rather than
+/// by `data-theme="system"`, so the media query is free to decide.
+/// --------------------------------------------------
+
+/// Every token in one place; the two selectors below both pull it in, so
+/// the palette is written once rather than kept in sync by hand.
+@mixin dark-tokens {
+   color-scheme: dark;
+
+   // Surfaces. "Raised" is *lighter* than the base in dark mode — depth is
+   // carried by lightness here, since shadows barely register on near-black.
+   --surface: #0b0f1a;
+   --surface-raised: #121826;
+   --surface-sunken: #080c14;
+   --surface-veil: rgb(11 15 26 / 72%);
+
+   // Text.
+   --ink: #e9ecf5;
+   --ink-soft: #b6bdd0;
+   --muted: #8b93a7;
+
+   // Accent as ink lifts to stay readable on a dark ground; accent as fill
+   // stays put, so white text on a button keeps its 6.7:1.
+   --accent: #818cf8;
+   --accent-strong: #a5b4fc;
+   --accent-solid: #4f46e5;
+   --accent-solid-hover: #4338ca;
+   --accent-contrast: #ffffff;
+   --accent-soft: #1e2340;
+
+   // Lines.
+   --line: #222a3d;
+   --line-strong: #33405c;
+
+   // Status, lifted the same way the accent is.
+   --danger: #f97066;
+   --danger-soft: #2d1512;
+   --warn: #fdb022;
+   --warn-soft: #2b1d0a;
+   --success: #47cd89;
+   --success-soft: #0c2318;
+
+   // Deeper and more opaque: a 6%-black shadow is invisible on #0b0f1a.
+   --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%), 0 1px 1px rgb(0 0 0 / 30%);
+   --shadow-md: 0 4px 12px rgb(0 0 0 / 45%), 0 12px 32px rgb(0 0 0 / 35%);
+   --shadow-lg: 0 8px 24px rgb(0 0 0 / 50%), 0 32px 64px rgb(0 0 0 / 40%);
+
+   // Built from the lifted accent so the ring stays visible on dark.
+   --focus-ring: 0 0 0 3px rgb(129 140 248 / 36%);
+
+   // Redrawn in the dark `--muted`. The colour is baked into the data URI
+   // — see the note in base/_global.scss — so the light arrow would sit at
+   // roughly 3:1 on a dark field and fail the non-text contrast rule.
+   --select-arrow: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238b93a7' d='M1.4 0 6 4.6 10.6 0 12 1.4 6 7.4 0 1.4z'/%3E%3C/svg%3E");
+}
+
+@media (prefers-color-scheme: dark) {
+   :root:not([data-theme="light"]) {
+      @include dark-tokens;
+   }
+}
+
+:root[data-theme="dark"] {
+   @include dark-tokens;
+}

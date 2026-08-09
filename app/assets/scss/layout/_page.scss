@@ -1,10 +1,176 @@
 /// --------------------------------------------------
 /// layout/_page.scss
 /// --------------------------------------------------
-/// This file is intended for defining page-specific layout styles.
-/// Use this file to set up layout rules that are unique to certain
-/// pages, such as custom containers, grids, or spacing that should
-/// not be applied globally. Keep these styles scoped to individual
-/// pages to maintain a clear separation between global, default,
-/// and page-level layout rules.
+/// Page-level scaffolding shared by the hub and every tool page: the
+/// centred content column, the section rhythm, the hero, the hub's tool
+/// grid and the prose defaults for ledes and FAQ answers.
 /// --------------------------------------------------
+
+@use "../abstracts" as *;
+
+/// Centred column. Everything on a page sits inside one of these.
+.page {
+   inline-size: 100%;
+   max-inline-size: var(--page-max);
+   margin-inline: auto;
+   padding: var(--space-lg) var(--page-gutter) var(--space-2xl);
+}
+
+/// Vertical rhythm between the blocks of a page.
+.stack {
+   display: flex;
+   flex-direction: column;
+   gap: var(--space-lg);
+
+   &--tight {
+      gap: var(--space-sm);
+   }
+
+   &--loose {
+      gap: var(--space-xl);
+   }
+}
+
+.page-header {
+   display: flex;
+   flex-direction: column;
+   gap: var(--space-2xs);
+
+   &__title {
+      font-size: clamp(#{px-to-rem(30)}, 5vw, #{px-to-rem(44)});
+      line-height: 1.1;
+   }
+
+   &__lede {
+      max-inline-size: var(--measure);
+      color: var(--ink-soft);
+      font-size: px-to-rem(17);
+      line-height: 1.6;
+   }
+}
+
+/// The hub's opening block. Sits in its own stacking context so the glow
+/// below can be positioned against it.
+.hero {
+   position: relative;
+   display: flex;
+   flex-direction: column;
+   gap: var(--space-sm);
+   padding-block: var(--space-lg) var(--space-2xs);
+   text-align: center;
+
+   /// A soft brand-coloured wash behind the headline. `pointer-events:
+   /// none` keeps it from swallowing clicks, and it is clipped by the
+   /// page container rather than allowed to widen the document — a
+   /// decorative element that triggers a horizontal scrollbar on a phone
+   /// is a bug, not a flourish.
+   &::before {
+      content: "";
+      position: absolute;
+      inset-block-start: 0;
+      inset-inline-start: 50%;
+      z-index: -1;
+      inline-size: min(#{px-to-rem(680)}, 100%);
+      block-size: px-to-rem(320);
+      transform: translateX(-50%);
+      background-image: radial-gradient(
+         ellipse at center,
+         rgb(99 91 255 / 16%) 0%,
+         rgb(124 58 237 / 8%) 45%,
+         transparent 70%
+      );
+      pointer-events: none;
+   }
+
+   &__eyebrow {
+      align-self: center;
+      padding: var(--space-3xs) var(--space-xs);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-pill);
+      background-color: var(--surface-raised);
+      color: var(--ink-soft);
+      font-size: px-to-rem(13);
+      font-weight: var(--weight-strong);
+   }
+
+   &__title {
+      max-inline-size: 18ch;
+      margin-inline: auto;
+      font-size: clamp(#{px-to-rem(34)}, 6.5vw, #{px-to-rem(60)});
+      line-height: 1.05;
+   }
+
+   /// Gradient applied to a single emphasised phrase rather than the whole
+   /// headline: the rest stays solid `--ink` so the contrast audit always
+   /// has a real colour to measure.
+   &__accent {
+      background-image: var(--gradient-brand);
+      background-clip: text;
+      color: transparent;
+   }
+
+   &__lede {
+      max-inline-size: 52ch;
+      margin-inline: auto;
+      color: var(--ink-soft);
+      font-size: px-to-rem(18);
+      line-height: 1.6;
+   }
+}
+
+.section-heading {
+   font-family: var(--font-display);
+   font-size: px-to-rem(19);
+   font-weight: var(--weight-label);
+   letter-spacing: -0.01em;
+}
+
+/// Responsive card grid — the hub's tool list and the "other tools" block.
+/// `auto-fit` plus `minmax` means no breakpoints to maintain: the columns
+/// reflow on their own.
+.card-grid {
+   display: grid;
+   // 320px settles into three columns at the page's maximum width, so five
+   // tools read as 3 + 2 rather than as 4 + 1 orphan. The `min(100%, …)`
+   // guard stops the track from overflowing a container narrower than the
+   // floor — a bare minmax(320px, …) forces a horizontal scrollbar on a
+   // 300px viewport.
+   grid-template-columns: repeat(auto-fit, minmax(min(100%, #{px-to-rem(320)}), 1fr));
+   gap: var(--space-sm);
+   list-style: none;
+}
+
+/// Question-and-answer list under each tool.
+.faq {
+   display: flex;
+   flex-direction: column;
+   gap: var(--space-sm);
+   list-style: none;
+
+   &__question {
+      margin-block-end: var(--space-3xs);
+      font-family: var(--font-display);
+      font-size: px-to-rem(16);
+      font-weight: var(--weight-label);
+   }
+
+   &__answer {
+      max-inline-size: var(--measure);
+      color: var(--ink-soft);
+      line-height: 1.65;
+   }
+}
+
+/// Visually hidden, but still announced by screen readers. Used for
+/// live regions and for labels that would be redundant on screen.
+.visually-hidden {
+   position: absolute;
+   inline-size: 1px;
+   block-size: 1px;
+   margin: -1px;
+   padding: 0;
+   border: 0;
+   clip-path: inset(50%);
+   white-space: nowrap;
+   overflow: hidden;
+}
