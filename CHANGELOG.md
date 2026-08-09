@@ -3,6 +3,17 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.1.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.0.0...v1.1.0) (2026-08-09)
+
+### ✨ Features
+
+* **header:** open the tools in a side sheet on phones ([5aa8fb4](https://github.com/moulibheemaneti/metrics-adda/commit/5aa8fb4362ca824e874ee8dc9e9191cd2bd8bbbd))
+* **header:** show the logo beside the site name ([2f4769f](https://github.com/moulibheemaneti/metrics-adda/commit/2f4769f87de0d6f015936009a043a0f7d2f26139))
+
+### 🐛 Bug Fixes
+
+* **header:** rebuild the topbar for narrow screens ([a9e2abc](https://github.com/moulibheemaneti/metrics-adda/commit/a9e2abc08047e02a96717d078cf05b2cfcf36562))
+
 ## 1.0.0 (2026-08-09)
 
 ### ✨ Features
