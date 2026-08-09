@@ -1,0 +1,59 @@
+/// --------------------------------------------------
+/// base/_global.scss
+/// --------------------------------------------------
+/// Foundational, project-wide styles layered on top of the reset:
+/// the design tokens (palette, typography scale, surfaces) exposed as
+/// custom properties, plus base typography. Components reference these
+/// custom properties rather than hardcoding hex values, so the theme
+/// stays consistent and themable from one place.
+///
+/// The values below are neutral placeholders — replace them when the
+/// Metrics Adda visual language lands.
+/// --------------------------------------------------
+
+:root {
+   // Surfaces.
+   --surface: #ffffff;
+   --surface-raised: #f7f8fa;
+   --surface-sunken: #eef0f4;
+
+   // Text.
+   --ink: #111318;
+   --ink-soft: #3c414b;
+   --muted: #6b7280;
+
+   // Accents.
+   --accent: #2563eb;
+   --accent-strong: #1d4ed8;
+   --accent-soft: #dbeafe;
+
+   // Lines.
+   --line: #e3e6ec;
+   --line-strong: #c9cfda;
+
+   // Typography.
+   --font-display: system-ui, -apple-system, "Segoe UI", sans-serif;
+   --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+   --font-mono: ui-monospace, "SF Mono", "Cascadia Code", monospace;
+
+   // Weights. Tune the whole site's typographic colour from these four.
+   --weight-body: 400;
+   --weight-strong: 500;
+   --weight-label: 600;
+   --weight-heading: 700;
+}
+
+body {
+   background-color: var(--surface);
+   color: var(--ink);
+   font-family: var(--font-body);
+   font-weight: var(--weight-body);
+}
+
+h1,
+h2,
+h3,
+h4 {
+   font-family: var(--font-display);
+   font-weight: var(--weight-heading);
+}

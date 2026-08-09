@@ -1,0 +1,102 @@
+{
+   // Editor Specific
+   "editor.formatOnSave": true,
+   "editor.formatOnPaste": false,
+   "editor.formatOnType": false,
+   "editor.insertSpaces": true,
+   "editor.tabSize": 3,
+   "editor.detectIndentation": true,
+   "editor.trimAutoWhitespace": true,
+   "editor.bracketPairColorization.enabled": true,
+   "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit",
+      "source.organizeImports": "explicit",
+      "source.removeUnusedImports": "always",
+      "source.sortImports": "always"
+   },
+   "editor.quickSuggestions": {
+      "other": true,
+      "comments": true,
+      "strings": true
+   },
+   "files.insertFinalNewline": true,
+   "files.trimFinalNewlines": true,
+   "files.trimTrailingWhitespace": true,
+   "files.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/.git": true,
+      "**/.DS_Store": true
+   },
+   "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/.git": true
+   },
+   // HTML Specific
+   "html.format.enable": true,
+   "html.format.wrapLineLength": 120,
+   "html.suggest.html5": true,
+   "emmet.includeLanguages": {
+      "vue-html": "html",
+      "vue": "html",
+      "javascript": "html"
+   },
+   "emmet.triggerExpansionOnTab": true,
+   "emmet.showAbbreviationSuggestions": true,
+   "emmet.showExpandedAbbreviation": "always",
+   // TypeScript Specific
+   "js/ts.tsdk.path": "node_modules/typescript/lib",
+   "js/ts.tsdk.promptToUseWorkspaceVersion": true,
+   "js/ts.preferences.importModuleSpecifier": "relative",
+   // ESLint Specific
+   "eslint.run": "onSave",
+   "eslint.validate": [
+      "javascript",
+      "javascriptreact",
+      "typescript",
+      "typescriptreact",
+      "vue",
+   ],
+   // Vue Related
+   "[vue]": {
+      "editor.defaultFormatter": "Vue.volar",
+      "editor.formatOnSave": true,
+   },
+   // --- ESLint as the sole formatter (no Prettier) ---
+   "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+   // --- ESLint flat config (required for Nuxt 4 / eslint v9) ---
+   "eslint.useFlatConfig": true,
+   // --- Per-language overrides ---
+   // SCSS: VS Code's built-in CSS formatter is fine for SCSS
+   "[scss]": {
+      "editor.defaultFormatter": "stylelint.vscode-stylelint"
+   },
+   // JSON: use VS Code built-in (ESLint doesn't format JSON)
+   "[json]": {
+      "editor.defaultFormatter": "vscode.json-language-features"
+   },
+   "[jsonc]": {
+      "editor.defaultFormatter": "vscode.json-language-features"
+   },
+   // Markdown: no auto-format (prevents unwanted rewrapping)
+   "[markdown]": {
+      "editor.formatOnSave": false
+   },
+   // --- Vue / Volar ---
+   "vue.inlayHints.missingProps": true,
+   "vue.autoInsert.dotValue": true,
+   // --- File nesting (keeps explorer clean) ---
+   "explorer.fileNesting.enabled": true,
+   "explorer.fileNesting.patterns": {
+      "release.config.mjs": "lighthouserc.json, lighthouserc.*.json",
+      "package.json": "bun.lock",
+      "nuxt.config.*": ".nuxtignore, .nuxtrc, tsconfig.json, vitest.config.ts",
+      "eslint.config.*": ".eslintignore, stylelint.config.mjs, commitlint.config.ts",
+      ".editorconfig": ".vscode",
+      ".env.example": ".env, .env.dev, .env.stage, .env.prod",
+      "README.md": "CHANGELOG.md, LICENSE"
+   },
+   // --- Misc ---
+   "files.eol": "\n",
+}

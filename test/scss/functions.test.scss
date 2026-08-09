@@ -1,0 +1,48 @@
+/// --------------------------------------------------
+/// SCSS unit tests for abstracts/_functions.scss
+/// --------------------------------------------------
+/// Written with sass-true (https://github.com/oddbird/true).
+/// Executed by test/scss/scss.spec.ts via Vitest — do not
+/// run this file directly.
+/// --------------------------------------------------
+
+@use "true" as *;
+@use "../../app/assets/scss/abstracts/functions" as *;
+
+@include test-module("px-to-rem") {
+   @include test("converts px to rem using the default 16 context") {
+      @include assert-equal(px-to-rem(32), 2rem);
+   }
+
+   @include test("converts px to rem using a custom context") {
+      @include assert-equal(px-to-rem(24, 12), 2rem);
+   }
+
+   @include test("halves the value when size is half the context") {
+      @include assert-equal(px-to-rem(8, 16), 0.5rem);
+   }
+}
+
+@include test-module("px-to-em") {
+   @include test("converts px to em using the default 16 context") {
+      @include assert-equal(px-to-em(32), 2em);
+   }
+
+   @include test("converts px to em using a custom context") {
+      @include assert-equal(px-to-em(24, 12), 2em);
+   }
+}
+
+@include test-module("get-color") {
+   @include test("returns the 500 shade when no shade is given") {
+      @include assert-equal(get-color("blue"), #0000FA);
+   }
+
+   @include test("returns the requested numeric shade") {
+      @include assert-equal(get-color("blue", 50), #0000FF);
+   }
+
+   @include test("returns the 500 shade explicitly") {
+      @include assert-equal(get-color("blue", 500), #0000FA);
+   }
+}

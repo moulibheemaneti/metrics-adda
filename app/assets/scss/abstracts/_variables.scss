@@ -1,0 +1,13 @@
+/// --------------------------------------------------
+/// abstracts/_variables.scss
+/// --------------------------------------------------
+/// This file is intended for defining global SCSS variables
+/// used throughout the project. Place all font stacks,
+/// breakpoints, z-index layers, and any other design tokens
+/// (except color palettes and spacing scales) here to ensure
+/// consistency and maintainability. Import this file wherever
+/// you need access to these shared variables.
+/// --------------------------------------------------
+
+$z-index-map: (
+);

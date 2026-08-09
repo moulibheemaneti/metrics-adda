@@ -1,0 +1,37 @@
+<template>
+   <footer class="site-footer">
+      <p class="site-footer__line">
+         © {{ year }} {{ t("site.name") }}. {{ t("footer.rights") }}
+      </p>
+      <a class="site-footer__contact" :href="`mailto:${SITE_EMAIL}`">
+         {{ t("footer.contact") }}
+      </a>
+   </footer>
+</template>
+
+<script lang="ts" setup>
+const { t } = useI18n()
+
+// Rendered on the server first, so this is the deploy's year on a cached
+// page — close enough for a copyright line, and it avoids a hydration
+// mismatch from computing it twice.
+const year = new Date().getFullYear()
+</script>
+
+<style scoped lang="scss">
+.site-footer {
+   display: flex;
+   flex-wrap: wrap;
+   align-items: center;
+   justify-content: space-between;
+   gap: 0.75rem;
+   padding: 1.5rem 1.25rem;
+   border-block-start: 1px solid var(--line);
+   color: var(--muted);
+   font-size: 0.9rem;
+
+   &__contact {
+      color: var(--accent);
+   }
+}
+</style>
