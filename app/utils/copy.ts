@@ -264,6 +264,23 @@ export const COPY = {
       relatedHeading: "Other tools",
       faqHeading: "Common questions",
    },
+   /// The error page. Kept deliberately free of the requested path: Nuxt's
+   /// built-in page interpolates it into the <title>, which both looks
+   /// broken and puts arbitrary text from the URL into the browser tab.
+   error: {
+      notFound: {
+         code: "404",
+         heading: "That page doesn't exist",
+         lede: "The link may be out of date, or the address may have a typo in it. Every tool is listed below.",
+      },
+      unexpected: {
+         code: "500",
+         heading: "Something went wrong",
+         lede: "That's on us, not on you. Try again in a moment, or pick a tool below.",
+      },
+      home: "Back to all tools",
+      toolsHeading: "Jump to a tool",
+   },
    home: {
       eyebrow: "Five tools, no sign-up",
       // The headline is split so one phrase can carry the brand gradient
