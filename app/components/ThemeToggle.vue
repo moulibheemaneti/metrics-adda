@@ -104,6 +104,16 @@ onMounted(sync)
          clip-path: inset(50%);
          overflow: hidden;
       }
+
+      // An icon on its own is a target a few millimetres across. The
+      // padding below is what makes each option tappable; keep it in step
+      // with the SSR placeholder in `layouts/default.vue`, which reserves
+      // the resulting 132 x 36 box.
+      &__option {
+         justify-content: center;
+         min-inline-size: px-to-rem(40);
+         padding-block: px-to-rem(7);
+      }
    }
 }
 </style>
