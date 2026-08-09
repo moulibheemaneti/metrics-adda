@@ -1,0 +1,8 @@
+// NOTE: New files in this folder should be
+// added to the @use list below to make them
+// available to other modules via this index.
+
+// NOTE: The order of the files is important.
+// First reset the CSS, then apply the global styles.
+@use "reset";
+@use "global";

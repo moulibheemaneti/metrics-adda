@@ -1,0 +1,23 @@
+{
+   "recommendations": [
+      "aaron-bond.better-comments",
+      "dbaeumer.vscode-eslint",
+      "gencer.html-slim-scss-css-class-completion",
+      "gruntfuggly.todo-tree",
+      "ms-vscode.vscode-gradle",
+      "pucelle.vscode-css-navigation",
+      // "rust-lang.rust-analyzer",
+      "streetsidesoftware.code-spell-checker",
+      "usernamehw.errorlens",
+      "vue.volar",
+      // ESLint — the core linter/formatter
+      "dbaeumer.vscode-eslint",
+      // EditorConfig support
+      "editorconfig.editorconfig",
+      // SCSS IntelliSense
+      "mrmlnc.vscode-scss",
+      // Bun runtime support
+      "oven.bun-vscode",
+      "stylelint.vscode-stylelint"
+   ]
+}

@@ -1,0 +1,29 @@
+# CODEOWNERS
+#
+# Controls who gets automatically requested for review when a PR touches certain files.
+# Format: <file pattern>  <@github-username or @org/team>
+#
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# ─── HOW TO USE ──────────────────────────────────────────────────────────────
+# Replace @your-username with your actual GitHub username now.
+# When you move to an org, replace with @your-org/team-name.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Default owner — catches everything not matched below
+* @moulibheemaneti
+
+# Nuxt / app config — high impact, always needs careful review
+nuxt.config.ts @moulibheemaneti
+app.config.ts @moulibheemaneti
+
+# CI/CD — changes here affect the entire pipeline
+.github/ @moulibheemaneti
+
+# Linting and code style config
+eslint.config.mjs @moulibheemaneti
+stylelint.config.mjs @moulibheemaneti
+commitlint.config.ts @moulibheemaneti
+
+# Environment and secrets — never merge without review
+.env.example @moulibheemaneti

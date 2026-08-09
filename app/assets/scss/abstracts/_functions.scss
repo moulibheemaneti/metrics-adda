@@ -1,0 +1,208 @@
+@use "sass:meta";
+@use "sass:math";
+@use "sass:map";
+@use "sass:list";
+
+@use "../tokens/colors" as *;
+@use "../abstracts/variables" as *;
+
+/// --------------------------------------------------
+/// abstracts/_functions.scss
+/// --------------------------------------------------
+/// This file is intended for defining custom SCSS functions
+/// that can be reused throughout the project. Place all
+/// function definitions here to keep them organized and
+/// easily accessible from other SCSS files.
+/// --------------------------------------------------
+
+// Validates $size and $context values for px-to-rem()
+/// @access private
+/// @param {Number} $size - Must be a number and unitless
+/// @param {Number} $context - Must be a number, unitless, and not zero
+@function validate-size-and-context($size, $context) {
+
+   // Validate that $size is a number
+   @if meta.type-of($size) != "number" {
+      @error "rem($size, $context): $size must be a number. Received: #{meta.type-of($size)}";
+   }
+
+   // Validate that $context is a number
+   @if meta.type-of($context) != "number" {
+      @error "rem($size, $context): $context must be a number. Received: #{meta.type-of($context)}";
+   }
+
+   // Prevent division by zero
+   @if $context == 0 {
+      @error "rem($size, $context): $context cannot be zero.";
+   }
+
+   // Ensure $size is unitless
+   @if not math.is-unitless($size) {
+      @error "rem($size, $context): $size must be unitless. Received: #{$size}";
+   }
+
+   // Ensure $context is unitless
+   @if not math.is-unitless($context) {
+      @error "rem($size, $context): $context must be unitless. Received: #{$context}";
+   }
+
+   @return true;
+}
+
+/// Converts a pixel value to rem units based on a given context (default: 16).
+///
+/// @param {Number} $size - The pixel value to convert (must be unitless).
+/// @param {Number} $context - The base pixel context for conversion (must be unitless, default: 16).
+/// @return {Number} - The value in rem units.
+///
+/// @example
+///   px-to-rem(32)         // returns 2rem
+///   px-to-rem(24, 12)     // returns 2rem
+@function px-to-rem($size, $context: 16) {
+
+   $valid: validate-size-and-context($size, $context);
+
+   // Perform the conversion and return rem value
+   @return math.div($size, $context) * 1rem;
+}
+
+/// Converts a pixel value to em units based on a given context (default: 16).
+///
+/// @param {Number} $size - The pixel value to convert (must be unitless).
+/// @param {Number} $context - The base pixel context for conversion (must be unitless, default: 16).
+/// @return {Number} - The value in em units.
+///
+/// @example
+///   px-to-em(32)         // returns 2em
+///   px-to-em(24, 12)     // returns 2em
+@function px-to-em($size, $context: 16) {
+
+   $valid: validate-size-and-context($size, $context);
+
+   // Perform the conversion and return em value
+   @return math.div($size, $context) * 1em;
+}
+
+/// Returns the z-index value for a given key from the $z-index-map defined in _variables.scss.
+/// @param {String} $layer - The key for the desired z-index layer.
+/// @return {Number} - The z-index value associated with the key.
+/// @example
+///   z-index('modal') // returns the z-index value for 'modal'
+@function z-index($layer) {
+
+   // Check if the global variable $z-index-map exists.
+   // If it does not exist, throw an error.
+   @if not meta.global-variable-exists(z-index-map) {
+      @error "z-index(): $z-index-map is not defined. Please define $z-index-map in _variables.scss.";
+   }
+
+   // Check if the provided $layer key exists in the $z-index-map.
+   // If the key is missing, throw an error.
+   @if not map.has-key($z-index-map, $layer) {
+      @error 'z-index(#{$layer}): "#{$layer}" not found in $z-index-map. Please define it in _variables.scss.';
+   }
+
+   @return map.get($z-index-map, $layer);
+}
+
+/// Retrieves a color value from the global $color-map-with-shades map (see tokens/_colors.scss).
+/// Supports both flat color values and color maps with multiple shades.
+/// @param {String} $color - The color name (e.g. "blue").
+/// @param {Number|null} $shade - Optional shade value (e.g. 500). If omitted, returns the default/base color.
+/// @return {Color|String} - The resolved color value.
+///
+/// @example
+///   get-color("blue")         // => "#0000FF"
+///   get-color("blue", 500)    // => "#0000FA"
+@function get-color($color, $shade: null) {
+
+   // Ensure the color map variable is available
+   @if not meta.global-variable-exists(color-map-with-shades) {
+      @error "get-color(): $color-map-with-shades is not defined.";
+   }
+
+   $color-map: $color-map-with-shades;
+
+   // Normalize $color to string for key lookup
+   $color-key: $color + "";
+
+   @if meta.type-of($color) == "string" {
+      $color-key: $color;
+   }
+
+   // Check if the color exists in the map
+   @if not map.has-key($color-map, $color-key) {
+      @error 'get-color("#{$color}"): Color not found in $color-map-with-shades.';
+   }
+
+   $color-entry: map.get($color-map, $color-key);
+
+   // Validate that the color entry is not an unsupported type
+   @if not $color-entry or meta.type-of($color-entry) == "list"
+   or meta.type-of($color-entry) == "bool"
+   or meta.type-of($color-entry) == "number" {
+      @error 'get-color("#{$color}"): Color entry must not be a list, boolean, number, or null.';
+   }
+
+   // If the color entry is a flat value (not a map), return it directly
+   @if meta.type-of($color-entry) != "map" {
+      @if $shade {
+         @warn 'get-color("#{$color}", #{$shade}): Shade provided for a flat color entry. Ignoring shade.';
+      }
+
+      @return $color-entry;
+   }
+
+   // If a shade is provided, ensure it is a unitless number
+   @if $shade != null and (meta.type-of($shade) != "number" or not math.is-unitless($shade)) {
+      @error 'get-color(): $shade must be a unitless number (e.g. 500, 700). Received "#{$shade}".';
+   }
+
+   // If no shade is provided, return the only value if there is one,
+   // or default to "500" or 500 if present
+   @if not $shade {
+      $keys: map.keys($color-entry);
+
+      // If only one shade exists, return it
+      @if list.length($keys) == 1 {
+         @return map.get($color-entry, list.nth($keys, 1));
+      }
+
+      // Prefer "500" as the default shade if available
+      @if map.has-key($color-entry, "500") {
+         @return map.get($color-entry, "500");
+      }
+
+      // Fallback to numeric 500 if available
+      @if map.has-key($color-entry, 500) {
+         @return map.get($color-entry, 500);
+      }
+
+      @error 'get-color("#{$color}"): No shade provided and no "500" shade found in the color map for the given color.';
+   }
+
+   // Try both string and number forms of the shade key
+   $shade-str: $shade + "";
+
+   // Declare in the outer scope first so the branch assignments below update
+   // this variable instead of shadowing it in the @if/@else block scope.
+   $shade-num: $shade;
+
+   @if meta.type-of($shade) == "string" {
+      $shade-num: str-to-number($shade);
+   }
+
+   $has-str-key: map.has-key($color-entry, $shade-str);
+   $has-num-key: map.has-key($color-entry, $shade-num);
+
+   // Return the color if the shade key exists (string or number)
+   @if $has-str-key {
+      @return map.get($color-entry, $shade-str);
+   }
+
+   @if $has-num-key {
+      @return map.get($color-entry, $shade-num);
+   }
+
+   @error 'get-color("#{$color}", #{$shade}): Shade not found in color entry. Tried both string and number keys.';
+}

@@ -1,0 +1,36 @@
+# editorconfig.org
+root = true
+
+# All files
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 3
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# TypeScript / JavaScript / Vue
+[*.{ts,tsx,js,mjs,cjs,vue}]
+# indent_size = 3
+quote_type = double
+
+# SCSS / CSS
+# [*.{scss,css}]
+# indent_size = 3
+
+# JSON / JSONC
+# [*.{json,jsonc}]
+# indent_size = 3
+
+# # Markdown — preserve trailing spaces (they mean <br>)
+# [*.md]
+# trim_trailing_whitespace = false
+
+# YAML (GitHub Actions, etc.)
+# [*.{yml,yaml}]
+# indent_size = 3
+
+# Shell scripts
+[*.sh]
+end_of_line = lf

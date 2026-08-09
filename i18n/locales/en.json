@@ -1,0 +1,23 @@
+{
+   "site": {
+      "name": "Metrics Adda",
+      "tagline": "Coming soon."
+   },
+   "nav": {
+      "home": "Home"
+   },
+   "footer": {
+      "contact": "Contact",
+      "rights": "All rights reserved."
+   },
+   "home": {
+      "heading": "Metrics Adda",
+      "tagline": "Coming soon."
+   },
+   "seo": {
+      "home": {
+         "title": "Metrics Adda",
+         "description": "Metrics Adda — coming soon."
+      }
+   }
+}
