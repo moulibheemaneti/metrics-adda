@@ -46,7 +46,7 @@
       "@semantic-release/release-notes-generator": "^14.1.1",
       "@stylistic/stylelint-plugin": "^5.2.1",
       "@vue/test-utils": "^2.4.11",
-      "conventional-changelog-conventionalcommits": "^8.0.0",
+      "conventional-changelog-conventionalcommits": "^10.2.1",
       "happy-dom": "^20.11.2",
       "sass": "^1.102.0",
       "sass-embedded": "^1.100.0",
