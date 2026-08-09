@@ -245,6 +245,12 @@ export const COPY = {
       home: "Home",
       label: "Tools",
    },
+   theme: {
+      legend: "Colour theme",
+      system: "System",
+      light: "Light",
+      dark: "Dark",
+   },
    footer: {
       contact: "Contact",
       rights: "All rights reserved.",

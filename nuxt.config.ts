@@ -30,6 +30,30 @@ export default defineNuxtConfig({
          htmlAttrs: { lang: "en" },
          meta: [
             { name: "viewport", content: "width=device-width, initial-scale=1" },
+            // Mobile browser chrome follows the OS setting. This tracks the
+            // `prefers-color-scheme` default rather than a manual override —
+            // a stored override is not knowable at SSR, and guessing wrong
+            // paints the wrong colour on the very first frame.
+            { name: "theme-color", content: "#ffffff", media: "(prefers-color-scheme: light)" },
+            { name: "theme-color", content: "#0b0f1a", media: "(prefers-color-scheme: dark)" },
+         ],
+         script: [
+            {
+               // Applies a stored theme choice BEFORE the first paint.
+               //
+               // This cannot wait for Vue: by the time the app hydrates the
+               // page has already painted, so a visitor who chose dark would
+               // see a white flash on every single navigation. It cannot be
+               // an external file either — that would race the stylesheet.
+               // Inline, blocking, and first in <head> is the whole point.
+               //
+               // Reads the key owned by `composables/useTheme.ts`; the two
+               // must stay in step. Wrapped in try/catch because localStorage
+               // throws outright when a browser blocks site data.
+               innerHTML: "(function(){try{var t=localStorage.getItem(\"ma-theme\");if(t===\"dark\"||t===\"light\")document.documentElement.setAttribute(\"data-theme\",t)}catch(e){}})()",
+               tagPosition: "head",
+               tagPriority: "critical",
+            },
          ],
       },
    },
