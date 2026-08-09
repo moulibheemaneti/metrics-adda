@@ -1,10 +1,99 @@
 /// --------------------------------------------------
 /// layout/_page.scss
 /// --------------------------------------------------
-/// This file is intended for defining page-specific layout styles.
-/// Use this file to set up layout rules that are unique to certain
-/// pages, such as custom containers, grids, or spacing that should
-/// not be applied globally. Keep these styles scoped to individual
-/// pages to maintain a clear separation between global, default,
-/// and page-level layout rules.
+/// Page-level scaffolding shared by the hub and every tool page: the
+/// centred content column, the section rhythm, the hub's tool grid and
+/// the prose defaults for ledes and FAQ answers.
 /// --------------------------------------------------
+
+@use "../abstracts" as *;
+
+/// Centred column. Everything on a page sits inside one of these.
+.page {
+   inline-size: 100%;
+   max-inline-size: var(--page-max);
+   margin-inline: auto;
+   padding: var(--space-lg) var(--page-gutter) var(--space-2xl);
+}
+
+/// Vertical rhythm between the blocks of a page.
+.stack {
+   display: flex;
+   flex-direction: column;
+   gap: var(--space-lg);
+
+   &--tight {
+      gap: var(--space-sm);
+   }
+
+   &--loose {
+      gap: var(--space-xl);
+   }
+}
+
+.page-header {
+   display: flex;
+   flex-direction: column;
+   gap: var(--space-2xs);
+
+   &__title {
+      font-size: clamp(#{px-to-rem(28)}, 5vw, #{px-to-rem(42)});
+      line-height: 1.15;
+   }
+
+   &__lede {
+      max-inline-size: var(--measure);
+      color: var(--ink-soft);
+      font-size: px-to-rem(17);
+   }
+}
+
+.section-heading {
+   font-family: var(--font-display);
+   font-size: px-to-rem(20);
+   font-weight: var(--weight-heading);
+}
+
+/// Responsive card grid — the hub's tool list and the "other tools" block.
+/// `auto-fit` plus `minmax` means no breakpoints to maintain: the columns
+/// reflow on their own.
+.card-grid {
+   display: grid;
+   grid-template-columns: repeat(auto-fit, minmax(#{px-to-rem(240)}, 1fr));
+   gap: var(--space-sm);
+   list-style: none;
+}
+
+/// Question-and-answer list under each tool.
+.faq {
+   display: flex;
+   flex-direction: column;
+   gap: var(--space-sm);
+   list-style: none;
+
+   &__question {
+      margin-block-end: var(--space-3xs);
+      font-family: var(--font-display);
+      font-size: px-to-rem(17);
+      font-weight: var(--weight-label);
+   }
+
+   &__answer {
+      max-inline-size: var(--measure);
+      color: var(--ink-soft);
+   }
+}
+
+/// Visually hidden, but still announced by screen readers. Used for
+/// live regions and for labels that would be redundant on screen.
+.visually-hidden {
+   position: absolute;
+   inline-size: 1px;
+   block-size: 1px;
+   margin: -1px;
+   padding: 0;
+   border: 0;
+   clip-path: inset(50%);
+   white-space: nowrap;
+   overflow: hidden;
+}

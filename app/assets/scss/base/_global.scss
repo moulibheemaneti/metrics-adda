@@ -7,9 +7,12 @@
 /// custom properties rather than hardcoding hex values, so the theme
 /// stays consistent and themable from one place.
 ///
-/// The values below are neutral placeholders — replace them when the
-/// Metrics Adda visual language lands.
+/// The colour values below are neutral placeholders — replace them when
+/// the Metrics Adda visual language lands. The spacing, radius and focus
+/// tokens are load-bearing and referenced throughout `components/`.
 /// --------------------------------------------------
+
+@use "../abstracts" as *;
 
 :root {
    // Surfaces.
@@ -30,6 +33,48 @@
    // Lines.
    --line: #e3e6ec;
    --line-strong: #c9cfda;
+
+   // Status. Used by the password strength meter and by validation
+   // messages. Each pairs a readable foreground with a tinted background.
+   --danger: #b91c1c;
+   --danger-soft: #fee2e2;
+   --warn: #b45309;
+   --warn-soft: #fef3c7;
+   --success: #15803d;
+   --success-soft: #dcfce7;
+
+   // Spacing scale. One ratio for the whole site, so gaps between unrelated
+   // components still line up.
+   --space-3xs: #{px-to-rem(4)};
+   --space-2xs: #{px-to-rem(8)};
+   --space-xs: #{px-to-rem(12)};
+   --space-sm: #{px-to-rem(16)};
+   --space-md: #{px-to-rem(24)};
+   --space-lg: #{px-to-rem(32)};
+   --space-xl: #{px-to-rem(48)};
+   --space-2xl: #{px-to-rem(72)};
+
+   // Corners.
+   --radius-sm: #{px-to-rem(6)};
+   --radius-md: #{px-to-rem(10)};
+   --radius-lg: #{px-to-rem(16)};
+   --radius-pill: 999px;
+
+   // Elevation. Kept subtle — this is a utility site, not a dashboard.
+   --shadow-sm: 0 1px 2px rgb(17 19 24 / 6%);
+   --shadow-md: 0 4px 16px rgb(17 19 24 / 8%);
+
+   // Focus. The reset strips `outline` from every form control, so this
+   // ring is the only thing standing between keyboard users and an
+   // invisible cursor. Every interactive element must apply it.
+   --focus-ring: 0 0 0 3px var(--accent-soft);
+
+   // Reading measure for prose blocks (ledes, FAQ answers).
+   --measure: 68ch;
+
+   // Page gutter and maximum content width.
+   --page-max: #{px-to-rem(1120)};
+   --page-gutter: clamp(#{px-to-rem(16)}, 4vw, #{px-to-rem(32)});
 
    // Typography.
    --font-display: system-ui, -apple-system, "Segoe UI", sans-serif;

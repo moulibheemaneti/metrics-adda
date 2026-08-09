@@ -1,0 +1,52 @@
+/// --------------------------------------------------
+/// components/_data-table.scss
+/// --------------------------------------------------
+/// The "every unit at once" table under each converter.
+///
+/// Wrapped in an overflow container rather than allowed to widen the page:
+/// a table that pushes the body sideways on a phone is both unusable and a
+/// layout-shift problem.
+/// --------------------------------------------------
+
+@use "../abstracts" as *;
+
+.data-table {
+   inline-size: 100%;
+   overflow-x: auto;
+
+   &__table {
+      inline-size: 100%;
+      border-collapse: collapse;
+      text-align: start;
+   }
+
+   &__head {
+      color: var(--muted);
+      font-size: px-to-rem(13);
+      font-weight: var(--weight-label);
+      text-align: start;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+   }
+
+   &__cell {
+      padding: var(--space-2xs) var(--space-xs);
+      border-block-end: 1px solid var(--line);
+      text-align: start;
+      white-space: nowrap;
+   }
+
+   &__cell--value {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      text-align: end;
+   }
+
+   &__row--active {
+      background-color: var(--accent-soft);
+   }
+
+   &__unit {
+      color: var(--muted);
+   }
+}
