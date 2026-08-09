@@ -21,8 +21,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 
 PORT="${PORT:-3123}"
-# Routes checked for the full meta/canonical/OG/JSON-LD set.
-ROUTES="${ROUTES:-/}"
+# Routes checked for the full meta/canonical/OG/JSON-LD set. Add a page
+# here when you add one to app/pages, so its metadata is asserted too.
+ROUTES="${ROUTES:-/ /weight-converter /height-converter /temperature-converter /word-counter /password-generator}"
 SERVER_PID=""
 
 # ── pretty output ────────────────────────────────────────────────────────────

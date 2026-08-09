@@ -4,6 +4,28 @@
 
 ---
 
+## Tools
+
+Each tool is its own indexable page, with its own title, description, OG card
+and structured data.
+
+| Route | What it does |
+| --- | --- |
+| `/weight-converter` | kg, g, mg, tonnes, oz, lb, stone, US tons |
+| `/height-converter` | cm and metres ⇄ feet and inches, plus all length units |
+| `/temperature-converter` | Celsius, Fahrenheit, kelvin |
+| `/word-counter` | Words, characters, sentences, paragraphs, reading time |
+| `/password-generator` | Strong random passwords with an entropy readout |
+
+Adding a tool means three things: an entry in `app/utils/tools.ts`, a copy block
+in `app/utils/copy.ts`, and a page in `app/pages/`. `test/unit/tools.test.ts`
+fails if those drift apart.
+
+All conversion, counting and generation runs client-side — nothing a visitor
+types is sent anywhere.
+
+---
+
 ## Tech Stack
 
 - **Framework** — [Nuxt 4](https://nuxt.com)

@@ -44,6 +44,12 @@
 
    &__row--active {
       background-color: var(--accent-soft);
+
+      // --muted on the tinted row is only 3.96:1, under the 4.5:1 minimum
+      // for body text. The darker ink clears it comfortably.
+      .data-table__unit {
+         color: var(--ink-soft);
+      }
    }
 
    &__unit {

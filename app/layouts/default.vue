@@ -2,6 +2,7 @@
    <div class="app-shell">
       <header class="app-shell__topbar">
          <SiteBrand />
+         <ToolNav />
       </header>
       <slot />
       <SiteFooter />
@@ -24,10 +25,11 @@
 
    &__topbar {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 1rem;
-      padding: 1rem 1.25rem;
+      gap: var(--space-2xs) var(--space-md);
+      padding: var(--space-xs) var(--page-gutter);
       border-block-end: 1px solid var(--line);
    }
 }
