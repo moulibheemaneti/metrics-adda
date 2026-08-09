@@ -93,25 +93,11 @@ onMounted(sync)
       font-size: px-to-rem(14);
    }
 
-   // Labels are for orientation on a wide header; the icons carry the
-   // meaning once space runs out.
+   // Below this the control is only ever rendered inside the menu sheet
+   // (see `layouts/default.vue`), which is reached by touch — so the rows
+   // get the taller padding a finger needs.
    @media (width < 40rem) {
-      &__text {
-         position: absolute;
-         inline-size: 1px;
-         block-size: 1px;
-         margin: -1px;
-         clip-path: inset(50%);
-         overflow: hidden;
-      }
-
-      // An icon on its own is a target a few millimetres across. The
-      // padding below is what makes each option tappable; keep it in step
-      // with the SSR placeholder in `layouts/default.vue`, which reserves
-      // the resulting 132 x 36 box.
       &__option {
-         justify-content: center;
-         min-inline-size: px-to-rem(40);
          padding-block: px-to-rem(7);
       }
    }

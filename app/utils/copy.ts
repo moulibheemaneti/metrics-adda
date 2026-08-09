@@ -244,6 +244,9 @@ export const COPY = {
    nav: {
       home: "Home",
       label: "Tools",
+      menu: "Menu",
+      menuHeading: "Tools",
+      close: "Close menu",
    },
    theme: {
       legend: "Colour theme",

@@ -148,13 +148,6 @@ watch(() => route.path, () => nextTick(revealActiveLink))
          outline-offset: -2px;
       }
 
-      // Thumb-sized targets once the nav is the only thing on its row.
-      // The tighter line-height keeps the taller padding from turning the
-      // row into a third of the header.
-      @media (width < 40rem) {
-         padding: var(--space-2xs) var(--space-xs);
-         line-height: 1.2;
-      }
    }
 
    // Nuxt adds this class to the link matching the current route.
