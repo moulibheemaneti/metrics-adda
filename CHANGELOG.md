@@ -3,6 +3,17 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.2.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.1.0...v1.2.0) (2026-08-10)
+
+### ✨ Features
+
+* **ads:** add a bottom-of-page adsense slot ([bf15048](https://github.com/moulibheemaneti/metrics-adda/commit/bf1504850475ae0ac268096a61a1d2460e67b0ae))
+* **ads:** set the real adsense publisher id in ads.txt ([ffb9a27](https://github.com/moulibheemaneti/metrics-adda/commit/ffb9a273daba2e4870c4eba72c57715cd2b5fa98))
+
+### 📚 Documentation
+
+* **ads:** add the adsense bottom-slot implementation plan ([5923256](https://github.com/moulibheemaneti/metrics-adda/commit/592325676721916980fb5f37ceae1adf9011fdd5))
+
 ## [1.1.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.0.0...v1.1.0) (2026-08-09)
 
 ### ✨ Features
