@@ -23,7 +23,7 @@ cd "$ROOT"
 PORT="${PORT:-3123}"
 # Routes checked for the full meta/canonical/OG/JSON-LD set. Add a page
 # here when you add one to app/pages, so its metadata is asserted too.
-ROUTES="${ROUTES:-/ /weight-converter /height-converter /temperature-converter /word-counter /password-generator}"
+ROUTES="${ROUTES:-/ /weight-converter /height-converter /temperature-converter /word-counter /password-generator /privacy-policy}"
 SERVER_PID=""
 
 # ── pretty output ────────────────────────────────────────────────────────────

@@ -10,7 +10,15 @@ describe("SiteFooter", () => {
    it("renders the contact address as a mailto link", async() => {
       const footer = await mountSuspended(SiteFooter)
 
-      expect(footer.find("a").attributes("href")).toBe(`mailto:${SITE_EMAIL}`)
+      expect(footer.find("a[href^=\"mailto:\"]").attributes("href")).toBe(`mailto:${SITE_EMAIL}`)
+   })
+
+   /// AdSense approval depends on the policy being reachable from every
+   /// page, and the footer is the only thing on every page that links it.
+   it("links the privacy policy", async() => {
+      const footer = await mountSuspended(SiteFooter)
+
+      expect(footer.find("a[href=\"/privacy-policy\"]").exists()).toBe(true)
    })
 
    it("renders the current year in the copyright line", async() => {

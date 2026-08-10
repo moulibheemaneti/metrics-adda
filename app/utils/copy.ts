@@ -24,7 +24,7 @@ export type ToolKey
      | "passwordGenerator"
 
 /** Pages that carry their own search metadata. */
-export type PageKey = ToolKey | "home"
+export type PageKey = ToolKey | "home" | "privacy"
 
 export interface SeoCopy {
    /** Rendered as <title>. Budget: SEO_TITLE_MAX. */
@@ -69,7 +69,12 @@ export const SEO: Record<PageKey, SeoCopy> = {
    home: {
       title: "Metrics Adda — Unit Converters & Text Tools",
       description:
-         "Free, fast unit converters for weight, height and temperature, plus a word counter and a secure password generator. No sign-up, no ads.",
+         "Free, fast unit converters for weight, height and temperature, plus a word counter and a secure password generator. No sign-up needed.",
+   },
+   privacy: {
+      title: "Privacy Policy",
+      description:
+         "How Metrics Adda handles your data: the tools run entirely in your browser and send nothing to a server. Cookies are used only for advertising.",
    },
    weightConverter: {
       title: "Weight Converter: kg, lb, oz, g & stone",
@@ -256,7 +261,16 @@ export const COPY = {
    },
    footer: {
       contact: "Contact",
+      privacy: "Privacy",
+      /// Names the footer's link group for screen readers — a second <nav>
+      /// on the page is ambiguous without one.
+      navLabel: "Footer",
       rights: "All rights reserved.",
+   },
+   /// The label above the ad unit. Google's programme policies require an
+   /// ad to be distinguishable from the content around it.
+   ads: {
+      label: "Advertisement",
    },
    common: {
       copy: "Copy",
@@ -293,6 +307,63 @@ export const COPY = {
       heading: "Everyday converters that are instant and exact",
       tagline: "Weight, height and temperature converters, a word counter and a password generator. Nothing to install, and nothing you type ever leaves your browser.",
       toolsHeading: "All tools",
+   },
+   /// The privacy policy. Kept here with the rest of the copy rather than
+   /// in the page component so the wording is reviewable in one place —
+   /// and because AdSense approval depends on what this actually says, the
+   /// disclosures about advertising cookies below are not decorative.
+   privacy: {
+      heading: "Privacy policy",
+      lede: "Metrics Adda is a set of small browser tools. The short version: what you type into them stays on your device, and the only data anyone collects here is what advertising and traffic measurement need.",
+      updated: "Last updated 10 August 2026",
+      sections: [
+         {
+            heading: "What the tools do with your input",
+            body: [
+               "Nothing leaves your browser. Every converter, the word counter and the password generator run entirely in client-side JavaScript. The values you type are never sent to a server, never written to a database, and never logged — the pages keep working with the network disconnected.",
+               "Nothing is stored between visits either, with one exception: your light or dark theme choice is kept in your browser's own local storage so the site does not flash the wrong colours on your next visit. It never leaves your device, and clearing your site data removes it.",
+            ],
+         },
+         {
+            heading: "Advertising cookies",
+            body: [
+               "This site shows ads served by Google AdSense. Google and its partners use cookies and similar technologies to serve and measure those ads, including on the basis of your previous visits to this and other websites.",
+               "Google's use of advertising cookies enables it and its partners to serve ads to you based on your visit to this site and other sites on the internet. You can opt out of personalised advertising at any time in Google's Ads Settings, and you can opt out of third-party vendors' use of cookies for personalised advertising at aboutads.info.",
+               "Visitors in the European Economic Area and the United Kingdom are shown a consent message before any personalised advertising cookie is set, and can change that choice at any time.",
+            ],
+            links: [
+               { label: "Google Ads Settings", href: "https://www.google.com/settings/ads" },
+               { label: "How Google uses data from sites that use its services", href: "https://policies.google.com/technologies/partner-sites" },
+               { label: "aboutads.info opt-out", href: "https://www.aboutads.info/choices/" },
+            ],
+         },
+         {
+            heading: "Traffic measurement",
+            body: [
+               "The site uses Vercel Analytics and Vercel Speed Insights to count page views and measure loading performance. Both are cookie-free and record no identifier that could be traced back to an individual — they report which pages were viewed and how quickly they rendered, nothing more.",
+            ],
+         },
+         {
+            heading: "Data we hold",
+            body: [
+               "None. There are no accounts on this site, no sign-up form, and no newsletter. If you email the address below, we hold that email in order to reply to it and for no other purpose.",
+            ],
+         },
+         {
+            heading: "Children",
+            body: [
+               "The site is a general-audience utility and is not directed at children under 13. We do not knowingly collect anything from them — and, as above, we do not knowingly collect anything from anyone.",
+            ],
+         },
+         {
+            heading: "Changes to this policy",
+            body: [
+               "If this policy changes in a way that affects what is collected, the date at the top of this page changes with it. There is no mailing list to notify, so that date is the record.",
+            ],
+         },
+      ],
+      contactHeading: "Questions",
+      contactBody: "Anything about this policy, or about the site generally:",
    },
    converter: {
       fromLabel: "From",
