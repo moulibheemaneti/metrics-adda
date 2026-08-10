@@ -5,9 +5,9 @@
 # live before the ad unit earns anything.
 #
 # Unlike the publisher ID in `runtimeConfig`, this cannot come from an env
-# var: crawlers fetch a static /ads.txt, so the ID is literal here. Replace
-# the placeholder below with the pub- ID from your AdSense account (the
-# digits only — no "ca-" prefix) before deploying.
+# var: crawlers fetch a static /ads.txt, so the ID is literal here. It is the
+# same account as `NUXT_PUBLIC_ADSENSE_CLIENT`, without the "ca-" prefix —
+# change both together or AdSense reports the domain as unauthorised.
 #
 # Verify after deploy:  curl https://www.metricsadda.com/ads.txt
-google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0
+google.com, pub-1965798674790603, DIRECT, f08c47fec0942fa0
