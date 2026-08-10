@@ -17,6 +17,11 @@
          <SiteMenu class="app-shell__menu" />
       </header>
       <slot />
+      <!-- After the content, before the footer: the one position on the
+           page that can't trigger Google's intrusive-interstitial or
+           above-the-fold ad-density treatments. Renders nothing at all
+           unless the AdSense env vars are set. -->
+      <AdSlot />
       <SiteFooter />
    </div>
 </template>

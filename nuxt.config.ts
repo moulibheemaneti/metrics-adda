@@ -71,6 +71,21 @@ export default defineNuxtConfig({
       defaultLocale: "en",
    },
 
+   // Google AdSense wiring for `components/AdSlot.vue`. Runtime rather than
+   // build-time `process.env` so the publisher ID can be rotated in the
+   // Vercel dashboard without a rebuild.
+   //
+   // Both default to empty, and an empty client id switches ads off
+   // entirely: no <ins>, no `adsbygoogle.js`, no third-party request. That
+   // is deliberately the state local dev and CI run in, so `lighthouse.sh`
+   // measures the site rather than Google's ad auction.
+   runtimeConfig: {
+      public: {
+         adsenseClient: "",
+         adsenseSlotFooter: "",
+      },
+   },
+
    // YYYY-MM-DD
    compatibilityDate: "2026-08-09",
 

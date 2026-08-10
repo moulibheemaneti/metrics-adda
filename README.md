@@ -1,6 +1,6 @@
 # Metrics Adda
 
-> Fast, free unit converters and everyday text tools — no sign-up, no ads.
+> Fast, free unit converters and everyday text tools — no sign-up, nothing to install.
 
 ---
 
