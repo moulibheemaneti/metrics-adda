@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest"
 // Relative, not aliased: `~` is a Nuxt convenience that exists only inside
 // the Nuxt/Vite environment, and these tests run in plain Node.
-import { formatCount, formatDuration, formatQuantity, parseQuantity } from "../../app/utils/format"
+import {
+   formatCount,
+   formatDuration,
+   formatDurationSpoken,
+   formatQuantity,
+   parseQuantity,
+} from "../../app/utils/format"
 
 describe("formatQuantity", () => {
    it("hides floating-point noise", () => {
@@ -88,19 +94,45 @@ describe("formatCount", () => {
 
 describe("formatDuration", () => {
    it("reports sub-minute durations in seconds", () => {
-      expect(formatDuration(40)).toBe("40 sec")
+      expect(formatDuration(40)).toBe("40s")
    })
 
    it("reports whole minutes without a seconds part", () => {
-      expect(formatDuration(120)).toBe("2 min")
+      expect(formatDuration(120)).toBe("2m")
    })
 
    it("reports minutes and seconds together", () => {
-      expect(formatDuration(80)).toBe("1 min 20 sec")
+      expect(formatDuration(80)).toBe("1m 20s")
+   })
+
+   it("keeps the longest realistic estimate on one line", () => {
+      // The stat tile is one grid track wide. "1 min 31 sec" wrapped there
+      // and made the timing tiles taller than the counts beside them.
+      expect(formatDuration(3661)).toBe("61m 1s")
    })
 
    it("reports zero for empty input", () => {
-      expect(formatDuration(0)).toBe("0 sec")
-      expect(formatDuration(Number.NaN)).toBe("0 sec")
+      expect(formatDuration(0)).toBe("0s")
+      expect(formatDuration(Number.NaN)).toBe("0s")
+   })
+})
+
+describe("formatDurationSpoken", () => {
+   it("spells the units out, since it is only ever read aloud", () => {
+      expect(formatDurationSpoken(80)).toBe("1 minute 20 seconds")
+   })
+
+   it("keeps singular units singular", () => {
+      expect(formatDurationSpoken(61)).toBe("1 minute 1 second")
+   })
+
+   it("drops a part that is zero", () => {
+      expect(formatDurationSpoken(120)).toBe("2 minutes")
+      expect(formatDurationSpoken(40)).toBe("40 seconds")
+   })
+
+   it("reports zero for empty input", () => {
+      expect(formatDurationSpoken(0)).toBe("0 seconds")
+      expect(formatDurationSpoken(Number.NaN)).toBe("0 seconds")
    })
 })

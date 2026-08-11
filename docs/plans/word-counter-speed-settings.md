@@ -62,6 +62,19 @@ again. A `.visually-hidden` polite region — the pattern
 `PasswordGeneratorPanel.vue` already uses for a generated password — carries
 the two final estimates instead.
 
+### Durations are compact on screen and spelled out for a voice
+
+`formatDuration` prints `1m 31s`, not `1 min 31 sec`. The stat tile is one
+grid track wide, and the spaced form wrapped onto a second line, leaving the
+two timing tiles taller than the six counts beside them. Measured after the
+change: all eight tiles are 85px.
+
+`formatDurationSpoken` prints `1 minute 31 seconds` and exists for one caller
+— the live region above. A screen reader turns `1m 31s` into "one m three one
+s", so the single string on the page whose only job is to be spoken must not
+use the compact form. The tiles keep it: they carry a visible text label
+("Reading time") that supplies the context a voice needs.
+
 ### The gear is a text glyph, not an SVG
 
 There is no SVG or icon component anywhere in `app/` — every icon is a Unicode
@@ -104,7 +117,7 @@ green.
 
 Both speeds are clamped before dividing. A zero or negative speed would
 otherwise produce `Infinity` seconds, which `formatDuration` prints as
-`"0 sec"` — the exact opposite of what it means.
+`"0s"` — the exact opposite of what it means.
 
 ### Draft state
 
@@ -141,6 +154,8 @@ it — because it *is* indistinguishable in every observable way.
 | `app/components/TextStatsPanel.vue` | Gear trigger, inline panel, draft + preview state, conditional wpm labels, scoped SCSS |
 | `app/utils/copy.ts` | `common.save` / `common.cancel`, seven `stats.*` keys, reworded reading-time FAQ answer |
 | `app/assets/scss/components/_field.scss` | `.slider:disabled`, `.field--disabled .field__label` |
+| `app/utils/format.ts` | `formatDuration` goes compact; new `formatDurationSpoken` |
+| `test/unit/format.test.ts` | Compact assertions, plus a `formatDurationSpoken` block |
 | `test/unit/text.test.ts` | Custom-speed and `clampSpeed` cases |
 | `test/nuxt/reading-speeds.nuxt.test.ts` | New — 18 cases |
 
@@ -173,12 +188,12 @@ panel handles Escape in component code, so the test exercises the real path.
 
 Driven end to end in Chromium against the production build:
 
-- Dragging a slider moves the tile live — `1 min 31 sec` to `51 sec` — while
+- Dragging a slider moves the tile live — `1m 31s` to `51s` — while
   `localStorage` stays `null`
 - Save stores `420` / `110`; both survive a reload and read back as
   `Reading time (420 wpm)` and `Speaking time (110 wpm)`
-- Dragging on to 700 previews `31 sec`, then Escape collapses the panel and
-  snaps the tile back to the committed `51 sec` with storage untouched
+- Dragging on to 700 previews `31s`, then Escape collapses the panel and
+  snaps the tile back to the committed `51s` with storage untouched
 - Re-ticking the box and saving clears **both** keys rather than writing
   `"238"` / `"150"`
 - Focus lands on the checkbox when the panel opens and returns to the gear when

@@ -150,7 +150,7 @@ describe("analyseText — custom speeds", () => {
 
    it("clamps a speed below the floor rather than dividing by it", () => {
       // Zero would give Infinity seconds, which `formatDuration` prints as
-      // "0 sec" — the exact opposite of what it means.
+      // "0s" — the exact opposite of what it means.
       const stats = analyseText(sentence, { reading: 0, speaking: 0 })
 
       expect(Number.isFinite(stats.readingTimeSeconds)).toBe(true)

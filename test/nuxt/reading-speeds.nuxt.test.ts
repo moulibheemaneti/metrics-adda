@@ -60,7 +60,7 @@ describe("TextStatsPanel — speed settings", () => {
       await panel.find("textarea").setValue("one two three four five six seven eight")
 
       // Eight words at twice 238 wpm is half the time 238 would give.
-      expect(values(panel)[6]).toBe("1 sec")
+      expect(values(panel)[6]).toBe("1s")
    })
 
    it("falls back to the recommended speed when the stored value is junk", async() => {
@@ -134,7 +134,7 @@ describe("TextStatsPanel — speed settings", () => {
       // Live preview is the reason this is an inline panel rather than a
       // dialog, so it is worth pinning: the tile updates on drag, and the
       // stored value has not been touched.
-      expect(values(panel)[6]).toBe("1 sec")
+      expect(values(panel)[6]).toBe("1s")
       expect(labels(panel)).toContain("Reading time (476 wpm)")
       expect(localStorage.getItem("ma-reading-speed")).toBeNull()
    })
@@ -173,7 +173,7 @@ describe("TextStatsPanel — speed settings", () => {
       await sliders[0]?.setValue("476")
       await panel.find(".text-stats__settings").trigger("submit")
 
-      expect(panel.find(".visually-hidden").text()).toContain("Reading time: 1 sec")
+      expect(panel.find(".visually-hidden").text()).toContain("Reading time: 1 second")
    })
 
    it("leaves the committed speeds alone when Cancel is pressed", async() => {

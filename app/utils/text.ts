@@ -67,7 +67,7 @@ export const DEFAULT_SPEEDS: TextSpeeds = {
  * Exported because two callers need it: the composable clamps on the way
  * in from storage, and `analyseText` clamps on the way in from a caller. A
  * zero or negative speed would otherwise divide into `Infinity`, which
- * `formatDuration` prints as "0 sec" — the exact opposite of what it means.
+ * `formatDuration` prints as "0s" — the exact opposite of what it means.
  */
 export function clampSpeed(value: number, min: number, max: number): number {
    if (!Number.isFinite(value)) return min

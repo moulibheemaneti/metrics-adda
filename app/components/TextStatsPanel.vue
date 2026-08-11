@@ -238,9 +238,11 @@ function cancel() {
 
 function save() {
    setSpeeds(preview.value)
+   // Spelled out, not the compact "1m 3s" on the tiles: this string only
+   // ever gets read aloud, and a voice makes "1m 3s" into "one m three s".
    announcement.value = [
-      `${COPY.stats.readingTime}: ${formatDuration(stats.value.readingTimeSeconds)}`,
-      `${COPY.stats.speakingTime}: ${formatDuration(stats.value.speakingTimeSeconds)}`,
+      `${COPY.stats.readingTime}: ${formatDurationSpoken(stats.value.readingTimeSeconds)}`,
+      `${COPY.stats.speakingTime}: ${formatDurationSpoken(stats.value.speakingTimeSeconds)}`,
    ].join(", ")
    close()
 }
