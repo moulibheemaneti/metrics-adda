@@ -28,6 +28,10 @@ const clock = (panel: VueWrapper): string => panel.find(".typing__clock").text()
 const activeWord = (panel: VueWrapper): string =>
    panel.find(".typing__word--active").text().replace(/\s+/gu, "")
 
+/** Every word currently on the strip, in order. */
+const dealtWords = (panel: VueWrapper): string[] =>
+   panel.findAll(".typing__word").map((word) => word.text().replace(/\s+/gu, ""))
+
 /** Which word in the stream is active — the reliable "did it advance" check. */
 const activeIndex = (panel: VueWrapper): number =>
    panel.findAll(".typing__word").findIndex((word) =>
@@ -313,5 +317,52 @@ describe("TypingTestPanel — restarting", () => {
       // achievement, so beating one must not touch the other.
       expect(Number(localStorage.getItem(SHORT_BEST_KEY))).toBeGreaterThan(0)
       expect(localStorage.getItem(BEST_KEY)).toBe("120")
+   })
+})
+
+describe("TypingTestPanel — the words on screen", () => {
+   /// The bug this covers: words are keyed by their index in the stream, so a
+   /// restart deals fresh words into the same slots. Without the word itself
+   /// as a `v-memo` dependency, every word ahead of the caret keeps the
+   /// previous run's text and only swaps to the real one as the caret arrives
+   /// — the reader watches the line rewrite itself while they type.
+
+   it("keeps every word it dealt after a restart", async() => {
+      const panel = await mountSuspended(TypingTestPanel)
+
+      await typeActiveWord(panel)
+      await typeActiveWord(panel)
+
+      await panel.find(".typing__actions .button").trigger("click")
+
+      const dealt = dealtWords(panel).slice(0, 6)
+
+      for (const word of dealt) {
+         // The word on screen when the caret reaches it must be the word that
+         // was on screen before it got there.
+         expect(activeWord(panel)).toBe(word)
+
+         await type(panel, `${word} `)
+      }
+   })
+
+   it("grades against the word the reader can actually see", async() => {
+      const panel = await mountSuspended(TypingTestPanel)
+
+      vi.useFakeTimers()
+
+      await typeActiveWord(panel)
+      await panel.find(".typing__actions .button").trigger("click")
+
+      for (const word of dealtWords(panel).slice(0, 4)) {
+         await type(panel, `${word} `)
+      }
+
+      await vi.advanceTimersByTimeAsync(31_000)
+      await vi.advanceTimersByTimeAsync(1000)
+
+      // Typing exactly what is on screen has to score 100%: anything less
+      // means the stream being graded is not the stream being shown.
+      expect(panel.findAll(".typing__grid .stat__value")[1]?.text()).toBe("100%")
    })
 })

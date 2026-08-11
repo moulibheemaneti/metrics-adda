@@ -63,7 +63,7 @@
                <span
                   v-for="(word, index) in words"
                   :key="index"
-                  v-memo="[typedAt(index), index === wordIndex]"
+                  v-memo="[word, typedAt(index), index === wordIndex]"
                   class="typing__word"
                   :class="{ 'typing__word--active': index === wordIndex }"
                >
@@ -161,6 +161,13 @@ import type { CharState, TestDuration } from "~/utils/typing"
 /// That measurement is cheap enough to do on every input because `v-memo`
 /// keeps the re-render to the active word — without it, a 120-second run
 /// would be diffing a couple of thousand character spans ten times a second.
+///
+/// The word itself is the first `v-memo` dependency, and has to be. Words are
+/// keyed by their index in the stream, and a restart deals a fresh stream into
+/// those same indices — so without it, every word ahead of the caret keeps the
+/// previous run's text (its other dependencies not having changed) while
+/// `charsFor` grades against the new one, and each word visibly swaps itself
+/// out as the caret arrives.
 
 const uid = useId()
 
@@ -399,6 +406,10 @@ function restartRun(): void {
    displayWpm.value = 0
    isRecord.value = false
    restart()
+   // Remeasured explicitly: restarting from an untouched run changes neither
+   // `typed`, `wordIndex` nor `status`, so the watcher below never fires and
+   // the caret would keep the previous stream's measurements.
+   remeasure()
    void nextTick(focusField)
 }
 
