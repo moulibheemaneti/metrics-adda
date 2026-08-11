@@ -3,6 +3,16 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.5.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.4.0...v1.5.0) (2026-08-11)
+
+### ✨ Features
+
+* **typing-test:** choose the topic, difficulty and mix of the words ([5baab57](https://github.com/moulibheemaneti/metrics-adda/commit/5baab572ba618757b300a56f604799ec0eec0592))
+
+### 🐛 Bug Fixes
+
+* **typing-test:** stop words changing under the caret mid-run ([68991b5](https://github.com/moulibheemaneti/metrics-adda/commit/68991b5c04529f064deb90a554b9ae6b96db1f52))
+
 ## [1.4.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.3.0...v1.4.0) (2026-08-11)
 
 ### ✨ Features
