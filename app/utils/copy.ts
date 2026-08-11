@@ -21,6 +21,7 @@ export type ToolKey
      | "heightConverter"
      | "temperatureConverter"
      | "wordCounter"
+     | "typingTest"
      | "passwordGenerator"
 
 /** Pages that carry their own search metadata. */
@@ -69,7 +70,7 @@ export const SEO: Record<PageKey, SeoCopy> = {
    home: {
       title: "Metrics Adda — Unit Converters & Text Tools",
       description:
-         "Free, fast unit converters for weight, height and temperature, plus a word counter and a secure password generator. No sign-up needed.",
+         "Free, fast unit converters for weight, height and temperature, plus a word counter, a typing speed test and a password generator. No sign-up needed.",
    },
    privacy: {
       title: "Privacy Policy",
@@ -95,6 +96,11 @@ export const SEO: Record<PageKey, SeoCopy> = {
       title: "Word & Character Counter",
       description:
          "Count words, characters, sentences, paragraphs and lines as you type, with reading and speaking time. Works with any language. Nothing is uploaded.",
+   },
+   typingTest: {
+      title: "Typing Speed Test: Words Per Minute",
+      description:
+         "Test your typing speed in 15, 30, 60 or 120 seconds. See your words per minute, accuracy and personal best. Free, no sign-up, runs in your browser.",
    },
    passwordGenerator: {
       title: "Strong Random Password Generator",
@@ -127,6 +133,12 @@ const TOOL_COPY: Record<ToolKey, ToolCopy> = {
       tagline: "Words, characters, sentences and reading time",
       heading: "Word and character counter",
       lede: "Paste or type your text to count words, characters, sentences, paragraphs and lines. Your text never leaves your browser.",
+   },
+   typingTest: {
+      name: "Typing Speed Test",
+      tagline: "Words per minute, accuracy and your best",
+      heading: "Typing speed test",
+      lede: "Type the words as they appear and see your speed in words per minute. Pick a length, start typing, and the clock starts with your first keystroke.",
    },
    passwordGenerator: {
       name: "Password Generator",
@@ -225,6 +237,24 @@ const FAQ_COPY: Record<ToolKey, FaqEntry[]> = {
          answer: "Reading time assumes 238 words per minute, the average adult silent-reading speed, and speaking time a slower 150 words per minute. Both are adjustable — open the speed settings above the results to set your own pace, and it is remembered on this device.",
       },
    ],
+   typingTest: [
+      {
+         question: "How is words per minute calculated?",
+         answer: "Your correct characters are divided by five, then by the minutes elapsed. Five characters has counted as one word since typewriter-era standards, so that short words are not worth as much as long ones.",
+      },
+      {
+         question: "What is a good typing speed?",
+         answer: "Around 40 wpm is average for an adult. Sustained 65–80 wpm is a proficient touch typist, and above 100 wpm is genuinely fast. Accuracy matters more than raw speed — errors cost you more time than they save.",
+      },
+      {
+         question: "What is the difference between wpm and raw wpm?",
+         answer: "Raw wpm counts every character you typed; wpm counts only the correct ones. The gap between them is what your mistakes cost you, so closing it is usually worth more than typing faster.",
+      },
+      {
+         question: "Is my typing recorded or uploaded?",
+         answer: "No. The test runs entirely in your browser and nothing is sent to a server. Your personal best is kept in your browser's own local storage on this device, and clearing your site data removes it.",
+      },
+   ],
    passwordGenerator: [
       {
          question: "Are these passwords safe to use?",
@@ -301,13 +331,13 @@ export const COPY = {
       toolsHeading: "Jump to a tool",
    },
    home: {
-      eyebrow: "Five tools, no sign-up",
+      eyebrow: "Six tools, no sign-up",
       // The headline is split so one phrase can carry the brand gradient
       // while the rest stays solid — see `.hero__accent`.
       headingLead: "Everyday converters that are",
       headingAccent: "instant and exact",
       heading: "Everyday converters that are instant and exact",
-      tagline: "Weight, height and temperature converters, a word counter and a password generator. Nothing to install, and nothing you type ever leaves your browser.",
+      tagline: "Weight, height and temperature converters, a word counter, a typing speed test and a password generator. Nothing to install, and nothing you type ever leaves your browser.",
       toolsHeading: "All tools",
    },
    /// The privacy policy. Kept here with the rest of the copy rather than
@@ -322,8 +352,8 @@ export const COPY = {
          {
             heading: "What the tools do with your input",
             body: [
-               "Nothing leaves your browser. Every converter, the word counter and the password generator run entirely in client-side JavaScript. The values you type are never sent to a server, never written to a database, and never logged — the pages keep working with the network disconnected.",
-               "Nothing is stored between visits either, with one exception: your light or dark theme choice is kept in your browser's own local storage so the site does not flash the wrong colours on your next visit. It never leaves your device, and clearing your site data removes it.",
+               "Nothing leaves your browser. Every converter, the word counter, the typing speed test and the password generator run entirely in client-side JavaScript. The values you type are never sent to a server, never written to a database, and never logged — the pages keep working with the network disconnected.",
+               "What you type is never stored between visits. Three preferences are, all of them in your browser's own local storage: your light or dark theme choice, so the site does not flash the wrong colours on your next visit; the reading and speaking speeds you set on the word counter; and your best score on the typing speed test. None of them leaves your device, and clearing your site data removes them.",
             ],
          },
          {
@@ -383,7 +413,11 @@ export const COPY = {
    stats: {
       words: "Words",
       characters: "Characters",
-      charactersNoSpaces: "Characters (no spaces)",
+      /// The qualifier is split out rather than being part of the label so
+      /// the tile can break the line itself. Left inside the string it wrapped
+      /// wherever the 150px grid track ran out — "Characters (no" above
+      /// "spaces)" — which reads as a typo rather than as a qualifier.
+      noSpaces: "(no spaces)",
       sentences: "Sentences",
       paragraphs: "Paragraphs",
       lines: "Lines",
@@ -401,6 +435,34 @@ export const COPY = {
       speakingSpeedLabel: "Speaking speed",
       useRecommended: "Use the recommended speeds",
       wordsPerMinute: "wpm",
+   },
+   /// The typing test. As with the speed settings above, no figures live in
+   /// these strings — the template interpolates `TEST_DURATIONS` and the
+   /// scores themselves.
+   typing: {
+      durationLegend: "Test length",
+      seconds: "s",
+      inputLabel: "Type the words shown above",
+      start: "Start typing to begin",
+      focusPrompt: "Click here or press any key to focus",
+      restart: "Restart",
+      tryAgain: "Try again",
+      timeLeft: "Time left",
+      wpm: "wpm",
+      wpmLabel: "Words per minute",
+      rawLabel: "Raw",
+      accuracyLabel: "Accuracy",
+      bestLabel: "Your best",
+      newBest: "New personal best",
+      noBest: "No best yet",
+      resultsHeading: "Your result",
+      /// Spoken-only strings. A screen reader renders "68 wpm" as "sixty-eight
+      /// w p m", so anything that exists purely to be announced spells the
+      /// unit out — the same reason `formatDurationSpoken` exists.
+      startedAnnouncement: "Test started.",
+      finishedAnnouncement: "Time up.",
+      wordsPerMinuteSpoken: "words per minute",
+      accuracySpoken: "accuracy",
    },
    password: {
       outputLabel: "Generated password",

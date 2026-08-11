@@ -17,8 +17,12 @@ const reset = (): void => {
 
 afterEach(reset)
 
+/// The "(300 wpm)" part is its own block-level span inside the label, so the
+/// markup carries a newline and indentation between the two. `text()` trims
+/// the ends but leaves that gap alone, so it is collapsed here — these
+/// assertions are about the wording, not about how the tile breaks the line.
 const labels = (panel: VueWrapper): string[] =>
-   panel.findAll(".stat__label").map((stat) => stat.text())
+   panel.findAll(".stat__label").map((stat) => stat.text().replace(/\s+/gu, " "))
 
 const values = (panel: VueWrapper): string[] =>
    panel.findAll(".stat__value").map((stat) => stat.text())

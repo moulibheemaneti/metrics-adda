@@ -52,6 +52,12 @@ export const TOOLS: ToolEntry[] = [
       group: "text",
    },
    {
+      slug: "typing-speed-test",
+      path: "/typing-speed-test",
+      key: "typingTest",
+      group: "text",
+   },
+   {
       slug: "password-generator",
       path: "/password-generator",
       key: "passwordGenerator",
