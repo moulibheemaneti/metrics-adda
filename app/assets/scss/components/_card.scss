@@ -141,6 +141,16 @@
       font-weight: var(--weight-strong);
       letter-spacing: 0.02em;
    }
+
+   // The qualifier after a label — "(no spaces)", "(300 wpm)". Block rather
+   // than inline so it always takes the whole of the next line: inline it
+   // wrapped mid-phrase at whatever point the grid track ran out. Lighter
+   // than the label above it, because it modifies that label rather than
+   // competing with it.
+   &__note {
+      display: block;
+      font-weight: var(--weight-body);
+   }
 }
 
 /// Strength meter for the password generator. The fill width and colour

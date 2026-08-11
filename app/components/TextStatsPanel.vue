@@ -113,7 +113,10 @@
       <ul class="text-stats__grid" :aria-live="isOpen ? 'off' : 'polite'">
          <li v-for="item in items" :key="item.key" class="stat">
             <span class="stat__value">{{ item.value }}</span>
-            <span class="stat__label">{{ item.label }}</span>
+            <span class="stat__label">
+               {{ item.label }}
+               <span v-if="item.note" class="stat__note">{{ item.note }}</span>
+            </span>
          </li>
       </ul>
 
@@ -174,16 +177,23 @@ const preview = computed<TextSpeeds>(() => {
 // sliders live, before anything is committed.
 const stats = computed(() => analyseText(text.value, preview.value))
 
-/** "Reading time" normally; "Reading time (300 wpm)" once it is not 238. */
-const speedLabel = (base: string, value: number, recommendedValue: number): string =>
-   value === recommendedValue ? base : `${base} (${value} ${COPY.stats.wordsPerMinute})`
+/**
+ * The parenthetical under a tile's label, or `null` when there is none.
+ *
+ * A qualifier rather than part of the phrase, so it is kept out of the label
+ * string and rendered as its own block below it. Concatenated in, it wrapped
+ * wherever the grid track ran out and stranded "wpm)" on a line of its own.
+ */
+const speedNote = (value: number, recommendedValue: number): string | null =>
+   value === recommendedValue ? null : `(${value} ${COPY.stats.wordsPerMinute})`
 
 const items = computed(() => [
    { key: "words", label: COPY.stats.words, value: formatCount(stats.value.words) },
    { key: "characters", label: COPY.stats.characters, value: formatCount(stats.value.characters) },
    {
       key: "charactersNoSpaces",
-      label: COPY.stats.charactersNoSpaces,
+      label: COPY.stats.characters,
+      note: COPY.stats.noSpaces,
       value: formatCount(stats.value.charactersNoSpaces),
    },
    { key: "sentences", label: COPY.stats.sentences, value: formatCount(stats.value.sentences) },
@@ -191,12 +201,14 @@ const items = computed(() => [
    { key: "lines", label: COPY.stats.lines, value: formatCount(stats.value.lines) },
    {
       key: "readingTime",
-      label: speedLabel(COPY.stats.readingTime, preview.value.reading, READING_WORDS_PER_MINUTE),
+      label: COPY.stats.readingTime,
+      note: speedNote(preview.value.reading, READING_WORDS_PER_MINUTE),
       value: formatDuration(stats.value.readingTimeSeconds),
    },
    {
       key: "speakingTime",
-      label: speedLabel(COPY.stats.speakingTime, preview.value.speaking, SPEAKING_WORDS_PER_MINUTE),
+      label: COPY.stats.speakingTime,
+      note: speedNote(preview.value.speaking, SPEAKING_WORDS_PER_MINUTE),
       value: formatDuration(stats.value.speakingTimeSeconds),
    },
 ])
