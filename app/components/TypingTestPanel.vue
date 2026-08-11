@@ -1,27 +1,93 @@
 <template>
    <div class="typing card card--panel stack stack--tight">
-      <fieldset class="typing__lengths">
-         <legend class="visually-hidden">
-            {{ COPY.typing.durationLegend }}
-         </legend>
+      <div class="typing__settings">
+         <fieldset class="typing__pills typing__pills--duration">
+            <legend class="visually-hidden">
+               {{ COPY.typing.durationLegend }}
+            </legend>
 
-         <label
-            v-for="option in TEST_DURATIONS"
-            :key="option"
-            class="typing__length"
-            :class="{ 'typing__length--active': duration === option }"
-         >
-            <input
-               class="typing__length-input visually-hidden"
-               type="radio"
-               :name="`${uid}-duration`"
-               :value="option"
-               :checked="duration === option"
-               @change="selectDuration(option)"
-            />
-            <span>{{ option }}{{ COPY.typing.seconds }}</span>
-         </label>
-      </fieldset>
+            <label
+               v-for="option in TEST_DURATIONS"
+               :key="option"
+               class="typing__pill"
+               :class="{ 'typing__pill--active': duration === option }"
+            >
+               <input
+                  class="typing__pill-input visually-hidden"
+                  type="radio"
+                  :name="`${uid}-duration`"
+                  :value="option"
+                  :checked="duration === option"
+                  @change="selectDuration(option)"
+               />
+               <span>{{ option }}{{ COPY.typing.seconds }}</span>
+            </label>
+         </fieldset>
+
+         <fieldset class="typing__pills typing__pills--difficulty">
+            <legend class="visually-hidden">
+               {{ COPY.typing.difficultyLegend }}
+            </legend>
+
+            <label
+               v-for="option in DIFFICULTIES"
+               :key="option"
+               class="typing__pill"
+               :class="{ 'typing__pill--active': settings.difficulty === option }"
+            >
+               <input
+                  class="typing__pill-input visually-hidden"
+                  type="radio"
+                  :name="`${uid}-difficulty`"
+                  :value="option"
+                  :checked="settings.difficulty === option"
+                  @change="selectDifficulty(option)"
+               />
+               <span>{{ COPY.typing.difficulties[option] }}</span>
+            </label>
+         </fieldset>
+
+         <!-- Checkboxes rather than radios: the two mixes are independent, so
+              a group that allowed only one would be lying about the model. -->
+         <fieldset class="typing__pills typing__pills--mix">
+            <legend class="visually-hidden">
+               {{ COPY.typing.mixLegend }}
+            </legend>
+
+            <label
+               v-for="option in mixToggles"
+               :key="option.key"
+               class="typing__pill"
+               :class="{ 'typing__pill--active': settings[option.key] }"
+               :title="option.name"
+            >
+               <input
+                  class="typing__pill-input visually-hidden"
+                  type="checkbox"
+                  :checked="settings[option.key]"
+                  @change="toggleMix(option.key)"
+               />
+               <span aria-hidden="true">{{ option.label }}</span>
+               <span class="visually-hidden">{{ option.name }}</span>
+            </label>
+         </fieldset>
+
+         <div class="field typing__topic">
+            <label class="visually-hidden" :for="`${uid}-topic`">
+               {{ COPY.typing.topicLabel }}
+            </label>
+            <select
+               :id="`${uid}-topic`"
+               class="control control--select typing__select"
+               :value="settings.topic"
+               @change="selectTopic(($event.target as HTMLSelectElement).value)"
+            >
+               <option v-for="option in TOPICS" :key="option" :value="option">
+                  {{ COPY.typing.topics[option] }}
+               </option>
+            </select>
+         </div>
+      </div>
 
       <!-- The clock and the live figures. `aria-hidden` because this repaints
            ten times a second: a live region here would talk continuously and
@@ -150,7 +216,7 @@
 </template>
 
 <script lang="ts" setup>
-import type { CharState, TestDuration } from "~/utils/typing"
+import type { CharState, Difficulty, StreamOptions, TestDuration } from "~/utils/typing"
 
 /// The stage renders the word stream and the caret; the composable owns the
 /// clock and the keystrokes. The one genuinely fiddly part is here rather
@@ -173,6 +239,8 @@ const uid = useId()
 
 const duration = ref<TestDuration>(DEFAULT_DURATION)
 
+const { settings, sync: syncSettings, setSettings } = useTypingSettings()
+
 const {
    status,
    stream,
@@ -184,9 +252,15 @@ const {
    result,
    handleInput,
    restart,
-} = useTypingTest(duration)
+} = useTypingTest(duration, settings)
 
 const { bests, sync: syncBests, record } = useTypingBest()
+
+/** The two independent mixes, as pills. */
+const mixToggles: { key: "numbers" | "punctuation", label: string, name: string }[] = [
+   { key: "numbers", label: COPY.typing.numbers, name: COPY.typing.numbersName },
+   { key: "punctuation", label: COPY.typing.punctuation, name: COPY.typing.punctuationName },
+]
 
 const field = useTemplateRef<HTMLInputElement>("field")
 const viewport = useTemplateRef<HTMLElement>("viewport")
@@ -418,6 +492,39 @@ function selectDuration(next: TestDuration): void {
    restartRun()
 }
 
+/**
+ * Change one setting and deal again.
+ *
+ * A settings change always restarts. Swapping the word list mid-run would
+ * score the seconds already typed against one vocabulary and the rest against
+ * another, and the resulting figure would measure neither.
+ */
+function applySettings(next: Partial<StreamOptions>): void {
+   setSettings({ ...settings.value, ...next })
+   restartRun()
+}
+
+function selectTopic(next: string): void {
+   if (isTopic(next)) applySettings({ topic: next })
+}
+
+/**
+ * Hard turns both mixes on as it is selected.
+ *
+ * A nudge, not a lock: the toggles stay live afterwards, so someone who wants
+ * long words without punctuation can still have them. Difficulty sets a
+ * starting point; the mixes remain the reader's own choice.
+ */
+function selectDifficulty(next: Difficulty): void {
+   applySettings(next === "hard"
+      ? { difficulty: next, numbers: true, punctuation: true }
+      : { difficulty: next })
+}
+
+function toggleMix(key: "numbers" | "punctuation"): void {
+   applySettings({ [key]: !settings.value[key] })
+}
+
 watch(status, (next, previous) => {
    if (next === "running" && previous === "idle") {
       announcement.value = COPY.typing.startedAnnouncement
@@ -448,6 +555,9 @@ let observer: ResizeObserver | undefined
 
 onMounted(() => {
    syncBests()
+   // Before the first deal, so the opening stream already matches the stored
+   // preferences rather than flashing the defaults and replacing them.
+   syncSettings()
    // The stream is random, so dealing it during setup would render different
    // words on the server and the client — a hydration mismatch. Same reason
    // `useReadingSpeeds` defers its storage read to here.
@@ -480,7 +590,17 @@ onBeforeUnmount(() => {
    // can be exactly three lines tall before anything has rendered into it.
    --typing-line: #{px-to-rem(44)};
 
-   &__lengths {
+   // The controls wrap onto as many rows as they need. Each group stays whole
+   // when it wraps, so a pill never ends up looking as if it belongs to the
+   // group beside it.
+   &__settings {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-2xs);
+   }
+
+   &__pills {
       display: flex;
       flex-wrap: wrap;
       gap: px-to-rem(2);
@@ -491,10 +611,10 @@ onBeforeUnmount(() => {
       background-color: var(--surface-sunken);
    }
 
-   // Native radios in a fieldset, styled through their labels — the same
-   // trade the theme toggle makes. Arrow-key navigation and the right
+   // Native radios and checkboxes in a fieldset, styled through their labels —
+   // the same trade the theme toggle makes. Arrow-key navigation and the right
    // announcement come free; a role="radiogroup" would have to rebuild both.
-   &__length {
+   &__pill {
       padding: px-to-rem(5) var(--space-sm);
       border-radius: var(--radius-pill);
       color: var(--muted);
@@ -512,7 +632,7 @@ onBeforeUnmount(() => {
       }
    }
 
-   &__length--active {
+   &__pill--active {
       background-color: var(--surface);
       box-shadow: var(--shadow-sm);
       color: var(--ink);
@@ -520,9 +640,25 @@ onBeforeUnmount(() => {
    }
 
    // The input is visually hidden, so the ring goes on the label around it.
-   &__length:has(.typing__length-input:focus-visible) {
+   &__pill:has(.typing__pill-input:focus-visible) {
       outline: 2px solid var(--accent);
       outline-offset: 2px;
+   }
+
+   // A select rather than a fourth pill row: five topic names are longer than
+   // a row of pills can hold on a phone, and a native select is the one
+   // control that stays usable at that width.
+   &__topic {
+      flex: 1 1 px-to-rem(180);
+      min-inline-size: px-to-rem(150);
+      max-inline-size: px-to-rem(260);
+   }
+
+   &__select {
+      min-block-size: px-to-rem(38);
+      padding-block: px-to-rem(6);
+      border-radius: var(--radius-pill);
+      font-size: px-to-rem(13);
    }
 
    &__hud {

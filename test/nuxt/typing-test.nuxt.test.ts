@@ -2,6 +2,7 @@ import type { DOMWrapper, VueWrapper } from "@vue/test-utils"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { mountSuspended } from "@nuxt/test-utils/runtime"
 import TypingTestPanel from "../../app/components/TypingTestPanel.vue"
+import { WORD_BANKS } from "../../app/utils/typing"
 
 /// Two things here can rot quietly. The clock is one: it is driven by
 /// `Date.now()` deltas rather than by counting ticks, and a regression to
@@ -15,9 +16,21 @@ import TypingTestPanel from "../../app/components/TypingTestPanel.vue"
 const BEST_KEY = "ma-typing-best-30"
 const SHORT_BEST_KEY = "ma-typing-best-15"
 
+/// The settings live in `useState`, which outlives a mount, so every key one
+/// test writes has to go before the next one reads storage on mounting.
+const SETTINGS_KEYS = [
+   "ma-typing-topic",
+   "ma-typing-difficulty",
+   "ma-typing-numbers",
+   "ma-typing-punctuation",
+]
+
 afterEach(() => {
    localStorage.removeItem(BEST_KEY)
    localStorage.removeItem(SHORT_BEST_KEY)
+
+   for (const key of SETTINGS_KEYS) localStorage.removeItem(key)
+
    vi.useRealTimers()
 })
 
@@ -292,7 +305,7 @@ describe("TypingTestPanel — restarting", () => {
       await typeActiveWord(panel)
       await vi.advanceTimersByTimeAsync(4000)
 
-      const shorter = panel.findAll(".typing__length-input")[0]
+      const shorter = panel.findAll(".typing__pills--duration .typing__pill-input")[0]
 
       await shorter?.setValue(true)
 
@@ -305,7 +318,7 @@ describe("TypingTestPanel — restarting", () => {
 
       const panel = await mountSuspended(TypingTestPanel)
 
-      await panel.findAll(".typing__length-input")[0]?.setValue(true)
+      await panel.findAll(".typing__pills--duration .typing__pill-input")[0]?.setValue(true)
 
       vi.useFakeTimers()
 
@@ -364,5 +377,174 @@ describe("TypingTestPanel — the words on screen", () => {
       // Typing exactly what is on screen has to score 100%: anything less
       // means the stream being graded is not the stream being shown.
       expect(panel.findAll(".typing__grid .stat__value")[1]?.text()).toBe("100%")
+   })
+
+   it("keeps every word it dealt when a setting changes", async() => {
+      const panel = await mountSuspended(TypingTestPanel)
+
+      await typeActiveWord(panel)
+      await panel.find(".typing__select").setValue("programming")
+
+      const dealt = dealtWords(panel).slice(0, 6)
+
+      for (const word of dealt) {
+         expect(activeWord(panel)).toBe(word)
+
+         await type(panel, `${word} `)
+      }
+   })
+})
+
+describe("TypingTestPanel — preferences", () => {
+   /** One control out of a pill group, by its position in that group. */
+   const pill = (panel: VueWrapper, group: string, index: number): DOMWrapper<Element> =>
+      panel.findAll(`.typing__pills--${group} .typing__pill-input`)[index] as DOMWrapper<Element>
+
+   const isActive = (panel: VueWrapper, group: string, index: number): boolean =>
+      panel.findAll(`.typing__pills--${group} .typing__pill`)[index]?.classes()
+         .includes("typing__pill--active") ?? false
+
+   it("draws from the chosen topic's vocabulary", async() => {
+      const panel = await mountSuspended(TypingTestPanel)
+
+      await panel.find(".typing__select").setValue("programming")
+
+      const bank = new Set(WORD_BANKS.programming)
+
+      for (const word of dealtWords(panel)) {
+         expect(bank.has(word), `${word} is not in the programming bank`).toBe(true)
+      }
+   })
+
+   it("deals only long words on hard", async() => {
+      const panel = await mountSuspended(TypingTestPanel)
+
+      await pill(panel, "difficulty", 2).setValue(true)
+
+      // Hard also mixes in numbers and punctuation, so the plain words are
+      // the ones to measure — the rest are covered below.
+      const plain = dealtWords(panel).filter((word) => /^[A-Za-z]+$/u.test(word))
+
+      expect(plain.length).toBeGreaterThan(0)
+
+      for (const word of plain) {
+         expect(word.length, `${word} is short for hard`).toBeGreaterThanOrEqual(7)
+      }
+   })
+
+   it("deals only short words on easy", async() => {
+      const panel = await mountSuspended(TypingTestPanel)
+
+      await pill(panel, "difficulty", 0).setValue(true)
+
+      for (const word of dealtWords(panel)) {
+         expect(word.length, `${word} is long for easy`).toBeLessThanOrEqual(5)
+      }
+   })
+
+   it("leaves the stream plain when nothing is mixed in", async() => {
+      const panel = await mountSuspended(TypingTestPanel)
+
+      for (const word of dealtWords(panel)) {
+         expect(word, `${word} is not plain lowercase`).toMatch(/^[a-z]+$/u)
+      }
+   })
+
+   it("punctuates the stream when asked", async() => {
+      const panel = await mountSuspended(TypingTestPanel)
+
+      await pill(panel, "mix", 1).setValue(true)
+
+      expect(dealtWords(panel).some((word) => /[^a-z]/u.test(word))).toBe(true)
+   })
+
+   it("drops numbers into the stream when asked", async() => {
+      const panel = await mountSuspended(TypingTestPanel)
+
+      await pill(panel, "mix", 0).setValue(true)
+
+      expect(dealtWords(panel).some((word) => /^[\d.,]+$/u.test(word))).toBe(true)
+   })
+
+   it("turns both mixes on with hard, and lets them be turned back off", async() => {
+      const panel = await mountSuspended(TypingTestPanel)
+
+      await pill(panel, "difficulty", 2).setValue(true)
+
+      expect(isActive(panel, "mix", 0)).toBe(true)
+      expect(isActive(panel, "mix", 1)).toBe(true)
+
+      await pill(panel, "mix", 1).setValue(false)
+
+      // A nudge, not a lock: hard sets a starting point, the reader keeps
+      // control of the mix.
+      expect(isActive(panel, "mix", 0)).toBe(true)
+      expect(isActive(panel, "mix", 1)).toBe(false)
+   })
+
+   it("restarts the run when a setting changes", async() => {
+      const panel = await mountSuspended(TypingTestPanel)
+
+      vi.useFakeTimers()
+
+      await typeActiveWord(panel)
+      await vi.advanceTimersByTimeAsync(4000)
+
+      expect(clock(panel)).toBe("26s")
+
+      await pill(panel, "mix", 0).setValue(true)
+
+      // Half a run on one vocabulary and half on another would measure
+      // neither, so the clock goes back.
+      expect(clock(panel)).toBe("30s")
+      expect(activeIndex(panel)).toBe(0)
+   })
+
+   it("stores a change for the next visit", async() => {
+      const panel = await mountSuspended(TypingTestPanel)
+
+      await panel.find(".typing__select").setValue("science")
+      await pill(panel, "mix", 0).setValue(true)
+
+      expect(localStorage.getItem("ma-typing-topic")).toBe("science")
+      expect(localStorage.getItem("ma-typing-numbers")).toBe("1")
+   })
+
+   it("stores the default as the absence of a key", async() => {
+      localStorage.setItem("ma-typing-topic", "science")
+
+      const panel = await mountSuspended(TypingTestPanel)
+
+      await panel.find(".typing__select").setValue("common")
+
+      // Back on the default means inheriting whatever that default becomes
+      // later, rather than being pinned to today's value.
+      expect(localStorage.getItem("ma-typing-topic")).toBeNull()
+   })
+
+   it("adopts preferences stored before it mounted", async() => {
+      localStorage.setItem("ma-typing-topic", "business")
+      localStorage.setItem("ma-typing-difficulty", "easy")
+
+      const panel = await mountSuspended(TypingTestPanel)
+      const bank = new Set(WORD_BANKS.business)
+
+      expect((panel.find(".typing__select").element as HTMLSelectElement).value).toBe("business")
+      expect(isActive(panel, "difficulty", 0)).toBe(true)
+
+      // The first stream already matches, rather than flashing the defaults
+      // and being replaced.
+      for (const word of dealtWords(panel)) {
+         expect(bank.has(word), `${word} is not in the business bank`).toBe(true)
+         expect(word.length).toBeLessThanOrEqual(5)
+      }
+   })
+
+   it("ignores a stored value it does not offer", async() => {
+      localStorage.setItem("ma-typing-topic", "klingon")
+
+      const panel = await mountSuspended(TypingTestPanel)
+
+      expect((panel.find(".typing__select").element as HTMLSelectElement).value).toBe("common")
    })
 })
