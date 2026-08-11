@@ -16,7 +16,7 @@
 /// Auto-imported by Nuxt.
 /// --------------------------------------------------
 
-import type { TestDuration, TypingResult } from "~/utils/typing"
+import type { StreamOptions, TestDuration, TypingResult } from "~/utils/typing"
 
 /**
  * `idle` until the first keystroke, `running` while the clock is going,
@@ -39,7 +39,13 @@ const TICK_MS = 100
 const STREAM_CHUNK = 120
 const REFILL_AT = 40
 
-export function useTypingTest(duration: Ref<TestDuration>) {
+/**
+ * `options` is read on every deal rather than watched. A settings change
+ * restarts the run, which the panel already does explicitly — re-dealing from
+ * inside a watcher would swap the words out from under someone's fingers
+ * mid-run, which is the exact failure this version set out to fix.
+ */
+export function useTypingTest(duration: Ref<TestDuration>, options: Ref<StreamOptions>) {
    const status = ref<TestStatus>("idle")
 
    const stream = ref<string[]>([])
@@ -129,7 +135,7 @@ export function useTypingTest(duration: Ref<TestDuration>) {
    function refill(): void {
       if (stream.value.length - wordIndex.value > REFILL_AT) return
 
-      stream.value = [...stream.value, ...buildStream(STREAM_CHUNK)]
+      stream.value = [...stream.value, ...buildStream(STREAM_CHUNK, options.value)]
    }
 
    /**
@@ -144,7 +150,7 @@ export function useTypingTest(duration: Ref<TestDuration>) {
       stopTimer()
       startedAt = null
       status.value = "idle"
-      stream.value = buildStream(STREAM_CHUNK)
+      stream.value = buildStream(STREAM_CHUNK, options.value)
       wordIndex.value = 0
       submitted.value = []
       typed.value = ""

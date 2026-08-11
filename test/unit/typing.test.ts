@@ -4,30 +4,122 @@ import { describe, expect, it } from "vitest"
 import {
    buildStream,
    computeResult,
+   DEFAULT_DIFFICULTY,
    DEFAULT_DURATION,
+   DEFAULT_STREAM_OPTIONS,
+   DEFAULT_TOPIC,
+   DIFFICULTIES,
    gradeWord,
+   isDifficulty,
    isTestDuration,
+   isTopic,
    MAX_PLAUSIBLE_WPM,
+   MIN_POOL,
+   poolFor,
    tallyWord,
    TEST_DURATIONS,
+   TOPICS,
    WORD_BANK,
+   WORD_BANKS,
+   type StreamOptions,
 } from "../../app/utils/typing"
 
-describe("WORD_BANK", () => {
+/** The default options with one or two fields swapped, for readability below. */
+const options = (overrides: Partial<StreamOptions> = {}): StreamOptions => ({
+   ...DEFAULT_STREAM_OPTIONS,
+   ...overrides,
+})
+
+describe("WORD_BANKS", () => {
    it("holds only plain lowercase words", () => {
-      for (const word of WORD_BANK) {
-         expect(word, `${word} is not plain lowercase`).toMatch(/^[a-z]+$/)
+      // Capitals, digits and punctuation are added by `buildStream`, and only
+      // when the reader asks for them. A bank that carried them already would
+      // make that choice for everyone.
+      for (const topic of TOPICS) {
+         for (const word of WORD_BANKS[topic]) {
+            expect(word, `${word} in ${topic} is not plain lowercase`).toMatch(/^[a-z]+$/)
+         }
       }
    })
 
-   it("repeats no word", () => {
-      expect(new Set(WORD_BANK).size).toBe(WORD_BANK.length)
+   it("repeats no word within a bank", () => {
+      for (const topic of TOPICS) {
+         const bank = WORD_BANKS[topic]
+
+         expect(new Set(bank).size, `${topic} repeats a word`).toBe(bank.length)
+      }
    })
 
-   it("is large enough that a run does not exhaust it", () => {
+   it("offers every topic it advertises", () => {
+      for (const topic of TOPICS) {
+         expect(WORD_BANKS[topic].length, `${topic} is empty`).toBeGreaterThan(0)
+      }
+   })
+
+   it("defaults to the common bank", () => {
+      expect(WORD_BANK).toBe(WORD_BANKS[DEFAULT_TOPIC])
+   })
+
+   it("is large enough that a run does not exhaust the default bank", () => {
       // A 120-second run at 100 wpm is about 200 words, so a smaller bank
       // would start cycling within a single test.
       expect(WORD_BANK.length).toBeGreaterThanOrEqual(200)
+   })
+
+   it("recognises the topics it offers and nothing else", () => {
+      expect(isTopic(DEFAULT_TOPIC)).toBe(true)
+      expect(isTopic("klingon")).toBe(false)
+   })
+})
+
+describe("poolFor", () => {
+   it("keeps every tier of every topic above the repetition floor", () => {
+      // Under MIN_POOL the same words come round inside a single run, which
+      // is the point at which a stream stops reading like written text.
+      for (const topic of TOPICS) {
+         for (const difficulty of DIFFICULTIES) {
+            expect(
+               poolFor(topic, difficulty).length,
+               `${topic}/${difficulty} is too thin`,
+            ).toBeGreaterThanOrEqual(MIN_POOL)
+         }
+      }
+   })
+
+   it("draws short words for easy and long ones for hard", () => {
+      for (const topic of TOPICS) {
+         for (const word of poolFor(topic, "easy")) {
+            expect(word.length, `${word} is long for easy`).toBeLessThanOrEqual(5)
+         }
+
+         for (const word of poolFor(topic, "hard")) {
+            expect(word.length, `${word} is short for hard`).toBeGreaterThanOrEqual(7)
+         }
+      }
+   })
+
+   it("hands the whole bank to medium", () => {
+      expect(poolFor("common", "medium")).toStrictEqual([...WORD_BANKS.common])
+   })
+
+   it("gets harder as the difficulty rises", () => {
+      const mean = (words: string[]): number =>
+         words.reduce((total, word) => total + word.length, 0) / words.length
+
+      expect(mean(poolFor("common", "hard"))).toBeGreaterThan(mean(poolFor("common", "medium")))
+      expect(mean(poolFor("common", "medium"))).toBeGreaterThan(mean(poolFor("common", "easy")))
+   })
+
+   it("falls back rather than emptying on a topic it does not know", () => {
+      // These values arrive from localStorage. A hand-edited key should cost
+      // a different word list, not a blank screen.
+      expect(poolFor("klingon" as never, "medium")).toStrictEqual([...WORD_BANKS.common])
+      expect(poolFor("common", "brutal" as never)).toStrictEqual([...WORD_BANKS.common])
+   })
+
+   it("recognises the difficulties it offers and nothing else", () => {
+      expect(isDifficulty(DEFAULT_DIFFICULTY)).toBe(true)
+      expect(isDifficulty("brutal")).toBe(false)
    })
 })
 
@@ -61,26 +153,43 @@ describe("buildStream", () => {
    }
 
    it("returns exactly the number of words asked for", () => {
-      expect(buildStream(10, seeded())).toHaveLength(10)
-      expect(buildStream(500, seeded())).toHaveLength(500)
+      expect(buildStream(10, options(), seeded())).toHaveLength(10)
+      expect(buildStream(500, options(), seeded())).toHaveLength(500)
    })
 
    it("is reproducible for a given source of randomness", () => {
-      expect(buildStream(60, seeded())).toStrictEqual(buildStream(60, seeded()))
+      expect(buildStream(60, options(), seeded()))
+         .toStrictEqual(buildStream(60, options(), seeded()))
+      expect(buildStream(60, options({ difficulty: "hard", numbers: true }), seeded()))
+         .toStrictEqual(buildStream(60, options({ difficulty: "hard", numbers: true }), seeded()))
    })
 
    it("draws only from the bank", () => {
       const bank = new Set(WORD_BANK)
 
-      for (const word of buildStream(400, seeded())) {
+      for (const word of buildStream(400, options(), seeded())) {
          expect(bank.has(word), `${word} is not in the bank`).toBe(true)
+      }
+   })
+
+   it("draws from the topic it was asked for", () => {
+      const bank = new Set(WORD_BANKS.programming)
+
+      for (const word of buildStream(400, options({ topic: "programming" }), seeded())) {
+         expect(bank.has(word), `${word} is not in the programming bank`).toBe(true)
+      }
+   })
+
+   it("respects the difficulty it was asked for", () => {
+      for (const word of buildStream(400, options({ difficulty: "easy" }), seeded())) {
+         expect(word.length, `${word} is long for easy`).toBeLessThanOrEqual(5)
       }
    })
 
    it("never repeats a word back to back, including across bags", () => {
       // 500 words is more than two full bags, so this covers the seam where a
       // fresh shuffle could otherwise open with the word that closed the last.
-      const stream = buildStream(500, seeded())
+      const stream = buildStream(500, options(), seeded())
 
       for (let i = 1; i < stream.length; i += 1) {
          expect(stream[i], `repeat at index ${i}`).not.toBe(stream[i - 1])
@@ -88,15 +197,128 @@ describe("buildStream", () => {
    })
 
    it("uses the whole bank before reusing any of it", () => {
-      const first = buildStream(WORD_BANK.length, seeded())
+      const first = buildStream(WORD_BANK.length, options(), seeded())
 
       expect(new Set(first).size).toBe(WORD_BANK.length)
    })
 
    it("returns nothing for a non-positive or unusable count", () => {
-      expect(buildStream(0, seeded())).toStrictEqual([])
-      expect(buildStream(-5, seeded())).toStrictEqual([])
-      expect(buildStream(Number.NaN, seeded())).toStrictEqual([])
+      expect(buildStream(0, options(), seeded())).toStrictEqual([])
+      expect(buildStream(-5, options(), seeded())).toStrictEqual([])
+      expect(buildStream(Number.NaN, options(), seeded())).toStrictEqual([])
+   })
+
+   it("defaults to plain words from the common bank", () => {
+      const bank = new Set(WORD_BANK)
+
+      for (const word of buildStream(200, undefined, seeded())) {
+         expect(bank.has(word), `${word} is not a plain common word`).toBe(true)
+      }
+   })
+})
+
+/// The mix is what turns a word list into something that reads like prose.
+/// Every rule below exists because its absence was visible on screen.
+
+describe("buildStream — the mix", () => {
+   const seeded = (start = 1) => {
+      let seed = start
+
+      return () => {
+         seed = (seed * 1103515245 + 12345) % 2147483648
+
+         return seed / 2147483648
+      }
+   }
+
+   /** A long stream, so a rate of a few per cent is reliably represented. */
+   const stream = (overrides: Partial<StreamOptions>, start = 1): string[] =>
+      buildStream(600, options(overrides), seeded(start))
+
+   it("never puts a space inside a token", () => {
+      // A space is the word boundary in `handleInput`, so a token holding one
+      // would bank two words for a single keystroke.
+      for (const topic of TOPICS) {
+         for (const difficulty of DIFFICULTIES) {
+            for (const word of stream({ topic, difficulty, numbers: true, punctuation: true })) {
+               expect(word, `${word} contains whitespace`).not.toMatch(/\s/u)
+               expect(word.length, "empty token").toBeGreaterThan(0)
+            }
+         }
+      }
+   })
+
+   it("leaves the stream plain when nothing is mixed in", () => {
+      for (const word of stream({ difficulty: "medium" })) {
+         expect(word, `${word} is not plain lowercase`).toMatch(/^[a-z]+$/)
+      }
+   })
+
+   it("drops numbers in only when asked", () => {
+      const isNumber = (word: string): boolean => /^[\d.,]+$/u.test(word)
+
+      expect(stream({ numbers: true }).some(isNumber)).toBe(true)
+      expect(stream({ numbers: false }).some(isNumber)).toBe(false)
+   })
+
+   it("never puts two numbers back to back", () => {
+      // Two numbers in a row read as a phone number rather than as prose.
+      const tokens = stream({ numbers: true, difficulty: "hard" })
+      const isNumber = (word: string | undefined): boolean => /^[\d.,]+$/u.test(word ?? "")
+
+      for (let i = 1; i < tokens.length; i += 1) {
+         expect(isNumber(tokens[i]) && isNumber(tokens[i - 1]), `pair at ${i}`).toBe(false)
+      }
+   })
+
+   it("punctuates only when asked", () => {
+      const isPunctuated = (word: string): boolean => /[^a-zA-Z]/u.test(word)
+
+      expect(stream({ punctuation: true }).some(isPunctuated)).toBe(true)
+      expect(stream({ punctuation: false, difficulty: "medium" }).some(isPunctuated)).toBe(false)
+   })
+
+   it("capitalises what follows a full stop", () => {
+      const tokens = stream({ punctuation: true })
+      let checked = 0
+
+      for (let i = 1; i < tokens.length; i += 1) {
+         const previous = tokens[i - 1] ?? ""
+         const word = tokens[i] ?? ""
+
+         if (!/[.!?]["')]*$/u.test(previous) || !/^[a-zA-Z]/u.test(word)) continue
+
+         expect(word[0], `${previous} ${word}`).toBe(word[0]?.toUpperCase())
+         checked += 1
+      }
+
+      expect(checked, "no sentence to check").toBeGreaterThan(0)
+   })
+
+   it("capitalises on hard even with no punctuation asked for", () => {
+      // Difficulty is the one setting allowed to change the shape of a word
+      // rather than only which words are drawn.
+      expect(stream({ difficulty: "hard" }).some((word) => /^[A-Z]/u.test(word))).toBe(true)
+      expect(stream({ difficulty: "medium" }).some((word) => /^[A-Z]/u.test(word))).toBe(false)
+   })
+
+   it("mixes more in as the difficulty rises", () => {
+      const share = (difficulty: StreamOptions["difficulty"]): number => {
+         const tokens = stream({ difficulty, numbers: true, punctuation: true })
+
+         return tokens.filter((word) => /[^a-z]/u.test(word)).length / tokens.length
+      }
+
+      expect(share("hard")).toBeGreaterThan(share("easy"))
+   })
+
+   it("still grades a decorated word one character at a time", () => {
+      // The mix changes what is on screen, not how it is scored — nothing
+      // downstream of here knows a comma from a letter.
+      expect(gradeWord("word,", "word,")).toStrictEqual(
+         ["correct", "correct", "correct", "correct", "correct"],
+      )
+      expect(tallyWord("42", "42")).toStrictEqual({ correct: 2, typed: 2 })
    })
 })
 

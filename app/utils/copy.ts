@@ -138,7 +138,7 @@ const TOOL_COPY: Record<ToolKey, ToolCopy> = {
       name: "Typing Speed Test",
       tagline: "Words per minute, accuracy and your best",
       heading: "Typing speed test",
-      lede: "Type the words as they appear and see your speed in words per minute. Pick a length, start typing, and the clock starts with your first keystroke.",
+      lede: "Type the words as they appear and see your speed in words per minute. Pick a length, a topic and a difficulty, mix in numbers and punctuation if you want them, and the clock starts with your first keystroke.",
    },
    passwordGenerator: {
       name: "Password Generator",
@@ -251,8 +251,12 @@ const FAQ_COPY: Record<ToolKey, FaqEntry[]> = {
          answer: "Raw wpm counts every character you typed; wpm counts only the correct ones. The gap between them is what your mistakes cost you, so closing it is usually worth more than typing faster.",
       },
       {
+         question: "Can I practise on my own vocabulary?",
+         answer: "Yes. Pick a topic — common English, programming, science and nature, business or everyday life — and a difficulty, which sets how long and how rare the words are. You can also mix in numbers and punctuation, and hard capitalises some words too.",
+      },
+      {
          question: "Is my typing recorded or uploaded?",
-         answer: "No. The test runs entirely in your browser and nothing is sent to a server. Your personal best is kept in your browser's own local storage on this device, and clearing your site data removes it.",
+         answer: "No. The test runs entirely in your browser and nothing is sent to a server. Your settings and personal best are kept in your browser's own local storage on this device, and clearing your site data removes them.",
       },
    ],
    passwordGenerator: [
@@ -441,6 +445,25 @@ export const COPY = {
    /// scores themselves.
    typing: {
       durationLegend: "Test length",
+      topicLabel: "Words",
+      topics: {
+         common: "Common English",
+         programming: "Programming",
+         science: "Science & nature",
+         business: "Business",
+         everyday: "Everyday life",
+      },
+      difficultyLegend: "Difficulty",
+      difficulties: {
+         easy: "Easy",
+         medium: "Medium",
+         hard: "Hard",
+      },
+      mixLegend: "Mix in",
+      numbers: "123",
+      numbersName: "Numbers",
+      punctuation: "!?",
+      punctuationName: "Punctuation",
       seconds: "s",
       inputLabel: "Type the words shown above",
       start: "Start typing to begin",
