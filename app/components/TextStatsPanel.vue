@@ -18,109 +18,124 @@
          </button>
          <CopyButton :value="text" />
          <button
+            ref="trigger"
             class="button button--icon text-stats__settings-trigger"
             type="button"
             :aria-label="COPY.stats.settingsLabel"
-            aria-haspopup="dialog"
-            @click="open"
+            :aria-expanded="isOpen"
+            :aria-controls="`${uid}-settings`"
+            @click="toggle"
          >
             <span aria-hidden="true">⚙</span>
          </button>
       </div>
 
+      <form
+         v-if="isOpen"
+         :id="`${uid}-settings`"
+         class="text-stats__settings"
+         :aria-labelledby="`${uid}-settings-title`"
+         @submit.prevent="save"
+         @keydown.esc="cancel"
+      >
+         <h2 :id="`${uid}-settings-title`" class="text-stats__settings-title">
+            {{ COPY.stats.settingsHeading }}
+         </h2>
+
+         <label class="checkbox">
+            <input
+               ref="recommended"
+               v-model="draft.useRecommended"
+               class="checkbox__box"
+               type="checkbox"
+            />
+            <span class="checkbox__label">
+               {{ COPY.stats.useRecommended }}
+               ({{ READING_WORDS_PER_MINUTE }} / {{ SPEAKING_WORDS_PER_MINUTE }}
+               {{ COPY.stats.wordsPerMinute }})
+            </span>
+         </label>
+
+         <div class="field" :class="{ 'field--disabled': draft.useRecommended }">
+            <label class="field__label" :for="`${uid}-reading`">
+               {{ COPY.stats.readingSpeedLabel }}: {{ preview.reading }} {{ COPY.stats.wordsPerMinute }}
+            </label>
+            <input
+               :id="`${uid}-reading`"
+               class="slider"
+               type="range"
+               :min="READING_SPEED_MIN"
+               :max="READING_SPEED_MAX"
+               :step="SPEED_STEP"
+               :value="preview.reading"
+               :disabled="draft.useRecommended"
+               @input="draft.reading = toSpeed($event)"
+            />
+         </div>
+
+         <div class="field" :class="{ 'field--disabled': draft.useRecommended }">
+            <label class="field__label" :for="`${uid}-speaking`">
+               {{ COPY.stats.speakingSpeedLabel }}: {{ preview.speaking }} {{ COPY.stats.wordsPerMinute }}
+            </label>
+            <input
+               :id="`${uid}-speaking`"
+               class="slider"
+               type="range"
+               :min="SPEAKING_SPEED_MIN"
+               :max="SPEAKING_SPEED_MAX"
+               :step="SPEED_STEP"
+               :value="preview.speaking"
+               :disabled="draft.useRecommended"
+               @input="draft.speaking = toSpeed($event)"
+            />
+         </div>
+
+         <p class="field__hint">
+            {{ COPY.stats.settingsHint }}
+         </p>
+
+         <div class="text-stats__settings-actions">
+            <button class="button" type="button" @click="cancel">
+               {{ COPY.common.cancel }}
+            </button>
+            <button class="button button--primary" type="submit">
+               {{ COPY.common.save }}
+            </button>
+         </div>
+      </form>
+
       <!-- `aria-live` on the grid means the numbers are announced as they
-           change, rather than being a silent update for screen readers. -->
-      <ul class="text-stats__grid" aria-live="polite">
+           change, rather than being a silent update for screen readers. It
+           drops to "off" while the settings are open: a slider already
+           announces its own value on every step, and eight tiles talking
+           over that would bury it. The region below covers what that
+           silences. -->
+      <ul class="text-stats__grid" :aria-live="isOpen ? 'off' : 'polite'">
          <li v-for="item in items" :key="item.key" class="stat">
             <span class="stat__value">{{ item.value }}</span>
             <span class="stat__label">{{ item.label }}</span>
          </li>
       </ul>
 
-      <dialog
-         ref="settings"
-         class="text-stats__settings"
-         :aria-labelledby="`${uid}-settings-title`"
-         @click="closeOnScrim"
-         @close="onClose"
-      >
-         <form class="text-stats__panel" method="dialog" @submit.prevent="save">
-            <h2 :id="`${uid}-settings-title`" class="text-stats__panel-title">
-               {{ COPY.stats.settingsHeading }}
-            </h2>
-
-            <label class="checkbox">
-               <input v-model="draft.useRecommended" class="checkbox__box" type="checkbox" />
-               <span class="checkbox__label">
-                  {{ COPY.stats.useRecommended }}
-                  ({{ READING_WORDS_PER_MINUTE }} / {{ SPEAKING_WORDS_PER_MINUTE }}
-                  {{ COPY.stats.wordsPerMinute }})
-               </span>
-            </label>
-
-            <div class="field" :class="{ 'field--disabled': draft.useRecommended }">
-               <label class="field__label" :for="`${uid}-reading`">
-                  {{ COPY.stats.readingSpeedLabel }}: {{ shownReading }} {{ COPY.stats.wordsPerMinute }}
-               </label>
-               <input
-                  :id="`${uid}-reading`"
-                  class="slider"
-                  type="range"
-                  :min="READING_SPEED_MIN"
-                  :max="READING_SPEED_MAX"
-                  :step="SPEED_STEP"
-                  :value="shownReading"
-                  :disabled="draft.useRecommended"
-                  @input="draft.reading = toSpeed($event)"
-               />
-            </div>
-
-            <div class="field" :class="{ 'field--disabled': draft.useRecommended }">
-               <label class="field__label" :for="`${uid}-speaking`">
-                  {{ COPY.stats.speakingSpeedLabel }}: {{ shownSpeaking }} {{ COPY.stats.wordsPerMinute }}
-               </label>
-               <input
-                  :id="`${uid}-speaking`"
-                  class="slider"
-                  type="range"
-                  :min="SPEAKING_SPEED_MIN"
-                  :max="SPEAKING_SPEED_MAX"
-                  :step="SPEED_STEP"
-                  :value="shownSpeaking"
-                  :disabled="draft.useRecommended"
-                  @input="draft.speaking = toSpeed($event)"
-               />
-            </div>
-
-            <p class="field__hint">
-               {{ COPY.stats.settingsHint }}
-            </p>
-
-            <div class="text-stats__panel-actions">
-               <button class="button" type="button" @click="close">
-                  {{ COPY.common.cancel }}
-               </button>
-               <button class="button button--primary" type="submit">
-                  {{ COPY.common.save }}
-               </button>
-            </div>
-         </form>
-      </dialog>
+      <!-- Saving usually changes nothing on screen — the tiles already
+           moved as the sliders did — so the grid has nothing to announce
+           at the moment it starts listening again. This says what the
+           estimates ended up as. -->
+      <p class="visually-hidden" aria-live="polite">
+         {{ announcement }}
+      </p>
    </div>
 </template>
 
 <script lang="ts" setup>
-/// The gear opens a modal <dialog> rather than an inline panel or a
-/// popover. Modal is what makes Escape, the focus trap, the return of
-/// focus to the gear and the inert page behind it browser behaviour — the
-/// same reasoning as `SiteMenu.vue`. A popover renders in the top layer,
-/// so anchoring it to the button would have needed CSS anchor positioning,
-/// which is not portable yet.
+/// The gear expands the speed settings in place rather than opening a
+/// dialog. Watching the estimate move as the slider does is the whole
+/// point of the control, and a modal works against that: it dims the
+/// tiles behind a scrim on a desktop and covers them outright on a phone.
 ///
-/// It also settles an announcement problem. The stat grid below is a
-/// polite live region, and while the dialog is open everything outside it
-/// is inert and therefore out of the accessibility tree — so dragging a
-/// slider announces nothing, and saving announces the new figures once.
+/// The cost is that Escape, focus on open and focus back on close have to
+/// be written by hand here, where `showModal()` would have given them for
+/// free. That is about thirty lines, and worth it for the live feedback.
 
 const uid = useId()
 
@@ -128,11 +143,40 @@ const text = ref("")
 
 const { speeds, usesDefaults, setSpeeds, sync } = useReadingSpeeds()
 
-const stats = computed(() => analyseText(text.value, speeds.value))
+const isOpen = ref(false)
+const announcement = ref("")
+
+const trigger = useTemplateRef<HTMLButtonElement>("trigger")
+const recommended = useTemplateRef<HTMLInputElement>("recommended")
+
+// What the sliders edit. Nothing reaches `setSpeeds` until Save, so Escape
+// and Cancel revert simply by collapsing: the draft is thrown away and
+// reseeded from the committed speeds the next time the panel opens.
+const draft = reactive({
+   reading: READING_WORDS_PER_MINUTE,
+   speaking: SPEAKING_WORDS_PER_MINUTE,
+   useRecommended: true,
+})
+
+// While the box is ticked the sliders show the recommended figures, but
+// `draft` keeps whatever was dragged to — so unticking hands the value
+// back rather than making someone find it again. A disabled input fires no
+// `input` event, so nothing overwrites it in the meantime.
+const preview = computed<TextSpeeds>(() => {
+   if (!isOpen.value) return speeds.value
+
+   return draft.useRecommended
+      ? DEFAULT_SPEEDS
+      : { reading: draft.reading, speaking: draft.speaking }
+})
+
+// Reading `preview` rather than `speeds` is what makes the tiles track the
+// sliders live, before anything is committed.
+const stats = computed(() => analyseText(text.value, preview.value))
 
 /** "Reading time" normally; "Reading time (300 wpm)" once it is not 238. */
-const speedLabel = (base: string, value: number, recommended: number): string =>
-   value === recommended ? base : `${base} (${value} ${COPY.stats.wordsPerMinute})`
+const speedLabel = (base: string, value: number, recommendedValue: number): string =>
+   value === recommendedValue ? base : `${base} (${value} ${COPY.stats.wordsPerMinute})`
 
 const items = computed(() => [
    { key: "words", label: COPY.stats.words, value: formatCount(stats.value.words) },
@@ -147,74 +191,61 @@ const items = computed(() => [
    { key: "lines", label: COPY.stats.lines, value: formatCount(stats.value.lines) },
    {
       key: "readingTime",
-      label: speedLabel(COPY.stats.readingTime, speeds.value.reading, READING_WORDS_PER_MINUTE),
+      label: speedLabel(COPY.stats.readingTime, preview.value.reading, READING_WORDS_PER_MINUTE),
       value: formatDuration(stats.value.readingTimeSeconds),
    },
    {
       key: "speakingTime",
-      label: speedLabel(COPY.stats.speakingTime, speeds.value.speaking, SPEAKING_WORDS_PER_MINUTE),
+      label: speedLabel(COPY.stats.speakingTime, preview.value.speaking, SPEAKING_WORDS_PER_MINUTE),
       value: formatDuration(stats.value.speakingTimeSeconds),
    },
 ])
 
-const settings = useTemplateRef<HTMLDialogElement>("settings")
-
-// What the sliders edit. Nothing reaches `setSpeeds` until Save, and that
-// is the whole of "closing without saving reverts": Escape, a click on the
-// scrim and Cancel all simply close, and the draft is thrown away and
-// reseeded from the committed speeds the next time the dialog opens.
-const draft = reactive({
-   reading: READING_WORDS_PER_MINUTE,
-   speaking: SPEAKING_WORDS_PER_MINUTE,
-   useRecommended: true,
-})
-
-// While the box is ticked the sliders show the recommended figures, but
-// `draft` keeps whatever was dragged to — so unticking hands the value
-// back rather than making someone find it again. A disabled input fires no
-// `input` event, so nothing overwrites it in the meantime.
-const shownReading = computed(() =>
-   draft.useRecommended ? READING_WORDS_PER_MINUTE : draft.reading,
-)
-
-const shownSpeaking = computed(() =>
-   draft.useRecommended ? SPEAKING_WORDS_PER_MINUTE : draft.speaking,
-)
-
 const toSpeed = (event: Event): number => Number((event.target as HTMLInputElement).value)
 
-function open() {
+async function open() {
    draft.reading = speeds.value.reading
    draft.speaking = speeds.value.speaking
    draft.useRecommended = usesDefaults.value
+   announcement.value = ""
+   isOpen.value = true
 
-   settings.value?.showModal()
-   // A modal dialog leaves the page behind scrollable in some browsers,
-   // which drags the backdrop around with it.
-   document.documentElement.style.overflow = "hidden"
+   // The panel is `v-if`, so nothing exists to focus until it has rendered.
+   await nextTick()
+   recommended.value?.focus()
 }
 
 function close() {
-   settings.value?.close()
+   isOpen.value = false
+   // Focus is inside the panel that is about to disappear; without this it
+   // would fall back to <body> and a keyboard user would lose their place.
+   trigger.value?.focus()
 }
 
-function onClose() {
-   document.documentElement.style.overflow = ""
+function toggle() {
+   if (isOpen.value) {
+      close()
+
+      return
+   }
+
+   void open()
 }
 
-function save() {
-   setSpeeds({ reading: shownReading.value, speaking: shownSpeaking.value })
+function cancel() {
    close()
 }
 
-/** Clicks land on the dialog itself only outside the panel — the scrim. */
-function closeOnScrim(event: MouseEvent) {
-   if (event.target === settings.value) close()
+function save() {
+   setSpeeds(preview.value)
+   announcement.value = [
+      `${COPY.stats.readingTime}: ${formatDuration(stats.value.readingTimeSeconds)}`,
+      `${COPY.stats.speakingTime}: ${formatDuration(stats.value.speakingTimeSeconds)}`,
+   ].join(", ")
+   close()
 }
 
 onMounted(sync)
-
-onBeforeUnmount(onClose)
 </script>
 
 <style scoped lang="scss">
@@ -242,42 +273,41 @@ onBeforeUnmount(onClose)
       line-height: 1;
    }
 
-   /// The dialog covers the viewport and the panel inside it is the
-   /// surface, so a click anywhere outside the panel is a click on the
-   /// dialog — which is what `closeOnScrim` tests for.
+   // Sunken rather than raised. It sits between the actions and the tiles,
+   // so it has to read as a recess in the panel it opened inside, not as a
+   // second card floating on top of one.
    &__settings {
-      max-inline-size: none;
-      max-block-size: none;
-      inline-size: 100%;
-      block-size: 100%;
-      border: 0;
-      background: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+      padding: var(--space-sm);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background-color: var(--surface-sunken);
 
-      &::backdrop {
-         background-color: rgb(11 16 32 / 48%);
-         backdrop-filter: blur(2px);
+      // The shared track colour *is* `--surface-sunken`, so on this block
+      // the track would vanish into its own background. `--line-strong`
+      // reads against the recess in both themes, where `--surface` would
+      // only work in the light one. Two rules, not one selector list: an
+      // unknown vendor pseudo-element invalidates the whole list.
+      .slider::-webkit-slider-runnable-track {
+         background-color: var(--line-strong);
+      }
+
+      .slider::-moz-range-track {
+         background-color: var(--line-strong);
       }
    }
 
-   &__panel {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-sm);
-      // Centres in both axes inside the full-viewport dialog.
-      margin: auto;
-      inline-size: min(#{px-to-rem(400)}, calc(100vw - var(--space-md)));
-      padding: var(--space-md);
-      border: 1px solid var(--line);
-      border-radius: var(--radius-lg);
-      background-color: var(--surface);
-      box-shadow: var(--shadow-lg);
+   &__settings-title {
+      font-size: px-to-rem(15);
+      font-weight: var(--weight-label);
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      text-transform: uppercase;
    }
 
-   &__panel-title {
-      font-size: px-to-rem(17);
-   }
-
-   &__panel-actions {
+   &__settings-actions {
       display: flex;
       gap: var(--space-2xs);
       justify-content: flex-end;

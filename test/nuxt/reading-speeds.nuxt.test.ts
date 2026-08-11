@@ -9,11 +9,6 @@ import TextStatsPanel from "../../app/components/TextStatsPanel.vue"
 /// the difference is invisible in the UI — so it is what these tests watch
 /// most closely, alongside the draft that Save commits and Cancel throws
 /// away.
-///
-/// Escape is deliberately untested: happy-dom does not simulate the
-/// browser's own dialog key handling, so `trigger("keydown.esc")` would
-/// pass by doing nothing at all. Cancel and the scrim cover the same
-/// revert path through code this component actually owns.
 
 const reset = (): void => {
    localStorage.removeItem("ma-reading-speed")
@@ -25,9 +20,12 @@ afterEach(reset)
 const labels = (panel: VueWrapper): string[] =>
    panel.findAll(".stat__label").map((stat) => stat.text())
 
+const values = (panel: VueWrapper): string[] =>
+   panel.findAll(".stat__value").map((stat) => stat.text())
+
 const isLocked = (slider: DOMWrapper<Element>): boolean => "disabled" in slider.attributes()
 
-/** Open the settings dialog and untick "use the recommended speeds". */
+/** Open the settings and untick "use the recommended speeds". */
 const openCustom = async(panel: VueWrapper): Promise<DOMWrapper<Element>[]> => {
    await panel.find(".text-stats__settings-trigger").trigger("click")
    await panel.find("input[type=\"checkbox\"]").setValue(false)
@@ -62,9 +60,7 @@ describe("TextStatsPanel — speed settings", () => {
       await panel.find("textarea").setValue("one two three four five six seven eight")
 
       // Eight words at twice 238 wpm is half the time 238 would give.
-      const values = panel.findAll(".stat__value").map((stat) => stat.text())
-
-      expect(values[6]).toBe("1 sec")
+      expect(values(panel)[6]).toBe("1 sec")
    })
 
    it("falls back to the recommended speed when the stored value is junk", async() => {
@@ -83,6 +79,27 @@ describe("TextStatsPanel — speed settings", () => {
       // Clamping to 800 would have hidden a bad write behind a plausible
       // number; falling back makes it obvious the value was not honoured.
       expect(labels(panel)).toContain("Reading time")
+   })
+
+   it("stays collapsed until the gear is pressed", async() => {
+      const panel = await mountSuspended(TextStatsPanel)
+
+      expect(panel.find(".text-stats__settings").exists()).toBe(false)
+      expect(panel.find(".text-stats__settings-trigger").attributes("aria-expanded")).toBe("false")
+
+      await panel.find(".text-stats__settings-trigger").trigger("click")
+
+      expect(panel.find(".text-stats__settings").exists()).toBe(true)
+      expect(panel.find(".text-stats__settings-trigger").attributes("aria-expanded")).toBe("true")
+   })
+
+   it("collapses again when the gear is pressed a second time", async() => {
+      const panel = await mountSuspended(TextStatsPanel)
+
+      await panel.find(".text-stats__settings-trigger").trigger("click")
+      await panel.find(".text-stats__settings-trigger").trigger("click")
+
+      expect(panel.find(".text-stats__settings").exists()).toBe(false)
    })
 
    it("opens with the box ticked and both sliders locked", async() => {
@@ -105,37 +122,82 @@ describe("TextStatsPanel — speed settings", () => {
       expect(sliders.every(isLocked)).toBe(false)
    })
 
+   it("moves the estimate as the slider moves, before anything is saved", async() => {
+      const panel = await mountSuspended(TextStatsPanel)
+
+      await panel.find("textarea").setValue("one two three four five six seven eight")
+
+      const sliders = await openCustom(panel)
+
+      await sliders[0]?.setValue("476")
+
+      // Live preview is the reason this is an inline panel rather than a
+      // dialog, so it is worth pinning: the tile updates on drag, and the
+      // stored value has not been touched.
+      expect(values(panel)[6]).toBe("1 sec")
+      expect(labels(panel)).toContain("Reading time (476 wpm)")
+      expect(localStorage.getItem("ma-reading-speed")).toBeNull()
+   })
+
+   it("quietens the live region while the settings are open", async() => {
+      const panel = await mountSuspended(TextStatsPanel)
+
+      expect(panel.find(".text-stats__grid").attributes("aria-live")).toBe("polite")
+
+      await panel.find(".text-stats__settings-trigger").trigger("click")
+
+      // A slider announces its own value on every step; eight tiles
+      // talking over that would bury it.
+      expect(panel.find(".text-stats__grid").attributes("aria-live")).toBe("off")
+   })
+
    it("saves a custom speed and stores it", async() => {
       const panel = await mountSuspended(TextStatsPanel)
       const sliders = await openCustom(panel)
 
       await sliders[0]?.setValue("300")
-      await panel.find("form").trigger("submit")
+      await panel.find(".text-stats__settings").trigger("submit")
 
       expect(localStorage.getItem("ma-reading-speed")).toBe("300")
       expect(labels(panel)).toContain("Reading time (300 wpm)")
+      expect(panel.find(".text-stats__settings").exists()).toBe(false)
    })
 
-   it("leaves the committed speeds alone when closed without saving", async() => {
+   it("announces the saved estimates, which the grid no longer can", async() => {
+      const panel = await mountSuspended(TextStatsPanel)
+
+      await panel.find("textarea").setValue("one two three four five six seven eight")
+
+      const sliders = await openCustom(panel)
+
+      await sliders[0]?.setValue("476")
+      await panel.find(".text-stats__settings").trigger("submit")
+
+      expect(panel.find(".visually-hidden").text()).toContain("Reading time: 1 sec")
+   })
+
+   it("leaves the committed speeds alone when Cancel is pressed", async() => {
       const panel = await mountSuspended(TextStatsPanel)
       const sliders = await openCustom(panel)
 
       await sliders[0]?.setValue("300")
-      await panel.findAll(".text-stats__panel-actions .button")[0]?.trigger("click")
+      await panel.findAll(".text-stats__settings-actions .button")[0]?.trigger("click")
 
       expect(localStorage.getItem("ma-reading-speed")).toBeNull()
       expect(labels(panel)).toContain("Reading time")
+      expect(panel.find(".text-stats__settings").exists()).toBe(false)
    })
 
-   it("reverts a draft when the scrim is clicked", async() => {
+   it("reverts a draft on Escape", async() => {
       const panel = await mountSuspended(TextStatsPanel)
       const sliders = await openCustom(panel)
 
       await sliders[0]?.setValue("300")
-      await panel.find("dialog").trigger("click")
+      await panel.find(".text-stats__settings").trigger("keydown.esc")
 
       expect(localStorage.getItem("ma-reading-speed")).toBeNull()
       expect(labels(panel)).toContain("Reading time")
+      expect(panel.find(".text-stats__settings").exists()).toBe(false)
    })
 
    it("reseeds the sliders from the committed speeds on every open", async() => {
@@ -143,7 +205,7 @@ describe("TextStatsPanel — speed settings", () => {
       const sliders = await openCustom(panel)
 
       await sliders[0]?.setValue("300")
-      await panel.findAll(".text-stats__panel-actions .button")[0]?.trigger("click")
+      await panel.findAll(".text-stats__settings-actions .button")[0]?.trigger("click")
       await panel.find(".text-stats__settings-trigger").trigger("click")
 
       const box = panel.find("input[type=\"checkbox\"]").element as HTMLInputElement
@@ -169,11 +231,11 @@ describe("TextStatsPanel — speed settings", () => {
       const sliders = await openCustom(panel)
 
       await sliders[0]?.setValue("300")
-      await panel.find("form").trigger("submit")
+      await panel.find(".text-stats__settings").trigger("submit")
 
       await panel.find(".text-stats__settings-trigger").trigger("click")
       await panel.find("input[type=\"checkbox\"]").setValue(true)
-      await panel.find("form").trigger("submit")
+      await panel.find(".text-stats__settings").trigger("submit")
 
       // Not "238" / "150": storing the figures would pin the visitor to
       // today's recommendation rather than letting them inherit a later one.
