@@ -3,6 +3,16 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.4.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.3.0...v1.4.0) (2026-08-11)
+
+### ✨ Features
+
+* **typing-test:** add the typing speed test ([84ec15f](https://github.com/moulibheemaneti/metrics-adda/commit/84ec15f18c8475c21c52577b302c35a5ddbbf198))
+
+### 📚 Documentation
+
+* **typing-test:** add the typing speed test implementation plan ([3f0ea98](https://github.com/moulibheemaneti/metrics-adda/commit/3f0ea98e71e5924fe289a9ac5e6130ec7366c999))
+
 ## [1.3.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.2.0...v1.3.0) (2026-08-11)
 
 ### ✨ Features
