@@ -3,6 +3,21 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.3.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.2.0...v1.3.0) (2026-08-11)
+
+### ✨ Features
+
+* **word-counter:** make the reading and speaking speeds adjustable ([c95494f](https://github.com/moulibheemaneti/metrics-adda/commit/c95494fbf70616c5c26b3dfc3f40dd4474f41d63))
+* **word-counter:** shorten the time readouts to 1m 31s ([8d742fb](https://github.com/moulibheemaneti/metrics-adda/commit/8d742fbeaba01cf20afa21d6cb07a3e1334c9214))
+
+### ♻️  Refactors
+
+* **word-counter:** expand the speed settings in place ([1702da5](https://github.com/moulibheemaneti/metrics-adda/commit/1702da507ece93c2737008f003054a041974d6ec))
+
+### 📚 Documentation
+
+* **word-counter:** add the speed settings implementation plan ([129f353](https://github.com/moulibheemaneti/metrics-adda/commit/129f35327f614c627dd1b7db001dc5216566bb1b))
+
 ## [1.2.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.1.0...v1.2.0) (2026-08-10)
 
 ### ✨ Features
