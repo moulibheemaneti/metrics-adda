@@ -222,7 +222,7 @@ const FAQ_COPY: Record<ToolKey, FaqEntry[]> = {
       },
       {
          question: "How is reading time estimated?",
-         answer: "Reading time assumes 238 words per minute, the average adult silent-reading speed. Speaking time assumes a slower 150 words per minute.",
+         answer: "Reading time assumes 238 words per minute, the average adult silent-reading speed, and speaking time a slower 150 words per minute. Both are adjustable — open the speed settings above the results to set your own pace, and it is remembered on this device.",
       },
    ],
    passwordGenerator: [
@@ -278,6 +278,8 @@ export const COPY = {
       copyFailed: "Press Ctrl+C to copy",
       swap: "Swap units",
       clear: "Clear",
+      save: "Save",
+      cancel: "Cancel",
       relatedHeading: "Other tools",
       faqHeading: "Common questions",
    },
@@ -389,6 +391,16 @@ export const COPY = {
       speakingTime: "Speaking time",
       inputLabel: "Your text",
       placeholder: "Paste or type your text here…",
+      /// The speed settings. No words-per-minute figures live in these
+      /// strings: the template interpolates the constants themselves, the
+      /// same way `password.lengthLabel` holds only the word.
+      settingsLabel: "Speed settings",
+      settingsHeading: "Reading and speaking speed",
+      settingsHint: "Changes the two time estimates below. Saved on this device only.",
+      readingSpeedLabel: "Reading speed",
+      speakingSpeedLabel: "Speaking speed",
+      useRecommended: "Use the recommended speeds",
+      wordsPerMinute: "wpm",
    },
    password: {
       outputLabel: "Generated password",

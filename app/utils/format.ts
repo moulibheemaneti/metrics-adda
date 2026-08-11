@@ -59,20 +59,45 @@ export function formatCount(value: number): string {
 /**
  * Format a duration for reading- and speaking-time readouts.
  *
- * Anything under a minute reads as seconds, because "0 min" tells a reader
+ * Compact units — "1m 3s", not "1 min 3 sec". The stat tiles are only as
+ * wide as a grid track, and the spaced form wrapped onto a second line,
+ * which left the two timing tiles taller than the six counts beside them.
+ *
+ * Anything under a minute reads as seconds, because "0m" tells a reader
  * nothing about a 40-second article.
  */
 export function formatDuration(seconds: number): string {
-   if (!Number.isFinite(seconds) || seconds <= 0) return "0 sec"
+   if (!Number.isFinite(seconds) || seconds <= 0) return "0s"
 
    const whole = Math.round(seconds)
 
-   if (whole < 60) return `${whole} sec`
+   if (whole < 60) return `${whole}s`
 
    const minutes = Math.floor(whole / 60)
    const remainder = whole % 60
 
-   if (remainder === 0) return `${minutes} min`
+   if (remainder === 0) return `${minutes}m`
 
-   return `${minutes} min ${remainder} sec`
+   return `${minutes}m ${remainder}s`
+}
+
+/**
+ * The same duration spelled out, for a screen reader.
+ *
+ * A voice reads "1m 3s" as "one m three s", so the compact form above is
+ * display-only. Anything on the page that exists purely to be spoken —
+ * the word counter's live region — uses this instead.
+ */
+export function formatDurationSpoken(seconds: number): string {
+   if (!Number.isFinite(seconds) || seconds <= 0) return "0 seconds"
+
+   const whole = Math.round(seconds)
+   const minutes = Math.floor(whole / 60)
+   const remainder = whole % 60
+   const parts: string[] = []
+
+   if (minutes > 0) parts.push(`${minutes} ${minutes === 1 ? "minute" : "minutes"}`)
+   if (remainder > 0) parts.push(`${remainder} ${remainder === 1 ? "second" : "seconds"}`)
+
+   return parts.join(" ")
 }

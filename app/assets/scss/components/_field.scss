@@ -36,6 +36,11 @@
       font-size: px-to-rem(13);
       font-weight: var(--weight-strong);
    }
+
+   // Pairs with a disabled control, so the label reads as inactive too.
+   &--disabled &__label {
+      color: var(--muted);
+   }
 }
 
 .control {
@@ -158,6 +163,14 @@
    &:focus-visible {
       outline: 2px solid var(--accent);
       outline-offset: 4px;
+   }
+
+   // The word counter locks both sliders while the recommended speeds are
+   // in use. Dimming the whole control rather than only the thumb is what
+   // reads as "not now" instead of "broken".
+   &:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
    }
 
    &::-webkit-slider-runnable-track {

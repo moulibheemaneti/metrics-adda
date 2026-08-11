@@ -32,6 +32,49 @@ export const READING_WORDS_PER_MINUTE = 238
 /** Average speaking pace for presentations, words per minute. */
 export const SPEAKING_WORDS_PER_MINUTE = 150
 
+/**
+ * The range the word counter's speed sliders run between.
+ *
+ * Reading stops at 800 rather than the four figures a speed-reading course
+ * advertises: past that the estimate stops describing comprehension.
+ * Speaking starts at 80 — a deliberate, pausing delivery — and ends at 300,
+ * beyond which a listener has stopped following.
+ */
+export const READING_SPEED_MIN = 100
+export const READING_SPEED_MAX = 800
+export const SPEAKING_SPEED_MIN = 80
+export const SPEAKING_SPEED_MAX = 300
+
+/** Both sliders move a word per minute at a time. */
+export const SPEED_STEP = 1
+
+export interface TextSpeeds {
+   /** Silent-reading pace, words per minute. */
+   reading: number
+   /** Spoken pace, words per minute. */
+   speaking: number
+}
+
+/** The recommended pair — the figures every visitor starts from. */
+export const DEFAULT_SPEEDS: TextSpeeds = {
+   reading: READING_WORDS_PER_MINUTE,
+   speaking: SPEAKING_WORDS_PER_MINUTE,
+}
+
+/**
+ * Hold a speed inside its slider's range.
+ *
+ * Exported because two callers need it: the composable clamps on the way
+ * in from storage, and `analyseText` clamps on the way in from a caller. A
+ * zero or negative speed would otherwise divide into `Infinity`, which
+ * `formatDuration` prints as "0s" — the exact opposite of what it means.
+ */
+export function clampSpeed(value: number, min: number, max: number): number {
+   if (!Number.isFinite(value)) return min
+
+   return Math.min(Math.max(Math.round(value), min), max)
+}
+
 export interface TextStats {
    /** Unicode code points, so an emoji counts once rather than twice. */
    characters: number
@@ -99,11 +142,20 @@ function countSentences(input: string): number {
    return sentences
 }
 
-/** Every length statistic the word counter reports, in one pass. */
-export function analyseText(input: string): TextStats {
+/**
+ * Every length statistic the word counter reports, in one pass.
+ *
+ * `speeds` is optional rather than required — unlike `generatePassword`,
+ * which takes its options outright — because the two timings are the only
+ * part of the result that depends on it, and a caller after nothing but
+ * counts should not have to know the words-per-minute figures exist.
+ */
+export function analyseText(input: string, speeds: TextSpeeds = DEFAULT_SPEEDS): TextStats {
    if (input === "") return { ...EMPTY_STATS }
 
    const words = countWords(input)
+   const reading = clampSpeed(speeds.reading, READING_SPEED_MIN, READING_SPEED_MAX)
+   const speaking = clampSpeed(speeds.speaking, SPEAKING_SPEED_MIN, SPEAKING_SPEED_MAX)
 
    return {
       characters: [...input].length,
@@ -114,7 +166,7 @@ export function analyseText(input: string): TextStats {
       // than inventing empty paragraphs between.
       paragraphs: input.split(/\n\s*\n/).filter((part) => part.trim() !== "").length,
       lines: input.split(/\r\n|\r|\n/).length,
-      readingTimeSeconds: (words / READING_WORDS_PER_MINUTE) * 60,
-      speakingTimeSeconds: (words / SPEAKING_WORDS_PER_MINUTE) * 60,
+      readingTimeSeconds: (words / reading) * 60,
+      speakingTimeSeconds: (words / speaking) * 60,
    }
 }
