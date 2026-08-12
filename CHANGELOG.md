@@ -3,6 +3,24 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.6.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.5.0...v1.6.0) (2026-08-12)
+
+### ✨ Features
+
+* **converters:** add the volume, area and time converters ([91009d2](https://github.com/moulibheemaneti/metrics-adda/commit/91009d28656c803be9ec3d8eabe113294ed19e38))
+* **data-storage-converter:** add the data storage converter ([21a3c71](https://github.com/moulibheemaneti/metrics-adda/commit/21a3c7194024171d40e361b41384a2315ac3ca36))
+* **speed-converter:** add the speed converter ([ad0385a](https://github.com/moulibheemaneti/metrics-adda/commit/ad0385a6b27d8b9910435b38ea35bc58ca1dd120))
+
+### 🐛 Bug Fixes
+
+* **seo:** derive the verified route list from the tool registry ([7948c37](https://github.com/moulibheemaneti/metrics-adda/commit/7948c37d106ab4fce3766a459b896e858717a213))
+
+### 📚 Documentation
+
+* **roadmap:** add the feature roadmap for new tools and programmatic SEO ([3500882](https://github.com/moulibheemaneti/metrics-adda/commit/3500882c3eb63a616c4f73e5c7cda4d64d0725f7))
+* **roadmap:** record the tier 1 sequencing ([eb54974](https://github.com/moulibheemaneti/metrics-adda/commit/eb5497473c533a4a88ea5af8eae4d64c158001d0))
+* **roadmap:** refresh against shipped tier 1 ([2012994](https://github.com/moulibheemaneti/metrics-adda/commit/20129946fa7e9c63183a9e921ebb035b307f5d3b))
+
 ## [1.5.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.4.0...v1.5.0) (2026-08-11)
 
 ### ✨ Features
