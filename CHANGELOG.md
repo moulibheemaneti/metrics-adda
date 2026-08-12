@@ -3,6 +3,13 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.7.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.6.0...v1.7.0) (2026-08-12)
+
+### ✨ Features
+
+* **bmi-calculator:** add the body mass index calculator ([e3e7703](https://github.com/moulibheemaneti/metrics-adda/commit/e3e7703c9f53f5ba3021fcfd2260a8c25bdc6877))
+* **case-converter:** add the case converter ([5169757](https://github.com/moulibheemaneti/metrics-adda/commit/5169757b3c9418154420b2ba3f1fa2d4a9c674b9))
+
 ## [1.6.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.5.0...v1.6.0) (2026-08-12)
 
 ### ✨ Features
