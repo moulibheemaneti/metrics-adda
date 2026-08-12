@@ -3,6 +3,20 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.8.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.7.0...v1.8.0) (2026-08-12)
+
+### ✨ Features
+
+* **bmi-calculator:** add an advanced body composition mode ([95a73f3](https://github.com/moulibheemaneti/metrics-adda/commit/95a73f342611dbdf584d3027b24a23ef20030f52))
+
+### 🐛 Bug Fixes
+
+* **nav:** shorten the header tool labels so the row stops scrolling ([cc2bfb3](https://github.com/moulibheemaneti/metrics-adda/commit/cc2bfb3cd40c698768bbf3375a6ed3c9734c57de))
+
+### ♻️  Refactors
+
+* **nav:** group the header tools into category dropdowns ([49480e8](https://github.com/moulibheemaneti/metrics-adda/commit/49480e856617c343da1806205465c93a5807d4fc))
+
 ## [1.7.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.6.0...v1.7.0) (2026-08-12)
 
 ### ✨ Features
