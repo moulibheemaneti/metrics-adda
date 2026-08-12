@@ -13,6 +13,8 @@
 /// Auto-imported by Nuxt. Tests import it relatively (see test/unit).
 /// --------------------------------------------------
 
+import type { BmiCategory } from "./bmi"
+import type { CaseId } from "./textCase"
 import type { DimensionId } from "./units"
 
 /** One key per tool. Drives the registry, the copy blocks and the SEO map. */
@@ -26,6 +28,8 @@ export type ToolKey
      | "timeConverter"
      | "dataStorageConverter"
      | "wordCounter"
+     | "caseConverter"
+     | "bmiCalculator"
      | "typingTest"
      | "passwordGenerator"
 
@@ -127,10 +131,20 @@ export const SEO: Record<PageKey, SeoCopy> = {
       description:
          "Count words, characters, sentences, paragraphs and lines as you type, with reading and speaking time. Works with any language. Nothing is uploaded.",
    },
+   caseConverter: {
+      title: "Case Converter: Upper, Lower, Title & camelCase",
+      description:
+         "Convert text to UPPER CASE, lower case, Title Case, Sentence case, camelCase, snake_case or kebab-case. Instant, free and runs in your browser.",
+   },
    typingTest: {
       title: "Typing Speed Test: Words Per Minute",
       description:
          "Test your typing speed in 15, 30, 60 or 120 seconds. See your words per minute, accuracy and personal best. Free, no sign-up, runs in your browser.",
+   },
+   bmiCalculator: {
+      title: "BMI Calculator: Body Mass Index in kg or lb",
+      description:
+         "Work out your BMI from height and weight in metric or imperial units. See your category and the weight range that reaches the healthy band.",
    },
    passwordGenerator: {
       title: "Strong Random Password Generator",
@@ -193,6 +207,18 @@ const TOOL_COPY: Record<ToolKey, ToolCopy> = {
       tagline: "Words, characters, sentences and reading time",
       heading: "Word and character counter",
       lede: "Paste or type your text to count words, characters, sentences, paragraphs and lines. Your text never leaves your browser.",
+   },
+   caseConverter: {
+      name: "Case Converter",
+      tagline: "UPPER, lower, Title, camelCase and snake_case",
+      heading: "Case converter",
+      lede: "Paste text and read it back in ten cases at once. Copy any one of them with a single click.",
+   },
+   bmiCalculator: {
+      name: "BMI Calculator",
+      tagline: "Body mass index from height and weight",
+      heading: "BMI calculator",
+      lede: "Enter your height and weight in metric or imperial units. You get your BMI, the category it falls in, and the weight range that would put you in the healthy band.",
    },
    typingTest: {
       name: "Typing Speed Test",
@@ -430,6 +456,20 @@ const FAQ_COPY: Record<ToolKey, FaqEntry[]> = {
          answer: "Eight. Storage is quoted in bytes and network speed in bits, which is why a 100 Mbps connection downloads at about 12.5 MB/s rather than 100.",
       },
    ],
+   caseConverter: [
+      {
+         question: "What is the difference between camelCase and PascalCase?",
+         answer: "Both join the words with no separator. camelCase leaves the first word lowercase, as in myVariableName; PascalCase capitalises it too, as in MyVariableName.",
+      },
+      {
+         question: "Why does Title Case capitalise short words like “of” and “the”?",
+         answer: "Because style guides disagree about which words stay lowercase, and the answer changes with a word’s position in the title. Capitalising every word is at least predictable.",
+      },
+      {
+         question: "Why did “dr. smith” become “Dr. Smith” in sentence case?",
+         answer: "A full stop and a space look identical whether they end a sentence or an abbreviation, and telling them apart needs a dictionary. Decimals are safe: the stop in 3.50 is followed by a digit.",
+      },
+   ],
    wordCounter: [
       {
          question: "Is my text uploaded anywhere?",
@@ -464,6 +504,24 @@ const FAQ_COPY: Record<ToolKey, FaqEntry[]> = {
       {
          question: "Is my typing recorded or uploaded?",
          answer: "No. The test runs entirely in your browser and nothing is sent to a server. Your settings and personal best are kept in your browser's own local storage on this device, and clearing your site data removes them.",
+      },
+   ],
+   bmiCalculator: [
+      {
+         question: "How is BMI calculated?",
+         answer: "Weight in kilograms divided by height in metres squared. Someone 1.75 m and 70 kg has a BMI of 22.9. Imperial entries are converted first, so both unit systems give the same figure.",
+      },
+      {
+         question: "What do the categories mean?",
+         answer: "Below 18.5 is underweight, 18.5 to 25 is the healthy band, 25 to 30 is overweight, and 30 or above is obese. These are the WHO figures for adults.",
+      },
+      {
+         question: "Why does BMI call a muscular person overweight?",
+         answer: "Because it uses only height and weight, and cannot tell muscle from fat. Muscle is denser, so athletes often read as overweight while carrying very little fat.",
+      },
+      {
+         question: "Does BMI work for everyone?",
+         answer: "No. It does not apply to children or teenagers, who need age and sex percentiles, nor during pregnancy. WHO also suggests lower action points of 23 and 27.5 for Asian populations; this calculator uses the standard adult figures.",
       },
    ],
    passwordGenerator: [
@@ -646,6 +704,58 @@ export const COPY = {
       speakingSpeedLabel: "Speaking speed",
       useRecommended: "Use the recommended speeds",
       wordsPerMinute: "wpm",
+   },
+   bmi: {
+      systemLabel: "Units",
+      metric: "Metric",
+      imperial: "Imperial",
+      heightLabel: "Height",
+      weightLabel: "Weight",
+      centimetres: "cm",
+      kilograms: "kg",
+      feet: "ft",
+      inches: "in",
+      pounds: "lb",
+      resultLabel: "Your BMI",
+      categoryLabel: "Category",
+      rangeLabel: "Healthy weight for this height",
+      empty: "Enter a height and a weight to see your BMI.",
+      /// Shown under every result, not tucked behind a link. BMI is a
+      /// population screening figure being read by one person about
+      /// themselves, and that gap is the thing most worth saying.
+      disclaimer: "BMI is a screening figure, not a diagnosis, and it cannot tell muscle from fat. Talk to a doctor about what it means for you.",
+      categories: {
+         underweight: "Underweight",
+         /// "Healthy weight" rather than "Normal": the band is the same,
+         /// but the word does not imply everything outside it is abnormal.
+         normal: "Healthy weight",
+         overweight: "Overweight",
+         obese: "Obese",
+      } satisfies Record<BmiCategory, string>,
+   },
+   /// Every case label is written *in* the case it names, so the list
+   /// doubles as its own worked example and a reader can pick the one they
+   /// want without reading a description of it.
+   textCase: {
+      inputLabel: "Your text",
+      placeholder: "Paste or type your text here…",
+      textHeading: "Text cases",
+      identifierHeading: "Programming cases",
+      /// Seeded into the box so the page renders a worked example rather
+      /// than ten empty rows — the same reason the converters start at 1.
+      sample: "the quick brown fox. jumps over the lazy dog!",
+      names: {
+         upper: "UPPER CASE",
+         lower: "lower case",
+         title: "Title Case",
+         sentence: "Sentence case",
+         alternating: "aLtErNaTiNg cAsE",
+         camel: "camelCase",
+         pascal: "PascalCase",
+         snake: "snake_case",
+         kebab: "kebab-case",
+         constant: "CONSTANT_CASE",
+      } satisfies Record<CaseId, string>,
    },
    /// The typing test. As with the speed settings above, no figures live in
    /// these strings — the template interpolates `TEST_DURATIONS` and the
