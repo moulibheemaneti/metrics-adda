@@ -384,10 +384,78 @@ describe("BmiCalculatorPanel", () => {
 })
 
 describe("ToolNav", () => {
+   /// Sorted rather than compared in order: the nav lists tools by group
+   /// now, so its order is the registry's grouped order, not its raw one.
+   /// What has to hold is that nothing is dropped — these are the site's
+   /// internal links, and a tool missing from the nav is a tool that loses
+   /// twelve inbound links.
    it("links to every registered tool", async() => {
       const nav = await mountSuspended(ToolNav)
       const hrefs = nav.findAll("a").map((link) => link.attributes("href"))
 
-      expect(hrefs).toEqual(TOOLS.map((tool) => tool.path))
+      expect(hrefs.toSorted()).toEqual(TOOLS.map((tool) => tool.path).toSorted())
+   })
+
+   /// The panels are hidden with CSS, not mounted on click. Rendering them
+   /// only when opened would take every link out of the server-rendered
+   /// HTML, which is the one thing this nav cannot afford to do.
+   it("renders the collapsed panels rather than mounting them on demand", async() => {
+      const nav = await mountSuspended(ToolNav)
+
+      expect(nav.findAll(".tool-nav__panel").length).toBeGreaterThan(0)
+
+      // Asserted on the inline style `v-show` writes, not `isVisible()`,
+      // which reports true here even with `display: none` on the element.
+      for (const panel of nav.findAll(".tool-nav__panel")) {
+         expect(panel.attributes("style")).toContain("display: none")
+      }
+   })
+
+   it("opens a group and marks it expanded", async() => {
+      const nav = await mountSuspended(ToolNav)
+      const trigger = nav.findAll(".tool-nav__trigger")[0]
+
+      expect(trigger?.attributes("aria-expanded")).toBe("false")
+
+      await trigger?.trigger("click")
+
+      expect(trigger?.attributes("aria-expanded")).toBe("true")
+      expect(nav.find(".tool-nav__panel").attributes("style") ?? "").not.toContain("display: none")
+
+      // Clicking the same trigger again collapses it.
+      await trigger?.trigger("click")
+
+      expect(trigger?.attributes("aria-expanded")).toBe("false")
+   })
+
+   /// A category button controls a panel, so the two have to be wired
+   /// together by id or a screen reader is told a list exists but not
+   /// which one.
+   it("points every trigger at the panel it controls", async() => {
+      const nav = await mountSuspended(ToolNav)
+
+      for (const trigger of nav.findAll(".tool-nav__trigger")) {
+         const id = trigger.attributes("aria-controls")
+
+         expect(id, "trigger controls nothing").toBeTruthy()
+         expect(nav.find(`#${id}`).exists(), `no panel with id ${id}`).toBe(true)
+      }
+   })
+
+   /// A group of one is a link to that tool, not a dropdown wrapping a
+   /// single item. Both shapes are live in the registry today.
+   it("renders a single-tool group as a direct link", async() => {
+      const nav = await mountSuspended(ToolNav)
+      const singles = TOOL_GROUPS
+         .map((group) => toolsByGroup(group))
+         .filter((tools) => tools.length === 1)
+
+      expect(singles.length).toBeGreaterThan(0)
+
+      for (const [tool] of singles) {
+         const link = nav.find(`.tool-nav__list > li > a[href="${tool?.path}"]`)
+
+         expect(link.exists(), `${tool?.slug} is not a top-level link`).toBe(true)
+      }
    })
 })

@@ -21,14 +21,23 @@
                </button>
             </div>
 
+            <!-- Grouped the same way the header nav is, so the site has one
+                 shape rather than a different one per viewport. Flat, the
+                 list was thirteen equal-weight links with no way to tell
+                 the eight converters from the rest. -->
             <nav :aria-label="COPY.nav.label">
-               <ul class="site-menu__list">
-                  <li v-for="tool in TOOLS" :key="tool.slug">
-                     <NuxtLink class="site-menu__link" :to="tool.path">
-                        {{ COPY.tools[tool.key].name }}
-                     </NuxtLink>
-                  </li>
-               </ul>
+               <div v-for="group in groups" :key="group.id" class="site-menu__group">
+                  <h3 class="site-menu__group-title">
+                     {{ group.label }}
+                  </h3>
+                  <ul class="site-menu__list">
+                     <li v-for="tool in group.tools" :key="tool.slug">
+                        <NuxtLink class="site-menu__link" :to="tool.path">
+                           {{ COPY.tools[tool.key].name }}
+                        </NuxtLink>
+                     </li>
+                  </ul>
+               </div>
             </nav>
 
             <!-- Same reason as the header copy: the stored preference is
@@ -51,6 +60,11 @@
 
 const route = useRoute()
 const sheet = useTemplateRef<HTMLDialogElement>("sheet")
+
+const groups = computed(() =>
+   TOOL_GROUPS
+      .map((id) => ({ id, label: COPY.nav.groups[id], tools: toolsByGroup(id) }))
+      .filter((group) => group.tools.length > 0))
 
 function open() {
    sheet.value?.showModal()
@@ -203,6 +217,20 @@ onBeforeUnmount(onClose)
          outline: 2px solid var(--accent);
          outline-offset: 2px;
       }
+   }
+
+   &__group + &__group {
+      margin-block-start: var(--space-sm);
+   }
+
+   &__group-title {
+      margin-block-end: var(--space-3xs);
+      padding-inline: var(--space-xs);
+      color: var(--muted);
+      font-size: px-to-rem(12);
+      font-weight: var(--weight-strong);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
    }
 
    &__list {

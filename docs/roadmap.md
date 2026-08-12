@@ -185,16 +185,14 @@ fix rather than a drive-by one.
   freshly added export in `app/utils/` fails typecheck until they are
   regenerated. commitguard runs typecheck pre-commit, so this bites at commit
   time.
-- **`ToolNav.vue`'s horizontal scroll — fixed at 13 tools, and it will come
-  back.** The full names came to 1940px of links and scrolled at *every*
-  viewport width, 1920px included. Two causes: the labels, and a `$single-row`
-  breakpoint of 78rem measured back when there were five tools, which between
-  1248px and 1590px squeezed the nav into a middle column narrower than the
-  full-width row beneath it. The nav now renders `COPY.tools[key].short`
-  (1099px) and `$single-row` is 101rem; it fits from 1180px up.
-  `test/unit/tools.test.ts` holds a 110-character budget on the labels.
-  That budget has ~13 characters of headroom, so roughly two more tools —
-  Ctrl+K search is still the real answer past that.
+- **`ToolNav.vue`'s horizontal scroll — fixed, and this time it stays
+  fixed.** At 13 tools the flat row came to 1940px of links and scrolled at
+  *every* viewport width, 1920px included. The nav now lists **groups**, each
+  opening a dropdown, and a group holding one tool renders as a direct link to
+  it. The top level is 455px and `$single-row` came *down*, from 78rem to
+  60rem. The width is now bounded by the number of categories rather than the
+  number of tools, so Tier 2 landing in full does not touch it — and
+  `toolsByGroup()` finally has a caller that is not a test.
 
 ---
 
@@ -209,7 +207,12 @@ Recorded so the reasons survive.
 - **India-specific tools** — GST calculator, EMI/loan calculator, land-area
   units (gaj, cent, guntha, bigha, ground). High intent, but a second pass after
   the generic set is in.
-- **Platform UX** — Ctrl+K tool search, favourites, PWA/offline. See the nav
-  note above; this is closer to necessary than it was.
+- **Platform UX** — Ctrl+K tool search, favourites, PWA/offline. The grouped
+  nav took the urgency out of search: it was being considered as a *fix* for
+  the overflowing row, which was the wrong job for it. Search is an
+  accelerator for someone who already knows the tool's name, and it adds no
+  crawlable links — it belongs on top of a browsable nav, not instead of one.
+  Worth building when the tool count makes scanning a dropdown slow, which is
+  not yet.
 - **Test and CI infrastructure** — Playwright E2E, an axe-core runner in the
   repo, `seo:verify` and Lighthouse wired into CI.
