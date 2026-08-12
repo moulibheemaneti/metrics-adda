@@ -5,93 +5,88 @@ What we could build next, and why. Two tracks: **more tools** and
 
 Traffic here is organic search, and revenue is one AdSense slot per page — so
 value scales with *indexable pages × search intent covered*. The architecture
-is already shaped for that: a tool is three edits (`app/utils/tools.ts`, a copy
-block in `app/utils/copy.ts`, a page in `app/pages/`), and `convert()` in
-`app/utils/units.ts` is a generic affine transform that already serves three
-tools.
+is shaped for that: a tool is three edits (`app/utils/tools.ts`, a copy block
+in `app/utils/copy.ts`, a page in `app/pages/`), and `convert()` in
+`app/utils/units.ts` is a generic affine transform now serving eight
+dimensions.
 
 This is not `docs/plans/`. Those are per-feature plans written just before the
 work; this is the list they get picked from.
 
-**Scope of this pass:** generic/global tools, client-only. India-specific tools
-and anything needing a server are deliberately later — see
+**Scope:** generic/global tools, client-only. India-specific tools and
+anything needing a server are deliberately later — see
 [Out of scope](#out-of-scope).
 
----
-
-## Tier 1 — new converters, no engine change
-
-Each is one new `DIMENSIONS` entry, one registry entry, one copy block, and a
-page that reuses `UnitConverter.vue`. All of these are purely multiplicative,
-so `offset` stays 0 and `convert()` is untouched.
-
-| Route | Units |
-| --- | --- |
-| `/speed-converter` | km/h, mph, m/s, ft/s, knot |
-| `/volume-converter` | ml, l, m³, tsp, tbsp, fl oz, cup, pint, quart, gallon |
-| `/area-converter` | mm², cm², m², km², hectare, in², ft², yd², acre, mi² |
-| `/data-storage-converter` | bit, byte, KB/MB/GB/TB **and** KiB/MiB/GiB/TiB |
-| `/time-converter` | ms, s, min, h, day, week, year |
-
-Things that will be got wrong if they are not written down:
-
-- **Volume — US and imperial are different sizes.** An imperial gallon is
-  ~4.546 l, a US gallon ~3.785 l; pints and fluid ounces diverge too. Ship both
-  as distinct unit ids (`gal-us`, `gal-imp`), or the tool is silently wrong for
-  half the people who find it.
-- **Data storage — decimal vs binary is the search intent.** People land on
-  this page *because* their 1 TB drive shows 931 GB. Both families, labelled,
-  or the page doesn't answer the question it ranks for.
-- **Time — no "month".** A month has no fixed length. Year is 365 days,
-  stated in the FAQ rather than assumed.
-- **Fuel economy does not belong here.** mpg ⇄ L/100km is reciprocal, not
-  affine — `base = value * factor + offset` cannot express it. It needs an
-  engine change, so it is deferred rather than bolted on.
-
-### Sequencing — three passes, not five, and not one
-
-The table above makes these look interchangeable. The maths is; the work is
-not. Ship them as:
-
-1. **`/speed-converter` alone — the pilot.** Five units, every factor exact,
-   no ambiguity to resolve. The cheapest example that still touches every
-   surface: the `DimensionId` and `ToolKey` unions, four separate blocks in
-   `copy.ts`, the registry, a page, `units.test.ts`, `verify.sh`, the README
-   table. Whatever is implicit in "adding a tool" surfaces once, here, rather
-   than five times.
-2. **`/volume-converter` + `/area-converter` + `/time-converter` together.**
-   The same move, once the pilot has proved it. What is left is copy, not
-   code — the US/imperial ids and the 365-day year are decisions about
-   wording and unit ids, made once and applied three times.
-3. **`/data-storage-converter` alone.** Not a registry add. Sixteen units
-   means a flat 16-option `<select>` rendered twice
-   (`UnitConverter.vue:25-29`, `:62-66` — there is no `<optgroup>` support)
-   and a 16-row always-visible table (`:98-111`), double today's largest.
-   Decimal and binary need visual separation to be usable at all, so this is
-   a component change wearing a converter's clothes.
-
-Why not one batch of five: each tool needs three FAQ answers with real facts
-in them, a title under 60 characters and a description under 155 — both
-enforced by `test/unit/seo.test.ts` — plus a tagline, heading, lede and ~10
-unit names. Five at once is ~50 unit labels and 15 factual answers written in
-one sitting, which is where quality quietly goes, and it is the part a
-reviewer cannot skim.
-
-Why not five separate passes: volume, area and time are genuinely mechanical
-once speed has landed. Five branches, plan docs, README edits and
-semantic-release bumps for three repeats is ceremony without payoff.
-
-**Decide during the pilot:** `scripts/seo/verify.sh` hardcodes its `ROUTES`
-list and `README.md` hardcodes its tools table. Both have *already* drifted —
-`/typing-speed-test` is missing from each. Four more routes will drift the
-same way, so the pilot is the moment to derive both from `TOOLS` rather than
-the fifth time someone forgets.
+**Where things stand:** 11 tools on 13 routes. Tier 1 is done.
 
 ---
 
-## Tier 2 — new panels, still no engine change
+## Tier 1 — converters ✅ shipped
 
-Ordered roughly by effort.
+Five converters, three passes, no change to `convert()`. All purely
+multiplicative, so `offset` stayed 0 throughout.
+
+| Route | Units | Pass |
+| --- | --- | --- |
+| `/speed-converter` | m/s, km/h, mph, ft/s, knot | 1 — pilot |
+| `/volume-converter` | ml, l, m³, 7 US units, 3 imperial | 2 |
+| `/area-converter` | mm², cm², m², ha, km², in², ft², yd², acre, mi² | 2 |
+| `/time-converter` | ms, s, min, h, day, week, year | 2 |
+| `/data-storage-converter` | bit, byte, kB–PB, KiB–PiB | 3 |
+
+### What the traps turned out to be
+
+Written down before the work, and worth keeping — the next dimension will hit
+the same shapes.
+
+- **Volume needed 13 units, not the 10 first listed here.** Both measurement
+  systems is non-negotiable (an imperial gallon is 4.54609 l, a US gallon
+  3.785411784 l), and that pushes the count up. Every US unit derives from the
+  US gallon's exact 231 in³, every imperial one from the exact 4.54609 l.
+- **Qualifier goes first in a unit name.** `UnitConverter` renders a unit as
+  `name (symbol)`, so `"Pint (US)"` came out as `"Pint (US) (pt)"`. The mass
+  block already had the answer: `"US ton"`. Use `"US pint"`.
+- **Hyphenated unit ids force quoted object keys.** `"us-gal"` must be quoted,
+  and `@stylistic/quote-props` is `consistent`, so *every* key in that copy
+  block needs quoting — including `ml` and `l`. Lint catches it.
+- **Data storage was a component change, not a registry add.** Twelve units
+  where "Kilobyte" and "Kibibyte" differ by one letter. Units can now declare a
+  `group`, and `unitGroups()` returns `null` for the seven dimensions that
+  don't — so grouping is available to any future dimension at no cost.
+- **Grouping is all-or-nothing per dimension.** A half-grouped dimension puts
+  its ungrouped units in an empty-labelled `<optgroup>`, which most browsers
+  silently drop — units vanish with no error. `test/unit/units.test.ts` holds
+  that line.
+- **Time has no "month".** No fixed length, so any factor is a guess printed to
+  eight significant digits. Year is 365 days, stated in the FAQ.
+- **Fuel economy still does not belong here.** mpg ⇄ L/100km is reciprocal, not
+  affine — `base = value * factor + offset` cannot express it. Deferred, not
+  forgotten.
+
+### What the three-pass split was worth
+
+Kept because the same question will come up for Tier 2.
+
+- **The pilot earned its keep.** Speed alone surfaced the `DimensionId` /
+  `ToolKey` union shape, the four separate copy blocks, and the `verify.sh`
+  drift — once, on five units, instead of five times.
+- **Deriving beat hand-editing.** `scripts/seo/verify.sh` now reads its routes
+  from `TOOLS` via `bun -e`. The four later routes were asserted the moment
+  they were registered, with no edit to the script. It also fixed a real gap:
+  `/typing-speed-test` had shipped without its SEO surface ever being checked.
+- **The registry-drift guards auto-extended.** `test/unit/tools.test.ts`
+  iterates `TOOLS` and `DIMENSIONS`, so it picked up every new dimension and
+  checked its copy and unit labels without being touched.
+- **Copy is the part that scales badly, not code.** Each tool is ~10 unit
+  labels, 3 FAQ answers with real facts in them, and a title/description inside
+  the 60/155 budgets `test/unit/seo.test.ts` enforces. That is why five in one
+  sitting was the wrong shape.
+
+---
+
+## Tier 2 — new panels, no engine change
+
+The next work. Ordered roughly by effort.
 
 - **`/case-converter`** — upper, lower, title, sentence, camel, snake, kebab.
   Reuses `CopyButton.vue` and the `Intl.Segmenter` word-splitting already in
@@ -112,16 +107,17 @@ Ordered roughly by effort.
 - **`/qr-code-generator`** — the only item needing a new dependency. Renders to
   canvas/SVG locally; nothing is uploaded.
 
-**Suggested order:** speed → volume → area → case-converter → BMI.
+**Suggested order:** case-converter → BMI → percentage → the encoders.
 
-The first three are registry-only adds. They prove the pattern at zero
-conceptual cost before anything bespoke lands.
+Case-converter first for the same reason speed went first: it is the cheapest
+one that still exercises a *new panel component*, which is the surface Tier 1
+never touched. Every Tier 1 tool reused `UnitConverter.vue`; none of these can.
 
 ---
 
 ## Programmatic SEO
 
-Each step depends on the one above it.
+Each step depends on the one above it. Nothing here has started.
 
 1. **Query-param deep links** — `?from=kg&to=lb&value=70` in
    `UnitConverter.vue`. Prerequisite for everything below, and useful on its
@@ -129,9 +125,10 @@ Each step depends on the one above it.
    typing a value doesn't fill the back stack.
 2. **Category hub pages** — `/converters`, `/text-tools`, `/security-tools`.
    The cheapest new pages on this list: `toolsByGroup()` already exists in
-   `app/utils/tools.ts` and is **currently called only by tests**. These pages
-   give it a real caller and add a middle layer of internal linking between the
-   hub and the tools.
+   `app/utils/tools.ts` and is **still called only by tests**. These pages give
+   it a real caller and add a middle layer of internal linking between the hub
+   and the tools — which matters more now that `/converters` alone would hold
+   eight.
 3. **Pair routes** — `/weight-converter/kg-to-lb`, one dynamic page per
    dimension. Titles and descriptions generated, not hand-authored.
 4. **Value routes** — `/weight-converter/70-kg-to-lb`. Highest volume of all,
@@ -140,29 +137,57 @@ Each step depends on the one above it.
 
 ### What steps 3 and 4 run into
 
-- **Cap the cross-product.** Eight mass units is 56 ordered pairs; five
-  dimensions unbounded is several hundred near-identical pages, which is a
-  thin-content risk rather than a traffic win. Ship a curated `POPULAR_PAIRS`
-  list per dimension.
-- **`SEO` in `copy.ts` is a closed map** — `Record<PageKey, SeoCopy>`, one
-  entry per page, which is exactly what makes a mistyped key a type error.
-  Dynamic routes cannot key into it. They need a *generator function alongside*
-  that record, not a loosening of it.
+- **Cap the cross-product — and Tier 1 made this sharper.** The eight
+  dimensions now hold 558 ordered unit pairs between them (volume alone is 156,
+  data storage 132). Generating all of them is several hundred near-identical
+  pages and a thin-content risk, not a traffic win. Ship a curated
+  `POPULAR_PAIRS` list per dimension.
+- **Grouped dimensions need a pair-route policy.** `kb-to-kib` is a real search;
+  `bit-to-pib` is not. Data storage's cross-product is mostly noise, so it wants
+  a tighter curation than the others rather than the same rule.
+- **`SEO` in `copy.ts` is a closed map** — `Record<PageKey, SeoCopy>`, one entry
+  per page, which is exactly what makes a mistyped key a type error. Dynamic
+  routes cannot key into it. They need a *generator function alongside* that
+  record, not a loosening of it.
 - **The SERP budget test only covers the static map.** `test/unit/seo.test.ts`
-  enforces 60/155 characters over `SEO`; generated titles bypass it entirely
-  and will ship clipped. Extend the test to sample generated strings.
-  `truncate()` in `app/utils/seo.ts` is the helper for the cases that overflow.
+  enforces 60/155 characters over `SEO`; generated titles bypass it entirely and
+  will ship clipped. Extend the test to sample generated strings. `truncate()`
+  in `app/utils/seo.ts` is the helper for the cases that overflow.
 - **`test/unit/tools.test.ts` is the registry-drift guard.** Hub pages and
-  dynamic routes are pages but not tools. Extend that test deliberately;
-  don't let new routes fail it and then relax the assertion.
+  dynamic routes are pages but not tools. Extend that test deliberately; don't
+  let new routes fail it and then relax the assertion.
 - **The sitemap needs generated routes fed in explicitly.** Doing that via a
   `server/api/__sitemap__/urls` source would introduce this repo's first
-  `server/` directory. That is build-time SEO plumbing and handles no user
-  data, so it does not break the client-only promise — but it should be an
-  explicit decision, not a quiet one. Static `sitemap.urls` config in
-  `nuxt.config.ts` avoids the question entirely.
-- **`scripts/seo/verify.sh` hardcodes its `ROUTES` list.** Every new route has
-  to be added there, or its SEO surface is never asserted.
+  `server/` directory. That is build-time SEO plumbing and handles no user data,
+  so it does not break the client-only promise — but it should be an explicit
+  decision, not a quiet one. Static `sitemap.urls` config in `nuxt.config.ts`
+  avoids the question entirely.
+- **`scripts/seo/verify.sh` covers tool routes automatically now**, but dynamic
+  routes are not in `TOOLS`. Pair and value routes will need their own sampling
+  strategy — asserting all of them is neither fast nor useful.
+
+---
+
+## Known rough edges
+
+Found while building Tier 1. None are regressions; all are worth a deliberate
+fix rather than a drive-by one.
+
+- **Very small results render as long zero-strings.** `formatQuantity` uses
+  `Intl.NumberFormat` with 8 significant digits and no notation, so 1 GB in
+  pebibytes is `0.00000088817842` and 1 m² in square miles is
+  `0.00000038610216`. Pre-existing — mass has always done this for mg → US tons
+  — but the wide dimensions make it obvious. A `notation: "scientific"`
+  threshold in `app/utils/format.ts` would fix it, and would change every tool's
+  output, so it is its own change.
+- **New auto-imported exports need `nuxi prepare` before typecheck.** `.nuxt`'s
+  generated types are what `vue-tsc` resolves auto-imports against, so a
+  freshly added export in `app/utils/` fails typecheck until they are
+  regenerated. commitguard runs typecheck pre-commit, so this bites at commit
+  time.
+- **`ToolNav.vue`'s horizontal scroll is now the constraint, not a worry.** At
+  11 tools the row scrolls on most laptop widths. Ctrl+K search moves from
+  "nice" to "needed" if Tier 2 lands in full.
 
 ---
 
@@ -171,15 +196,13 @@ Each step depends on the one above it.
 Recorded so the reasons survive.
 
 - **Currency converter.** Needs live exchange rates, which needs a server and a
-  cache. Everything else on this list runs in the browser and sends nothing;
-  this one would be the first exception, and it would need the privacy policy
-  amended. Revisit deliberately.
+  cache. Everything else here runs in the browser and sends nothing; this would
+  be the first exception, and it would need the privacy policy amended. Revisit
+  deliberately.
 - **India-specific tools** — GST calculator, EMI/loan calculator, land-area
-  units (gaj, cent, guntha, bigha, ground). High intent, but a second pass
-  after the generic set is in.
-- **Platform UX** — Ctrl+K tool search, favourites, PWA/offline. Worth doing;
-  not this roadmap. Worth noting that `ToolNav.vue`'s horizontal scroll stops
-  scaling somewhere past a dozen tools, so search becomes necessary rather than
-  nice if Tier 1 and Tier 2 both land.
+  units (gaj, cent, guntha, bigha, ground). High intent, but a second pass after
+  the generic set is in.
+- **Platform UX** — Ctrl+K tool search, favourites, PWA/offline. See the nav
+  note above; this is closer to necessary than it was.
 - **Test and CI infrastructure** — Playwright E2E, an axe-core runner in the
   repo, `seo:verify` and Lighthouse wired into CI.
