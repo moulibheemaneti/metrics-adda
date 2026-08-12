@@ -17,7 +17,7 @@
 /// Auto-imported by Nuxt. Tests import it relatively (see test/unit).
 /// --------------------------------------------------
 
-export type DimensionId = "mass" | "length" | "temperature"
+export type DimensionId = "mass" | "length" | "temperature" | "speed"
 
 export interface UnitDefinition {
    /** Stable key. Also the copy key under `COPY.units.<dimension>.<id>`. */
@@ -41,6 +41,15 @@ const METRES_PER_INCH = 0.0254
 
 /** Grams per pound — exact by international agreement, 1959. */
 const GRAMS_PER_POUND = 453.59237
+
+/** Inches per mile — exact: 5,280 feet of 12 inches. */
+const INCHES_PER_MILE = 63_360
+
+/** Metres per nautical mile — exact by definition, and the basis of the knot. */
+const METRES_PER_NAUTICAL_MILE = 1852
+
+/** Seconds per hour, spelled out where it divides a per-hour speed. */
+const SECONDS_PER_HOUR = 3600
 
 export const DIMENSIONS: Record<DimensionId, Dimension> = {
    mass: {
@@ -68,7 +77,22 @@ export const DIMENSIONS: Record<DimensionId, Dimension> = {
          { id: "in", factor: METRES_PER_INCH },
          { id: "ft", factor: METRES_PER_INCH * 12 },
          { id: "yd", factor: METRES_PER_INCH * 36 },
-         { id: "mi", factor: METRES_PER_INCH * 63_360 },
+         { id: "mi", factor: METRES_PER_INCH * INCHES_PER_MILE },
+      ],
+   },
+   speed: {
+      // Base is metres per second — the SI unit, and the only one of the
+      // five that needs no division. Every factor below is exact: the
+      // imperial speeds inherit the exact inch, and the knot is defined
+      // from the nautical mile rather than approximated from a mile.
+      id: "speed",
+      base: "mps",
+      units: [
+         { id: "mps", factor: 1 },
+         { id: "kmh", factor: 1000 / SECONDS_PER_HOUR },
+         { id: "mph", factor: METRES_PER_INCH * INCHES_PER_MILE / SECONDS_PER_HOUR },
+         { id: "fps", factor: METRES_PER_INCH * 12 },
+         { id: "kn", factor: METRES_PER_NAUTICAL_MILE / SECONDS_PER_HOUR },
       ],
    },
    temperature: {

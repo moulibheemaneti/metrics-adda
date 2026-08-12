@@ -64,6 +64,33 @@ describe("convert — length", () => {
    })
 })
 
+describe("convert — speed", () => {
+   const { speed } = DIMENSIONS
+
+   it("converts metres per second to km/h by exactly 3.6", () => {
+      expect(convert(1, "mps", "kmh", speed)).toBeCloseTo(3.6, 10)
+   })
+
+   it("converts a motorway speed to miles per hour", () => {
+      expect(convert(100, "kmh", "mph", speed)).toBeCloseTo(62.1371192237, 8)
+   })
+
+   it("derives miles per hour from the exact mile", () => {
+      // A mile is 1609.344 m exactly, so 1 mph is that many metres per hour.
+      expect(convert(1, "mph", "mps", speed)).toBeCloseTo(1609.344 / 3600, 12)
+   })
+
+   it("converts feet per second against the exact foot", () => {
+      expect(convert(1, "fps", "mps", speed)).toBeCloseTo(0.3048, 12)
+   })
+
+   it("derives the knot from the nautical mile, not the land mile", () => {
+      expect(convert(1, "kn", "mps", speed)).toBeCloseTo(1852 / 3600, 12)
+      // The two miles differ, so a knot must not equal a mile per hour.
+      expect(convert(1, "kn", "mph", speed)).toBeCloseTo(1.1507794480, 9)
+   })
+})
+
 /// Temperature is the reason units are modelled as affine transforms
 /// rather than plain multipliers, so it gets the closest look.
 

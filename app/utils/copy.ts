@@ -20,6 +20,7 @@ export type ToolKey
    = | "weightConverter"
      | "heightConverter"
      | "temperatureConverter"
+     | "speedConverter"
      | "wordCounter"
      | "typingTest"
      | "passwordGenerator"
@@ -92,6 +93,11 @@ export const SEO: Record<PageKey, SeoCopy> = {
       description:
          "Convert temperature between Celsius, Fahrenheit and kelvin. Type a value and read every scale at once — free, instant and accurate to the degree.",
    },
+   speedConverter: {
+      title: "Speed Converter: km/h, mph, m/s & knots",
+      description:
+         "Convert speed between kilometres per hour, miles per hour, metres per second and knots. Type a value and read every unit at once — free and instant.",
+   },
    wordCounter: {
       title: "Word & Character Counter",
       description:
@@ -127,6 +133,12 @@ const TOOL_COPY: Record<ToolKey, ToolCopy> = {
       tagline: "Celsius, Fahrenheit and kelvin",
       heading: "Temperature converter",
       lede: "Convert between Celsius, Fahrenheit and kelvin. Type a value and read every scale at once.",
+   },
+   speedConverter: {
+      name: "Speed Converter",
+      tagline: "km/h, mph, m/s, ft/s and knots",
+      heading: "Speed converter",
+      lede: "Convert between metric, imperial and nautical speeds. Type a value and every other unit updates as you go.",
    },
    wordCounter: {
       name: "Word Counter",
@@ -173,6 +185,13 @@ const UNIT_COPY: Record<DimensionId, Record<string, UnitCopy>> = {
       c: { name: "Celsius", symbol: "°C" },
       f: { name: "Fahrenheit", symbol: "°F" },
       k: { name: "Kelvin", symbol: "K" },
+   },
+   speed: {
+      mps: { name: "Metre per second", symbol: "m/s" },
+      kmh: { name: "Kilometre per hour", symbol: "km/h" },
+      mph: { name: "Mile per hour", symbol: "mph" },
+      fps: { name: "Foot per second", symbol: "ft/s" },
+      kn: { name: "Knot", symbol: "kn" },
    },
 }
 
@@ -221,6 +240,20 @@ const FAQ_COPY: Record<ToolKey, FaqEntry[]> = {
       {
          question: "What is absolute zero?",
          answer: "Absolute zero is 0 K, equal to −273.15 °C or −459.67 °F. It is the lowest temperature possible, so kelvin values are never negative.",
+      },
+   ],
+   speedConverter: [
+      {
+         question: "How many miles per hour is 100 km/h?",
+         answer: "100 km/h is 62.137119 mph. The conversion is exact rather than approximate: a mile is 63,360 inches, and an inch is defined as exactly 2.54 cm.",
+      },
+      {
+         question: "What is a knot, and why is it not a mile per hour?",
+         answer: "A knot is one nautical mile per hour. A nautical mile is exactly 1,852 metres — longer than a land mile — so one knot is about 1.151 mph.",
+      },
+      {
+         question: "How do I convert metres per second to km/h?",
+         answer: "Multiply by 3.6. A speed of one metre per second covers 3,600 metres in an hour, which is 3.6 kilometres. Divide by 3.6 to go back the other way.",
       },
    ],
    wordCounter: [

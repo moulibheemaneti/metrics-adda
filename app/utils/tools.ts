@@ -46,6 +46,12 @@ export const TOOLS: ToolEntry[] = [
       group: "converters",
    },
    {
+      slug: "speed-converter",
+      path: "/speed-converter",
+      key: "speedConverter",
+      group: "converters",
+   },
+   {
       slug: "word-counter",
       path: "/word-counter",
       key: "wordCounter",
