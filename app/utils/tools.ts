@@ -82,6 +82,12 @@ export const TOOLS: ToolEntry[] = [
       group: "text",
    },
    {
+      slug: "case-converter",
+      path: "/case-converter",
+      key: "caseConverter",
+      group: "text",
+   },
+   {
       slug: "typing-speed-test",
       path: "/typing-speed-test",
       key: "typingTest",

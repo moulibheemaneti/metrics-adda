@@ -13,6 +13,7 @@
 /// Auto-imported by Nuxt. Tests import it relatively (see test/unit).
 /// --------------------------------------------------
 
+import type { CaseId } from "./textCase"
 import type { DimensionId } from "./units"
 
 /** One key per tool. Drives the registry, the copy blocks and the SEO map. */
@@ -26,6 +27,7 @@ export type ToolKey
      | "timeConverter"
      | "dataStorageConverter"
      | "wordCounter"
+     | "caseConverter"
      | "typingTest"
      | "passwordGenerator"
 
@@ -127,6 +129,11 @@ export const SEO: Record<PageKey, SeoCopy> = {
       description:
          "Count words, characters, sentences, paragraphs and lines as you type, with reading and speaking time. Works with any language. Nothing is uploaded.",
    },
+   caseConverter: {
+      title: "Case Converter: Upper, Lower, Title & camelCase",
+      description:
+         "Convert text to UPPER CASE, lower case, Title Case, Sentence case, camelCase, snake_case or kebab-case. Instant, free and runs in your browser.",
+   },
    typingTest: {
       title: "Typing Speed Test: Words Per Minute",
       description:
@@ -193,6 +200,12 @@ const TOOL_COPY: Record<ToolKey, ToolCopy> = {
       tagline: "Words, characters, sentences and reading time",
       heading: "Word and character counter",
       lede: "Paste or type your text to count words, characters, sentences, paragraphs and lines. Your text never leaves your browser.",
+   },
+   caseConverter: {
+      name: "Case Converter",
+      tagline: "UPPER, lower, Title, camelCase and snake_case",
+      heading: "Case converter",
+      lede: "Paste text and read it back in ten cases at once. Copy any one of them with a single click.",
    },
    typingTest: {
       name: "Typing Speed Test",
@@ -430,6 +443,20 @@ const FAQ_COPY: Record<ToolKey, FaqEntry[]> = {
          answer: "Eight. Storage is quoted in bytes and network speed in bits, which is why a 100 Mbps connection downloads at about 12.5 MB/s rather than 100.",
       },
    ],
+   caseConverter: [
+      {
+         question: "What is the difference between camelCase and PascalCase?",
+         answer: "Both join the words with no separator. camelCase leaves the first word lowercase, as in myVariableName; PascalCase capitalises it too, as in MyVariableName.",
+      },
+      {
+         question: "Why does Title Case capitalise short words like “of” and “the”?",
+         answer: "Because style guides disagree about which words stay lowercase, and the answer changes with a word’s position in the title. Capitalising every word is at least predictable.",
+      },
+      {
+         question: "Why did “dr. smith” become “Dr. Smith” in sentence case?",
+         answer: "A full stop and a space look identical whether they end a sentence or an abbreviation, and telling them apart needs a dictionary. Decimals are safe: the stop in 3.50 is followed by a digit.",
+      },
+   ],
    wordCounter: [
       {
          question: "Is my text uploaded anywhere?",
@@ -646,6 +673,30 @@ export const COPY = {
       speakingSpeedLabel: "Speaking speed",
       useRecommended: "Use the recommended speeds",
       wordsPerMinute: "wpm",
+   },
+   /// Every case label is written *in* the case it names, so the list
+   /// doubles as its own worked example and a reader can pick the one they
+   /// want without reading a description of it.
+   textCase: {
+      inputLabel: "Your text",
+      placeholder: "Paste or type your text here…",
+      textHeading: "Text cases",
+      identifierHeading: "Programming cases",
+      /// Seeded into the box so the page renders a worked example rather
+      /// than ten empty rows — the same reason the converters start at 1.
+      sample: "the quick brown fox. jumps over the lazy dog!",
+      names: {
+         upper: "UPPER CASE",
+         lower: "lower case",
+         title: "Title Case",
+         sentence: "Sentence case",
+         alternating: "aLtErNaTiNg cAsE",
+         camel: "camelCase",
+         pascal: "PascalCase",
+         snake: "snake_case",
+         kebab: "kebab-case",
+         constant: "CONSTANT_CASE",
+      } satisfies Record<CaseId, string>,
    },
    /// The typing test. As with the speed settings above, no figures live in
    /// these strings — the template interpolates `TEST_DURATIONS` and the
