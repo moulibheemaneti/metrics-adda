@@ -49,6 +49,24 @@ export function parseQuantity(text: string): number | null {
    return Number.isFinite(value) ? value : null
 }
 
+/**
+ * Format to a fixed number of decimal places.
+ *
+ * Distinct from `formatQuantity`, which caps *significant* digits — the
+ * right rule for a converted quantity, where 0.0012 and 1200 both deserve
+ * the same precision. An estimate is the other case: a body fat figure
+ * wants exactly one decimal whether it reads 8.5% or 38.5%, and
+ * significant digits would print those as "8.5" and "39".
+ */
+export function formatDecimal(value: number, fractionDigits: number): string {
+   if (!Number.isFinite(value)) return ""
+
+   return new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+   }).format(value)
+}
+
 /** Format a whole-number count (word counts, character counts). */
 export function formatCount(value: number): string {
    if (!Number.isFinite(value)) return "0"

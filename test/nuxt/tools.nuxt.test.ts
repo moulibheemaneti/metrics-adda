@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { mountSuspended } from "@nuxt/test-utils/runtime"
+import BmiCalculatorPanel from "../../app/components/BmiCalculatorPanel.vue"
 import HeightConverter from "../../app/components/HeightConverter.vue"
 import PasswordGeneratorPanel from "../../app/components/PasswordGeneratorPanel.vue"
 import TextStatsPanel from "../../app/components/TextStatsPanel.vue"
@@ -170,6 +171,215 @@ describe("PasswordGeneratorPanel", () => {
 
       expect(panel.find(".notice").exists()).toBe(true)
       expect(panel.find("input").element.value).toBe("")
+   })
+})
+
+/// The BMI panel had no component test before advanced mode was added.
+/// The basic-mode block is the guard on "basic is the tool that already
+/// existed" — it has to keep passing whatever advanced grows into.
+describe("BmiCalculatorPanel", () => {
+   /// Radios in DOM order: mode (basic, advanced), then units (metric,
+   /// imperial), then sex once the advanced panel is on screen.
+   const MODE_ADVANCED = 1
+   const SYSTEM_IMPERIAL = 3
+   const SEX_FEMALE = 4
+   const SEX_MALE = 5
+
+   /// Text fields in DOM order: height, weight, then age and the three
+   /// tape measurements from the child panel.
+   const AGE = 2
+   const WAIST = 3
+   const NECK = 4
+   const HIP = 5
+
+   type Panel = Awaited<ReturnType<typeof mountSuspended<typeof BmiCalculatorPanel>>>
+
+   /// Mounted and switched to advanced, which every case below starts from.
+   const advanced = async(): Promise<Panel> => {
+      const panel = await mountSuspended(BmiCalculatorPanel)
+
+      await panel.findAll("input[type=\"radio\"]")[MODE_ADVANCED]?.setValue()
+
+      return panel
+   }
+
+   describe("basic mode", () => {
+      it("renders a worked example before any interaction", async() => {
+         const panel = await mountSuspended(BmiCalculatorPanel)
+
+         expect(panel.find(".bmi__value").text()).toBe("22.9")
+         expect(panel.find(".bmi__category").text()).toBe(COPY.bmi.categories.normal)
+         expect(panel.find(".bmi__marker").attributes("style")).toContain("inset-inline-start")
+      })
+
+      /// Flipping the unit system reinterprets the digits already in the
+      /// fields rather than converting them — long-standing behaviour of
+      /// this panel, and not something advanced mode changed. So the
+      /// assertion worth making is that the imperial *path* agrees: the
+      /// same body entered in pounds and feet reads the same BMI.
+      it("agrees between the two unit systems", async() => {
+         const panel = await mountSuspended(BmiCalculatorPanel)
+
+         await panel.findAll("input[type=\"radio\"]")[SYSTEM_IMPERIAL]?.setValue()
+
+         const fields = panel.findAll("input[type=\"text\"]")
+
+         // 5 ft 9 in and 154.324 lb — 1.7526 m and 70 kg.
+         await fields[2]?.setValue("154.324")
+
+         expect(panel.find(".bmi__value").text()).toBe("22.8")
+         expect(panel.find(".bmi__category").text()).toBe(COPY.bmi.categories.normal)
+      })
+
+      it("prompts instead of calculating when a field is empty", async() => {
+         const panel = await mountSuspended(BmiCalculatorPanel)
+
+         await panel.findAll("input[type=\"text\"]")[1]?.setValue("")
+
+         expect(panel.find(".bmi__empty").text()).toBe(COPY.bmi.empty)
+         expect(panel.find(".bmi__value").exists()).toBe(false)
+      })
+
+      it("shows no advanced surface at all", async() => {
+         const panel = await mountSuspended(BmiCalculatorPanel)
+
+         expect(panel.find(".body").exists()).toBe(false)
+         expect(panel.findAll("select")).toHaveLength(0)
+      })
+   })
+
+   describe("advanced mode", () => {
+      it("reveals the population selector and the composition panel", async() => {
+         const panel = await advanced()
+
+         expect(panel.find(".body").exists()).toBe(true)
+         expect(panel.findAll("select").length).toBeGreaterThan(0)
+      })
+
+      /// Sex has no neutral default, so it is deliberately unset — which
+      /// means the panel has to explain the gap rather than look broken.
+      it("asks for a sex before estimating anything", async() => {
+         const panel = await advanced()
+
+         expect(panel.text()).toContain(COPY.body.sexPrompt)
+         expect(panel.text()).not.toContain(COPY.body.compositionHeading)
+      })
+
+      it("estimates body fat once the tape measurements are in", async() => {
+         const panel = await advanced()
+
+         await panel.findAll("input[type=\"radio\"]")[SEX_MALE]?.setValue()
+
+         const fields = panel.findAll("input[type=\"text\"]")
+
+         expect(panel.text()).toContain(COPY.body.needsWaistNeck)
+
+         await fields[WAIST]?.setValue("85")
+         await fields[NECK]?.setValue("38")
+
+         // 175 cm, 85 cm waist, 38 cm neck — the fixture from body.test.ts.
+         expect(panel.text()).toContain("16.9%")
+         expect(panel.text()).not.toContain(COPY.body.needsWaistNeck)
+      })
+
+      /// The guard that matters most: waist === neck returns exactly -450
+      /// from the raw formula, so this is the case that would otherwise
+      /// render a large negative percentage.
+      it("explains a waist that is not larger than the neck", async() => {
+         const panel = await advanced()
+
+         await panel.findAll("input[type=\"radio\"]")[SEX_MALE]?.setValue()
+
+         const fields = panel.findAll("input[type=\"text\"]")
+
+         await fields[WAIST]?.setValue("38")
+         await fields[NECK]?.setValue("38")
+
+         expect(panel.find(".notice").text()).toBe(COPY.body.waistUnderNeck)
+         expect(panel.text()).not.toContain("-450")
+      })
+
+      it("asks for a hip measurement on the female form", async() => {
+         const panel = await advanced()
+
+         await panel.findAll("input[type=\"radio\"]")[SEX_FEMALE]?.setValue()
+
+         const fields = panel.findAll("input[type=\"text\"]")
+
+         await fields[WAIST]?.setValue("76")
+         await fields[NECK]?.setValue("32")
+
+         expect(panel.text()).toContain(COPY.body.needsHip)
+
+         await fields[HIP]?.setValue("98")
+
+         // The panel's seeded 175 cm height, not the 165 cm fixture in
+         // test/unit/body.test.ts — the component supplies its own.
+         expect(panel.text()).toContain("26.8%")
+      })
+
+      /// The whole point of the selector: the reading never moves, the
+      /// label does — and it moves in the main readout, not just below.
+      it("relabels the same reading under another population", async() => {
+         const panel = await advanced()
+
+         await panel.findAll("input[type=\"text\"]")[1]?.setValue("73.5")
+
+         expect(panel.find(".bmi__value").text()).toBe("24")
+         expect(panel.find(".bmi__category").text()).toBe(COPY.bmi.categories.normal)
+
+         await panel.findAll("select")[0]?.setValue("india")
+
+         expect(panel.find(".bmi__value").text()).toBe("24")
+         expect(panel.find(".bmi__category").text()).toBe(COPY.bmi.categories.overweight)
+         expect(panel.text()).toContain(COPY.body.populations.india)
+      })
+
+      it("refuses to estimate for a child", async() => {
+         const panel = await advanced()
+
+         await panel.findAll("input[type=\"radio\"]")[SEX_MALE]?.setValue()
+         await panel.findAll("input[type=\"text\"]")[AGE]?.setValue("12")
+
+         expect(panel.find(".notice").text()).toBe(COPY.body.adultsOnly)
+      })
+
+      it("measures circumferences in inches under imperial units", async() => {
+         const panel = await advanced()
+
+         await panel.findAll("input[type=\"radio\"]")[SEX_MALE]?.setValue()
+         await panel.findAll("input[type=\"radio\"]")[SYSTEM_IMPERIAL]?.setValue()
+
+         expect(panel.text()).toContain(`${COPY.body.waistLabel} (${COPY.bmi.inches})`)
+
+         // Imperial height is two fields, so everything after it shifts by one.
+         const fields = panel.findAll("input[type=\"text\"]")
+
+         await fields[AGE + 1]?.setValue("30")
+         await fields[WAIST + 1]?.setValue("33.464567")
+         await fields[NECK + 1]?.setValue("14.960630")
+
+         // 85 cm and 38 cm in inches — the same reading as the metric case.
+         expect(panel.text()).toContain("16.9%")
+      })
+
+      /// Radios are labelled by their wrapping <label>, so only the
+      /// controls that need an explicit id/for pair are checked here.
+      it("labels every control", async() => {
+         const panel = await advanced()
+
+         const controls = [
+            ...panel.findAll("input[type=\"text\"]"),
+            ...panel.findAll("select"),
+         ]
+
+         for (const control of controls) {
+            const id = control.attributes("id")
+
+            expect(id, "control has no id to label").toBeTruthy()
+            expect(panel.find(`label[for="${id}"]`).exists(), `no label for ${id}`).toBe(true)
+         }
+      })
    })
 })
 
