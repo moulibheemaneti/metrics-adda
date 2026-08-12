@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 // Relative, not aliased: `~` is a Nuxt convenience that exists only inside
 // the Nuxt/Vite environment, and these tests run in plain Node.
 import { COPY, SEO } from "../../app/utils/copy"
-import { relatedTools, TOOLS, toolsByGroup } from "../../app/utils/tools"
+import { relatedTools, TOOL_GROUPS, TOOLS, toolsByGroup } from "../../app/utils/tools"
 import { DIMENSIONS } from "../../app/utils/units"
 
 describe("TOOLS", () => {
@@ -109,14 +109,18 @@ describe("toolsByGroup", () => {
       }
    })
 
+   /// Derived from TOOL_GROUPS rather than a hand-written list, so adding
+   /// a group cannot quietly leave its tools uncounted here.
    it("accounts for every tool across all groups", () => {
-      const grouped = [
-         ...toolsByGroup("converters"),
-         ...toolsByGroup("text"),
-         ...toolsByGroup("security"),
-      ]
+      const grouped = TOOL_GROUPS.flatMap((group) => toolsByGroup(group))
 
       expect(grouped).toHaveLength(TOOLS.length)
+   })
+
+   it("puts every tool in a known group", () => {
+      for (const tool of TOOLS) {
+         expect(TOOL_GROUPS).toContain(tool.group)
+      }
    })
 })
 

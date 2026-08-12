@@ -14,7 +14,18 @@
 
 import type { ToolKey } from "./copy"
 
-export type ToolGroup = "converters" | "text" | "security"
+/**
+ * Every group, in one array so nothing has to restate the list.
+ *
+ * `ToolGroup` derives from it rather than the other way round, which is
+ * what lets `test/unit/tools.test.ts` check that the groups account for
+ * every tool without hardcoding their names — the previous version listed
+ * three by hand and would have silently under-counted the moment a fourth
+ * arrived.
+ */
+export const TOOL_GROUPS = ["converters", "text", "security", "health"] as const
+
+export type ToolGroup = typeof TOOL_GROUPS[number]
 
 export interface ToolEntry {
    /** URL segment, and the identifier used in `relatedTools`. */
@@ -92,6 +103,12 @@ export const TOOLS: ToolEntry[] = [
       path: "/typing-speed-test",
       key: "typingTest",
       group: "text",
+   },
+   {
+      slug: "bmi-calculator",
+      path: "/bmi-calculator",
+      key: "bmiCalculator",
+      group: "health",
    },
    {
       slug: "password-generator",

@@ -22,6 +22,7 @@ and structured data.
 | `/word-counter` | Words, characters, sentences, paragraphs, reading time |
 | `/case-converter` | UPPER, lower, Title, Sentence, camelCase, snake_case + 4 more |
 | `/typing-speed-test` | Timed WPM test with accuracy and a personal best |
+| `/bmi-calculator` | Body mass index, its category, and the healthy weight range |
 | `/password-generator` | Strong random passwords with an entropy readout |
 
 Adding a tool means three things: an entry in `app/utils/tools.ts`, a copy block
