@@ -185,9 +185,16 @@ fix rather than a drive-by one.
   freshly added export in `app/utils/` fails typecheck until they are
   regenerated. commitguard runs typecheck pre-commit, so this bites at commit
   time.
-- **`ToolNav.vue`'s horizontal scroll is now the constraint, not a worry.** At
-  11 tools the row scrolls on most laptop widths. Ctrl+K search moves from
-  "nice" to "needed" if Tier 2 lands in full.
+- **`ToolNav.vue`'s horizontal scroll — fixed at 13 tools, and it will come
+  back.** The full names came to 1940px of links and scrolled at *every*
+  viewport width, 1920px included. Two causes: the labels, and a `$single-row`
+  breakpoint of 78rem measured back when there were five tools, which between
+  1248px and 1590px squeezed the nav into a middle column narrower than the
+  full-width row beneath it. The nav now renders `COPY.tools[key].short`
+  (1099px) and `$single-row` is 101rem; it fits from 1180px up.
+  `test/unit/tools.test.ts` holds a 110-character budget on the labels.
+  That budget has ~13 characters of headroom, so roughly two more tools —
+  Ctrl+K search is still the real answer past that.
 
 ---
 

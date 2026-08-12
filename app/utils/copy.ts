@@ -52,8 +52,19 @@ export interface SeoCopy {
 }
 
 export interface ToolCopy {
-   /** Short label for nav and cards. */
+   /** Full name, used on the hub cards, the related-tools grid and the menu sheet. */
    name: string
+   /**
+    * The header nav's label, which is the only place the full names do not
+    * fit: thirteen of them come to 1940px of links, so the row scrolled at
+    * every viewport width including 1920px.
+    *
+    * Only the nav uses it. `ToolCard` and `SiteMenu` keep `name`, which is
+    * what preserves the descriptive anchor text — every page already links
+    * to every other tool through the related-tools grid, so the nav is the
+    * one place the words can be dropped without losing them site-wide.
+    */
+   short: string
    /** One line under the name on the hub card, and on the OG card. */
    tagline: string
    /** The page's <h1>. */
@@ -170,78 +181,91 @@ export const SEO: Record<PageKey, SeoCopy> = {
 const TOOL_COPY: Record<ToolKey, ToolCopy> = {
    weightConverter: {
       name: "Weight Converter",
+      short: "Weight",
       tagline: "kg, lb, oz, g, stone and tonnes",
       heading: "Weight converter",
       lede: "Convert between metric and imperial weights. Type a value and every other unit updates as you go.",
    },
    heightConverter: {
       name: "Height Converter",
+      short: "Height",
       tagline: "cm, m, feet and inches",
       heading: "Height converter",
       lede: "Convert a height between centimetres and feet and inches — enter it either way round.",
    },
    temperatureConverter: {
       name: "Temperature Converter",
+      short: "Temperature",
       tagline: "Celsius, Fahrenheit and kelvin",
       heading: "Temperature converter",
       lede: "Convert between Celsius, Fahrenheit and kelvin. Type a value and read every scale at once.",
    },
    speedConverter: {
       name: "Speed Converter",
+      short: "Speed",
       tagline: "km/h, mph, m/s, ft/s and knots",
       heading: "Speed converter",
       lede: "Convert between metric, imperial and nautical speeds. Type a value and every other unit updates as you go.",
    },
    volumeConverter: {
       name: "Volume Converter",
+      short: "Volume",
       tagline: "Litres, millilitres, gallons, pints and cups",
       heading: "Volume converter",
       lede: "Convert between metric, US and imperial volumes. US and imperial units are listed separately, because a pint is not the same size in both.",
    },
    areaConverter: {
       name: "Area Converter",
+      short: "Area",
       tagline: "m², sq ft, acres, hectares and sq miles",
       heading: "Area converter",
       lede: "Convert between metric and imperial areas, from square millimetres to square miles. Type a value and every other unit updates as you go.",
    },
    timeConverter: {
       name: "Time Converter",
+      short: "Time",
       tagline: "Milliseconds, seconds, minutes, hours and days",
       heading: "Time converter",
       lede: "Convert between milliseconds, seconds, minutes, hours, days, weeks and years. Type a value and read every unit at once.",
    },
    dataStorageConverter: {
       name: "Data Storage Converter",
+      short: "Data Storage",
       tagline: "Bytes, KB, MB, GB, TB and KiB, MiB, GiB, TiB",
       heading: "Data storage converter",
       lede: "Convert between decimal and binary storage units. They are listed separately because a kilobyte is 1,000 bytes and a kibibyte is 1,024.",
    },
    wordCounter: {
       name: "Word Counter",
+      short: "Word Counter",
       tagline: "Words, characters, sentences and reading time",
       heading: "Word and character counter",
       lede: "Paste or type your text to count words, characters, sentences, paragraphs and lines. Your text never leaves your browser.",
    },
    caseConverter: {
       name: "Case Converter",
+      short: "Text Case",
       tagline: "UPPER, lower, Title, camelCase and snake_case",
       heading: "Case converter",
       lede: "Paste text and read it back in ten cases at once. Copy any one of them with a single click.",
    },
    bmiCalculator: {
       name: "BMI Calculator",
+      short: "BMI",
       tagline: "Body mass index, body fat and daily energy",
       heading: "BMI calculator",
       lede: "Enter your height and weight in metric or imperial units. You get your BMI, the category it falls in, and the weight range that would put you in the healthy band. Switch to advanced for body fat, lean mass and the calories your body burns.",
    },
    typingTest: {
       name: "Typing Speed Test",
+      short: "Typing Test",
       tagline: "Words per minute, accuracy and your best",
       heading: "Typing speed test",
       lede: "Type the words as they appear and see your speed in words per minute. Pick a length, a topic and a difficulty, mix in numbers and punctuation if you want them, and the clock starts with your first keystroke.",
    },
    passwordGenerator: {
       name: "Password Generator",
+      short: "Password",
       tagline: "Strong random passwords, generated locally",
       heading: "Password generator",
       lede: "Generate a strong random password. Everything happens in your browser — nothing is sent to a server or stored anywhere.",

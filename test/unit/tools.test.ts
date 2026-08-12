@@ -42,10 +42,35 @@ describe("registry and copy agree", () => {
 
          expect(copy, `${tool.key} has no copy`).toBeDefined()
          expect(copy.name.trim()).not.toBe("")
+         expect(copy.short.trim()).not.toBe("")
          expect(copy.tagline.trim()).not.toBe("")
          expect(copy.heading.trim()).not.toBe("")
          expect(copy.lede.trim()).not.toBe("")
       }
+   })
+
+   /// The header nav renders `short` and nothing else, and it has already
+   /// overflowed once — thirteen full names came to 1940px of links, which
+   /// scrolled at every viewport width including 1920px. These two bounds
+   /// are what stop it creeping back: no label longer than the full name it
+   /// stands in for, and a budget on the row as a whole.
+   it("keeps the nav labels short enough to fit one row", () => {
+      const CHARACTER_BUDGET = 110
+
+      let total = 0
+
+      for (const tool of TOOLS) {
+         const copy = COPY.tools[tool.key]
+
+         expect(
+            copy.short.length,
+            `${tool.key}: "${copy.short}" is longer than its full name`,
+         ).toBeLessThanOrEqual(copy.name.length)
+
+         total += copy.short.length
+      }
+
+      expect(total, "the nav labels have outgrown the header").toBeLessThanOrEqual(CHARACTER_BUDGET)
    })
 
    it("gives every tool search metadata", () => {

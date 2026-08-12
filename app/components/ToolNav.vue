@@ -12,7 +12,7 @@
       <ul class="tool-nav__list">
          <li v-for="tool in TOOLS" :key="tool.slug">
             <NuxtLink class="tool-nav__link" :to="tool.path">
-               {{ COPY.tools[tool.key].name }}
+               {{ COPY.tools[tool.key].short }}
             </NuxtLink>
          </li>
       </ul>

@@ -32,11 +32,19 @@
 @use "../assets/scss/abstracts" as *;
 
 /// The width at which brand, nav and toggle stop competing for one row.
-/// Measured, not guessed: the nav's five links come to 770px, the brand to
-/// 127px and the toggle to 216px, plus two 24px gaps and two 32px gutters —
-/// 1225px before anything has to give. Below this the header splits into
-/// two rows rather than squeezing the nav into whatever is left over.
-$single-row: 78rem;
+///
+/// Measured, not guessed — and re-measured at thirteen tools, because the
+/// original 78rem was taken when there were five. Everything around the nav
+/// is fixed: brand 127px, toggle 216px, two 24px gaps and two 32px gutters
+/// come to 491px of overhead at every width. The nav's short labels measure
+/// 1099px, so one row needs 1590px; this is the next round figure above it.
+///
+/// 78rem was actively worse than no breakpoint at all here. Between 1248px
+/// and 1590px it put the nav in the middle column, where it had *less* room
+/// than the full-width row beneath would have given it — 1021px of track at
+/// a 1512px viewport against 1448px two rows down. The links scrolled on
+/// exactly the widths most laptops use.
+$single-row: 101rem;
 
 /// Below this the nav and the theme control live in the sheet behind the
 /// hamburger instead of in the header: at 320px the brand, a hamburger
