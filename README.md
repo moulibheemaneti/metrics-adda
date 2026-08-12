@@ -18,6 +18,7 @@ and structured data.
 | `/volume-converter` | ml, litres, m³, and US **and** imperial gallons, pints, cups |
 | `/area-converter` | mm², cm², m², hectares, km², in², ft², yd², acres, mi² |
 | `/time-converter` | ms, seconds, minutes, hours, days, weeks, years |
+| `/data-storage-converter` | bits, bytes, decimal KB–PB **and** binary KiB–PiB |
 | `/word-counter` | Words, characters, sentences, paragraphs, reading time |
 | `/typing-speed-test` | Timed WPM test with accuracy and a personal best |
 | `/password-generator` | Strong random passwords with an entropy readout |

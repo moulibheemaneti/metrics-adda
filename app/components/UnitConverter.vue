@@ -23,7 +23,14 @@
                {{ COPY.converter.fromLabel }}
             </label>
             <select :id="`${uid}-from-unit`" v-model="fromUnit" class="control control--select">
-               <option v-for="unit in activeDimension.units" :key="unit.id" :value="unit.id">
+               <template v-if="groups">
+                  <optgroup v-for="group in groups" :key="group.id" :label="groupLabel(group.id)">
+                     <option v-for="unit in group.units" :key="unit.id" :value="unit.id">
+                        {{ unitLabel(unit.id) }}
+                     </option>
+                  </optgroup>
+               </template>
+               <option v-for="unit in activeDimension.units" v-else :key="unit.id" :value="unit.id">
                   {{ unitLabel(unit.id) }}
                </option>
             </select>
@@ -60,7 +67,14 @@
                {{ COPY.converter.toLabel }}
             </label>
             <select :id="`${uid}-to-unit`" v-model="toUnit" class="control control--select">
-               <option v-for="unit in activeDimension.units" :key="unit.id" :value="unit.id">
+               <template v-if="groups">
+                  <optgroup v-for="group in groups" :key="group.id" :label="groupLabel(group.id)">
+                     <option v-for="unit in group.units" :key="unit.id" :value="unit.id">
+                        {{ unitLabel(unit.id) }}
+                     </option>
+                  </optgroup>
+               </template>
+               <option v-for="unit in activeDimension.units" v-else :key="unit.id" :value="unit.id">
                   {{ unitLabel(unit.id) }}
                </option>
             </select>
@@ -94,9 +108,17 @@
                      </th>
                   </tr>
                </thead>
-               <tbody>
+               <!-- One tbody per heading. An ungrouped dimension gets a
+                    single unlabelled one, so both cases share the row
+                    markup rather than duplicating it. -->
+               <tbody v-for="group in tableGroups" :key="group.id">
+                  <tr v-if="group.id">
+                     <th class="data-table__cell data-table__group" colspan="2" scope="colgroup">
+                        {{ groupLabel(group.id) }}
+                     </th>
+                  </tr>
                   <tr
-                     v-for="unit in activeDimension.units"
+                     v-for="unit in group.units"
                      :key="unit.id"
                      class="data-table__row"
                      :class="{ 'data-table__row--active': unit.id === toUnit }"
@@ -118,7 +140,7 @@
 
 <script lang="ts" setup>
 import type { Ref } from "vue"
-import type { DimensionId } from "~/utils/units"
+import type { DimensionId, UnitGroup } from "~/utils/units"
 
 const props = defineProps<{
    /** Which set of units this instance converts between. */
@@ -145,6 +167,19 @@ const unitLabel = (id: string): string => {
 
    return unit ? `${unit.name} (${unit.symbol})` : id
 }
+
+/** Headings for this dimension, or `null` when its units are a flat list. */
+const groups = computed(() => unitGroups(activeDimension.value))
+
+/**
+ * The same split for the reference table, with the ungrouped case folded
+ * into one anonymous group so the table body has a single shape to render.
+ */
+const tableGroups = computed<UnitGroup[]>(() =>
+   groups.value ?? [{ id: "", units: activeDimension.value.units }],
+)
+
+const groupLabel = (id: string): string => COPY.unitGroups[props.dimension]?.[id] ?? id
 
 /**
  * True only when a field holds text that is not a number — not when it is

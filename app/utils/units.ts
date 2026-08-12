@@ -25,6 +25,7 @@ export type DimensionId
      | "volume"
      | "area"
      | "time"
+     | "data"
 
 export interface UnitDefinition {
    /** Stable key. Also the copy key under `COPY.units.<dimension>.<id>`. */
@@ -33,6 +34,23 @@ export interface UnitDefinition {
    factor: number
    /** Added *after* scaling. Only non-zero for temperature scales. */
    offset?: number
+   /**
+    * Optional heading this unit sits under, as a key into
+    * `COPY.unitGroups.<dimension>`.
+    *
+    * Only set where a flat list would mislead — data storage, where
+    * "Kilobyte" and "Kibibyte" are a letter apart and a thousand-and-a-bit
+    * bytes apart. A dimension either groups every unit or none of them;
+    * `test/unit/units.test.ts` holds that line, because a half-grouped
+    * dropdown would silently drop the ungrouped options in most browsers.
+    */
+   group?: string
+}
+
+/** One heading and the units filed under it, for a grouped dimension. */
+export interface UnitGroup {
+   id: string
+   units: UnitDefinition[]
 }
 
 export interface Dimension {
@@ -76,6 +94,9 @@ const METRES_PER_MILE = METRES_PER_INCH * INCHES_PER_MILE
  */
 const LITRES_PER_US_GALLON = 231 * (METRES_PER_INCH * 100) ** 3 / 1000
 const LITRES_PER_IMPERIAL_GALLON = 4.54609
+
+/** Bytes per kibibyte — 2^10, the base of every IEC binary prefix. */
+const BYTES_PER_KIBIBYTE = 1024
 
 export const DIMENSIONS: Record<DimensionId, Dimension> = {
    mass: {
@@ -198,6 +219,62 @@ export const DIMENSIONS: Record<DimensionId, Dimension> = {
          { id: "yr", factor: SECONDS_PER_HOUR * 24 * 365 },
       ],
    },
+   data: {
+      // The only grouped dimension, and the reason grouping exists: a
+      // kilobyte and a kibibyte differ by one letter on screen and by 24
+      // bytes in fact, and the gap compounds — a terabyte and a tebibyte
+      // are about 10% apart. Listing all twelve flat would put "Kilobyte"
+      // and "Kibibyte" adjacent with nothing to say which is which.
+      //
+      // Base is the byte. The bit is included because network speeds are
+      // quoted in bits while storage is quoted in bytes, which is its own
+      // reliable source of confusion.
+      id: "data",
+      base: "byte",
+      units: [
+         { id: "bit", factor: 1 / 8, group: "base" },
+         { id: "byte", factor: 1, group: "base" },
+         { id: "kb", factor: 1e3, group: "decimal" },
+         { id: "mb", factor: 1e6, group: "decimal" },
+         { id: "gb", factor: 1e9, group: "decimal" },
+         { id: "tb", factor: 1e12, group: "decimal" },
+         { id: "pb", factor: 1e15, group: "decimal" },
+         { id: "kib", factor: BYTES_PER_KIBIBYTE, group: "binary" },
+         { id: "mib", factor: BYTES_PER_KIBIBYTE ** 2, group: "binary" },
+         { id: "gib", factor: BYTES_PER_KIBIBYTE ** 3, group: "binary" },
+         { id: "tib", factor: BYTES_PER_KIBIBYTE ** 4, group: "binary" },
+         { id: "pib", factor: BYTES_PER_KIBIBYTE ** 5, group: "binary" },
+      ],
+   },
+}
+
+/**
+ * The dimension's units split into their headings, in declaration order,
+ * or `null` when the dimension is ungrouped.
+ *
+ * Returning `null` rather than one synthetic group keeps the flat case
+ * exactly as it was for the seven dimensions that do not group.
+ */
+export function unitGroups(dimension: Dimension): UnitGroup[] | null {
+   if (!dimension.units.some((unit) => unit.group)) return null
+
+   const groups: UnitGroup[] = []
+
+   for (const unit of dimension.units) {
+      // A unit with no group in a grouped dimension is a copy/registry
+      // error, not a layout choice — see the note on `UnitDefinition.group`.
+      const id = unit.group ?? ""
+      const existing = groups.find((group) => group.id === id)
+
+      if (existing) {
+         existing.units.push(unit)
+      }
+      else {
+         groups.push({ id, units: [unit] })
+      }
+   }
+
+   return groups
 }
 
 /** Look up a unit, failing loudly rather than silently converting wrongly. */

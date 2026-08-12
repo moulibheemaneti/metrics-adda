@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 // Relative, not aliased: `~` is a Nuxt convenience that exists only inside
 // the Nuxt/Vite environment, and these tests run in plain Node.
+import { COPY } from "../../app/utils/copy"
 import {
    convert,
    convertToAll,
@@ -8,6 +9,7 @@ import {
    findUnit,
    fromFeetInches,
    toFeetInches,
+   unitGroups,
 } from "../../app/utils/units"
 
 /// Known-value checks come from the exact legal definitions (an inch is
@@ -188,6 +190,79 @@ describe("convert — time", () => {
    it("offers no month, which has no fixed length", () => {
       expect(time.units.map((unit) => unit.id)).not.toContain("mo")
       expect(() => convert(1, "mo", "d", time)).toThrow(/Unknown time unit/)
+   })
+})
+
+/// The decimal/binary split is the entire point of this dimension, so the
+/// two families are pinned apart rather than just spot-checked.
+
+describe("convert — data storage", () => {
+   const { data } = DIMENSIONS
+
+   it("keeps decimal prefixes on powers of 1,000", () => {
+      expect(convert(1, "kb", "byte", data)).toBeCloseTo(1000, 10)
+      expect(convert(1, "mb", "kb", data)).toBeCloseTo(1000, 10)
+      expect(convert(1, "tb", "byte", data)).toBeCloseTo(1e12, 4)
+   })
+
+   it("keeps binary prefixes on powers of 1,024", () => {
+      expect(convert(1, "kib", "byte", data)).toBeCloseTo(1024, 10)
+      expect(convert(1, "mib", "byte", data)).toBeCloseTo(1_048_576, 8)
+      expect(convert(1, "gib", "byte", data)).toBeCloseTo(1_073_741_824, 6)
+   })
+
+   it("explains the 1 TB drive that reports 931 GB", () => {
+      expect(convert(1, "tb", "gib", data)).toBeCloseTo(931.3225746155, 8)
+   })
+
+   it("widens the decimal/binary gap at every step", () => {
+      expect(convert(1, "kib", "kb", data)).toBeCloseTo(1.024, 10)
+      expect(convert(1, "tib", "tb", data)).toBeCloseTo(1.099511627776, 10)
+   })
+
+   it("puts eight bits in a byte", () => {
+      expect(convert(1, "byte", "bit", data)).toBeCloseTo(8, 10)
+      // 100 Mbps is 12.5 MB/s, the figure the FAQ quotes.
+      expect(convert(100, "mb", "byte", data) / 8).toBeCloseTo(12.5e6, 6)
+   })
+})
+
+describe("unitGroups", () => {
+   it("returns null for a dimension with no groups", () => {
+      for (const id of ["mass", "length", "temperature", "speed", "volume", "area", "time"] as const) {
+         expect(unitGroups(DIMENSIONS[id])).toBeNull()
+      }
+   })
+
+   it("splits a grouped dimension in declaration order", () => {
+      const groups = unitGroups(DIMENSIONS.data)
+
+      expect(groups?.map((group) => group.id)).toEqual(["base", "decimal", "binary"])
+   })
+
+   it("keeps every unit, exactly once", () => {
+      const groups = unitGroups(DIMENSIONS.data) ?? []
+      const grouped = groups.flatMap((group) => group.units)
+
+      expect(grouped).toEqual(DIMENSIONS.data.units)
+   })
+
+   /// A dimension that grouped only some of its units would render the
+   /// rest into an empty-labelled optgroup, which most browsers drop.
+   it("leaves no dimension half-grouped", () => {
+      for (const dimension of Object.values(DIMENSIONS)) {
+         const grouped = dimension.units.filter((unit) => unit.group).length
+
+         expect([0, dimension.units.length]).toContain(grouped)
+      }
+   })
+
+   it("gives every group a label", () => {
+      for (const dimension of Object.values(DIMENSIONS)) {
+         for (const group of unitGroups(dimension) ?? []) {
+            expect(COPY.unitGroups[dimension.id]?.[group.id]).toBeTruthy()
+         }
+      }
    })
 })
 

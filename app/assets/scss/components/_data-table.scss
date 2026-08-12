@@ -65,6 +65,24 @@
       }
    }
 
+   // Heading row inside a grouped table — "Decimal", "Binary". Styled like
+   // the column head rather than like a unit, so a reader scanning the
+   // first column does not mistake it for another unit name.
+   &__group {
+      padding-block-start: var(--space-sm);
+      color: var(--muted);
+      font-size: px-to-rem(11);
+      font-weight: var(--weight-label);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+   }
+
+   // The first group sits directly under the column heads, which already
+   // carry their own spacing.
+   tbody:first-of-type &__group {
+      padding-block-start: var(--space-2xs);
+   }
+
    &__unit {
       color: var(--muted);
       font-weight: var(--weight-body);

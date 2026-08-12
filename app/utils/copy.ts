@@ -24,6 +24,7 @@ export type ToolKey
      | "volumeConverter"
      | "areaConverter"
      | "timeConverter"
+     | "dataStorageConverter"
      | "wordCounter"
      | "typingTest"
      | "passwordGenerator"
@@ -116,6 +117,11 @@ export const SEO: Record<PageKey, SeoCopy> = {
       description:
          "Convert time between milliseconds, seconds, minutes, hours, days, weeks and years. Type a value and read every unit at once — free and instant.",
    },
+   dataStorageConverter: {
+      title: "Data Storage Converter: KB, MB, GB & TB",
+      description:
+         "Convert data storage between bytes, KB, MB, GB, TB and their binary counterparts KiB, MiB, GiB and TiB. See why a 1 TB drive shows as 931 GB.",
+   },
    wordCounter: {
       title: "Word & Character Counter",
       description:
@@ -175,6 +181,12 @@ const TOOL_COPY: Record<ToolKey, ToolCopy> = {
       tagline: "Milliseconds, seconds, minutes, hours and days",
       heading: "Time converter",
       lede: "Convert between milliseconds, seconds, minutes, hours, days, weeks and years. Type a value and read every unit at once.",
+   },
+   dataStorageConverter: {
+      name: "Data Storage Converter",
+      tagline: "Bytes, KB, MB, GB, TB and KiB, MiB, GiB, TiB",
+      heading: "Data storage converter",
+      lede: "Convert between decimal and binary storage units. They are listed separately because a kilobyte is 1,000 bytes and a kibibyte is 1,024.",
    },
    wordCounter: {
       name: "Word Counter",
@@ -270,6 +282,34 @@ const UNIT_COPY: Record<DimensionId, Record<string, UnitCopy>> = {
       d: { name: "Day", symbol: "d" },
       wk: { name: "Week", symbol: "wk" },
       yr: { name: "Year", symbol: "yr" },
+   },
+   data: {
+      bit: { name: "Bit", symbol: "b" },
+      byte: { name: "Byte", symbol: "B" },
+      kb: { name: "Kilobyte", symbol: "kB" },
+      mb: { name: "Megabyte", symbol: "MB" },
+      gb: { name: "Gigabyte", symbol: "GB" },
+      tb: { name: "Terabyte", symbol: "TB" },
+      pb: { name: "Petabyte", symbol: "PB" },
+      kib: { name: "Kibibyte", symbol: "KiB" },
+      mib: { name: "Mebibyte", symbol: "MiB" },
+      gib: { name: "Gibibyte", symbol: "GiB" },
+      tib: { name: "Tebibyte", symbol: "TiB" },
+      pib: { name: "Pebibyte", symbol: "PiB" },
+   },
+}
+
+/**
+ * Headings for the dimensions whose units are grouped, keyed by the
+ * `group` on each `UnitDefinition`. Only data storage groups today, so
+ * this is deliberately partial rather than a full `Record<DimensionId, …>`
+ * of mostly-empty objects.
+ */
+const UNIT_GROUP_COPY: Partial<Record<DimensionId, Record<string, string>>> = {
+   data: {
+      base: "Bits and bytes",
+      decimal: "Decimal — powers of 1,000",
+      binary: "Binary — powers of 1,024",
    },
 }
 
@@ -374,6 +414,20 @@ const FAQ_COPY: Record<ToolKey, FaqEntry[]> = {
       {
          question: "How long is the year used here?",
          answer: "365 days, which is 31,536,000 seconds. Leap years and the 365.2425-day calendar year are deliberately not applied, so the figure stays predictable.",
+      },
+   ],
+   dataStorageConverter: [
+      {
+         question: "Why does my 1 TB drive show as 931 GB?",
+         answer: "The drive really is 1 TB — a trillion bytes. Your operating system divides by 1,024 rather than 1,000 but still writes “GB”, and a trillion bytes is 931.32 GiB. Nothing is missing.",
+      },
+      {
+         question: "What is the difference between KB and KiB?",
+         answer: "A kilobyte is 1,000 bytes; a kibibyte is 1,024. The gap compounds at every step, so a terabyte and a tebibyte are about 10% apart rather than 2.4%.",
+      },
+      {
+         question: "How many bits are in a byte?",
+         answer: "Eight. Storage is quoted in bytes and network speed in bits, which is why a 100 Mbps connection downloads at about 12.5 MB/s rather than 100.",
       },
    ],
    wordCounter: [
@@ -661,5 +715,6 @@ export const COPY = {
    },
    tools: TOOL_COPY,
    units: UNIT_COPY,
+   unitGroups: UNIT_GROUP_COPY,
    faq: FAQ_COPY,
 }
