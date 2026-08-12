@@ -21,9 +21,22 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 
 PORT="${PORT:-3123}"
-# Routes checked for the full meta/canonical/OG/JSON-LD set. Add a page
-# here when you add one to app/pages, so its metadata is asserted too.
-ROUTES="${ROUTES:-/ /weight-converter /height-converter /temperature-converter /word-counter /password-generator /privacy-policy}"
+
+# Routes checked for the full meta/canonical/OG/JSON-LD set.
+#
+# The tool routes are read out of the registry rather than repeated here:
+# `app/utils/tools.ts` is already the single source of truth for the nav,
+# the hub grid and the cross-links, and Bun runs the TypeScript directly
+# (the file's only import is type-only, so nothing else is pulled in). The
+# hand-maintained list this replaces had already drifted — /typing-speed-test
+# shipped without ever being asserted here.
+#
+# Only the two pages that are not tools stay written out.
+TOOL_ROUTES="$(bun -e 'import { TOOLS } from "./app/utils/tools.ts"; console.log(TOOLS.map((t) => t.path).join(" "))')" || {
+   echo "could not read the tool registry — is bun on PATH?" >&2
+   exit 1
+}
+ROUTES="${ROUTES:-/ $TOOL_ROUTES /privacy-policy}"
 SERVER_PID=""
 
 # ── pretty output ────────────────────────────────────────────────────────────

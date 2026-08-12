@@ -14,7 +14,13 @@ and structured data.
 | `/weight-converter` | kg, g, mg, tonnes, oz, lb, stone, US tons |
 | `/height-converter` | cm and metres ⇄ feet and inches, plus all length units |
 | `/temperature-converter` | Celsius, Fahrenheit, kelvin |
+| `/speed-converter` | km/h, mph, m/s, ft/s, knots |
+| `/volume-converter` | ml, litres, m³, and US **and** imperial gallons, pints, cups |
+| `/area-converter` | mm², cm², m², hectares, km², in², ft², yd², acres, mi² |
+| `/time-converter` | ms, seconds, minutes, hours, days, weeks, years |
+| `/data-storage-converter` | bits, bytes, decimal KB–PB **and** binary KiB–PiB |
 | `/word-counter` | Words, characters, sentences, paragraphs, reading time |
+| `/typing-speed-test` | Timed WPM test with accuracy and a personal best |
 | `/password-generator` | Strong random passwords with an entropy readout |
 
 Adding a tool means three things: an entry in `app/utils/tools.ts`, a copy block

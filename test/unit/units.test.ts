@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 // Relative, not aliased: `~` is a Nuxt convenience that exists only inside
 // the Nuxt/Vite environment, and these tests run in plain Node.
+import { COPY } from "../../app/utils/copy"
 import {
    convert,
    convertToAll,
@@ -8,6 +9,7 @@ import {
    findUnit,
    fromFeetInches,
    toFeetInches,
+   unitGroups,
 } from "../../app/utils/units"
 
 /// Known-value checks come from the exact legal definitions (an inch is
@@ -61,6 +63,206 @@ describe("convert — length", () => {
 
    it("converts a common height", () => {
       expect(convert(180.34, "cm", "in", length)).toBeCloseTo(71, 8)
+   })
+})
+
+describe("convert — speed", () => {
+   const { speed } = DIMENSIONS
+
+   it("converts metres per second to km/h by exactly 3.6", () => {
+      expect(convert(1, "mps", "kmh", speed)).toBeCloseTo(3.6, 10)
+   })
+
+   it("converts a motorway speed to miles per hour", () => {
+      expect(convert(100, "kmh", "mph", speed)).toBeCloseTo(62.1371192237, 8)
+   })
+
+   it("derives miles per hour from the exact mile", () => {
+      // A mile is 1609.344 m exactly, so 1 mph is that many metres per hour.
+      expect(convert(1, "mph", "mps", speed)).toBeCloseTo(1609.344 / 3600, 12)
+   })
+
+   it("converts feet per second against the exact foot", () => {
+      expect(convert(1, "fps", "mps", speed)).toBeCloseTo(0.3048, 12)
+   })
+
+   it("derives the knot from the nautical mile, not the land mile", () => {
+      expect(convert(1, "kn", "mps", speed)).toBeCloseTo(1852 / 3600, 12)
+      // The two miles differ, so a knot must not equal a mile per hour.
+      expect(convert(1, "kn", "mph", speed)).toBeCloseTo(1.1507794480, 9)
+   })
+})
+
+/// Volume is the dimension where a wrong answer looks most plausible: the
+/// US and imperial units share names, so a mix-up reads as a normal number
+/// rather than as an obvious error. Both systems are pinned here.
+
+describe("convert — volume", () => {
+   const { volume } = DIMENSIONS
+
+   it("derives the US gallon from 231 cubic inches exactly", () => {
+      expect(convert(1, "us-gal", "l", volume)).toBeCloseTo(3.785411784, 12)
+   })
+
+   it("uses the exact 1985 definition of the imperial gallon", () => {
+      expect(convert(1, "imp-gal", "l", volume)).toBeCloseTo(4.54609, 12)
+   })
+
+   it("keeps the two gallons about a fifth apart", () => {
+      expect(convert(1, "imp-gal", "us-gal", volume)).toBeCloseTo(1.2009499255, 9)
+   })
+
+   it("divides each gallon by its own number of fluid ounces", () => {
+      // 128 for the US gallon, 160 for the imperial one.
+      expect(convert(1, "us-gal", "us-floz", volume)).toBeCloseTo(128, 10)
+      expect(convert(1, "imp-gal", "imp-floz", volume)).toBeCloseTo(160, 10)
+   })
+
+   it("keeps the two pints distinct", () => {
+      expect(convert(1, "us-pt", "ml", volume)).toBeCloseTo(473.176473, 9)
+      expect(convert(1, "imp-pt", "ml", volume)).toBeCloseTo(568.26125, 9)
+   })
+
+   it("nests the US spoons and cups inside the gallon", () => {
+      expect(convert(1, "us-floz", "us-tbsp", volume)).toBeCloseTo(2, 10)
+      expect(convert(1, "us-tbsp", "us-tsp", volume)).toBeCloseTo(3, 10)
+      expect(convert(1, "us-cup", "us-floz", volume)).toBeCloseTo(8, 10)
+      expect(convert(1, "us-qt", "us-pt", volume)).toBeCloseTo(2, 10)
+   })
+
+   it("scales the metric units against the litre", () => {
+      expect(convert(1, "m3", "l", volume)).toBeCloseTo(1000, 10)
+      expect(convert(1, "l", "ml", volume)).toBeCloseTo(1000, 10)
+   })
+})
+
+/// Area factors are length factors squared, which is the one thing a
+/// reader is most likely to assume works linearly.
+
+describe("convert — area", () => {
+   const { area } = DIMENSIONS
+
+   it("squares the length conversion rather than reusing it", () => {
+      expect(convert(1, "m2", "ft2", area)).toBeCloseTo(10.7639104167, 8)
+      // Not 3.2808399 — that would be the unsquared length ratio.
+      expect(convert(1, "ft2", "m2", area)).toBeCloseTo(0.09290304, 10)
+   })
+
+   it("converts square inches exactly", () => {
+      expect(convert(1, "in2", "cm2", area)).toBeCloseTo(6.4516, 10)
+   })
+
+   it("defines the acre as 4,840 square yards", () => {
+      expect(convert(1, "acre", "yd2", area)).toBeCloseTo(4840, 8)
+      expect(convert(1, "acre", "m2", area)).toBeCloseTo(4046.8564224, 7)
+   })
+
+   it("relates the hectare and the acre", () => {
+      expect(convert(1, "ha", "m2", area)).toBeCloseTo(10_000, 8)
+      expect(convert(1, "ha", "acre", area)).toBeCloseTo(2.4710538147, 8)
+   })
+
+   it("makes a square mile 640 acres", () => {
+      expect(convert(1, "mi2", "acre", area)).toBeCloseTo(640, 6)
+   })
+})
+
+describe("convert — time", () => {
+   const { time } = DIMENSIONS
+
+   it("converts the everyday units", () => {
+      expect(convert(1, "min", "s", time)).toBeCloseTo(60, 10)
+      expect(convert(1, "h", "min", time)).toBeCloseTo(60, 10)
+      expect(convert(1, "d", "h", time)).toBeCloseTo(24, 10)
+      expect(convert(1, "wk", "d", time)).toBeCloseTo(7, 10)
+   })
+
+   it("puts 86,400 seconds in a day", () => {
+      expect(convert(1, "d", "s", time)).toBeCloseTo(86_400, 8)
+      expect(convert(1, "wk", "s", time)).toBeCloseTo(604_800, 8)
+   })
+
+   it("uses a 365-day year, as the FAQ states", () => {
+      expect(convert(1, "yr", "d", time)).toBeCloseTo(365, 8)
+      expect(convert(1, "yr", "s", time)).toBeCloseTo(31_536_000, 6)
+   })
+
+   it("offers no month, which has no fixed length", () => {
+      expect(time.units.map((unit) => unit.id)).not.toContain("mo")
+      expect(() => convert(1, "mo", "d", time)).toThrow(/Unknown time unit/)
+   })
+})
+
+/// The decimal/binary split is the entire point of this dimension, so the
+/// two families are pinned apart rather than just spot-checked.
+
+describe("convert — data storage", () => {
+   const { data } = DIMENSIONS
+
+   it("keeps decimal prefixes on powers of 1,000", () => {
+      expect(convert(1, "kb", "byte", data)).toBeCloseTo(1000, 10)
+      expect(convert(1, "mb", "kb", data)).toBeCloseTo(1000, 10)
+      expect(convert(1, "tb", "byte", data)).toBeCloseTo(1e12, 4)
+   })
+
+   it("keeps binary prefixes on powers of 1,024", () => {
+      expect(convert(1, "kib", "byte", data)).toBeCloseTo(1024, 10)
+      expect(convert(1, "mib", "byte", data)).toBeCloseTo(1_048_576, 8)
+      expect(convert(1, "gib", "byte", data)).toBeCloseTo(1_073_741_824, 6)
+   })
+
+   it("explains the 1 TB drive that reports 931 GB", () => {
+      expect(convert(1, "tb", "gib", data)).toBeCloseTo(931.3225746155, 8)
+   })
+
+   it("widens the decimal/binary gap at every step", () => {
+      expect(convert(1, "kib", "kb", data)).toBeCloseTo(1.024, 10)
+      expect(convert(1, "tib", "tb", data)).toBeCloseTo(1.099511627776, 10)
+   })
+
+   it("puts eight bits in a byte", () => {
+      expect(convert(1, "byte", "bit", data)).toBeCloseTo(8, 10)
+      // 100 Mbps is 12.5 MB/s, the figure the FAQ quotes.
+      expect(convert(100, "mb", "byte", data) / 8).toBeCloseTo(12.5e6, 6)
+   })
+})
+
+describe("unitGroups", () => {
+   it("returns null for a dimension with no groups", () => {
+      for (const id of ["mass", "length", "temperature", "speed", "volume", "area", "time"] as const) {
+         expect(unitGroups(DIMENSIONS[id])).toBeNull()
+      }
+   })
+
+   it("splits a grouped dimension in declaration order", () => {
+      const groups = unitGroups(DIMENSIONS.data)
+
+      expect(groups?.map((group) => group.id)).toEqual(["base", "decimal", "binary"])
+   })
+
+   it("keeps every unit, exactly once", () => {
+      const groups = unitGroups(DIMENSIONS.data) ?? []
+      const grouped = groups.flatMap((group) => group.units)
+
+      expect(grouped).toEqual(DIMENSIONS.data.units)
+   })
+
+   /// A dimension that grouped only some of its units would render the
+   /// rest into an empty-labelled optgroup, which most browsers drop.
+   it("leaves no dimension half-grouped", () => {
+      for (const dimension of Object.values(DIMENSIONS)) {
+         const grouped = dimension.units.filter((unit) => unit.group).length
+
+         expect([0, dimension.units.length]).toContain(grouped)
+      }
+   })
+
+   it("gives every group a label", () => {
+      for (const dimension of Object.values(DIMENSIONS)) {
+         for (const group of unitGroups(dimension) ?? []) {
+            expect(COPY.unitGroups[dimension.id]?.[group.id]).toBeTruthy()
+         }
+      }
    })
 })
 
