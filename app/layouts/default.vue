@@ -32,11 +32,18 @@
 @use "../assets/scss/abstracts" as *;
 
 /// The width at which brand, nav and toggle stop competing for one row.
-/// Measured, not guessed: the nav's five links come to 770px, the brand to
-/// 127px and the toggle to 216px, plus two 24px gaps and two 32px gutters —
-/// 1225px before anything has to give. Below this the header splits into
-/// two rows rather than squeezing the nav into whatever is left over.
-$single-row: 78rem;
+///
+/// Measured, not guessed. Brand 127px, toggle 216px, two 24px gaps and two
+/// 32px gutters come to 491px of overhead at every width; the nav's four
+/// category items measure 455px, so one row needs 946px.
+///
+/// This was 78rem while the nav listed every tool by name, and by thirteen
+/// tools that row was 1940px of links — it overflowed at *every* viewport
+/// width, 1920px included. Grouping the tools is what let the figure come
+/// down rather than go up: the nav's width is now bounded by the number of
+/// categories, which changes about once a year, instead of by the number
+/// of tools, which is the thing that grows.
+$single-row: 60rem;
 
 /// Below this the nav and the theme control live in the sheet behind the
 /// hamburger instead of in the header: at 320px the brand, a hamburger
@@ -64,7 +71,7 @@ $compact: 40rem;
    /// - phone: brand and a hamburger, one row. The links and the theme
    ///   control move into the sheet that button opens.
    /// - between: brand and the theme control on one row, the nav on a
-   ///   full-width row of its own beneath, scrolling if it must.
+   ///   full-width row of its own beneath.
    /// - `$single-row` and up: all three side by side, as before.
    &__topbar {
       position: sticky;
@@ -141,9 +148,7 @@ $compact: 40rem;
    }
 
    // Centred between the brand and the toggle, as the old space-between
-   // row had it. The cap is what keeps a nav too wide for the middle
-   // column scrolling inside it instead of overflowing both ways and
-   // printing itself over its neighbours.
+   // row had it.
    @media (width >= $single-row) {
       &__nav {
          justify-self: center;

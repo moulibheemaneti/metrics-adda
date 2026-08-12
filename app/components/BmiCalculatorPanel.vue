@@ -1,6 +1,25 @@
 <template>
    <div class="bmi stack stack--tight">
       <div class="card card--panel stack stack--tight">
+         <!-- Radios rather than tabs: advanced is basic *plus* more, not a
+              swapped panel, and a fieldset gets arrow keys and the "1 of
+              2" announcement without rebuilding either. -->
+         <fieldset class="bmi__system">
+            <legend class="field__label">
+               {{ COPY.bmi.modeLabel }}
+            </legend>
+            <label v-for="option in MODES" :key="option" class="bmi__system-option">
+               <input
+                  v-model="mode"
+                  class="bmi__system-input radio-dot"
+                  type="radio"
+                  :name="`${uid}-mode`"
+                  :value="option"
+               />
+               <span>{{ COPY.bmi[option] }}</span>
+            </label>
+         </fieldset>
+
          <fieldset class="bmi__system">
             <legend class="field__label">
                {{ COPY.bmi.systemLabel }}
@@ -8,7 +27,7 @@
             <label v-for="option in SYSTEMS" :key="option" class="bmi__system-option">
                <input
                   v-model="system"
-                  class="bmi__system-input"
+                  class="bmi__system-input radio-dot"
                   type="radio"
                   :name="`${uid}-system`"
                   :value="option"
@@ -79,6 +98,28 @@
                />
             </div>
          </div>
+
+         <!-- Advanced only. Basic is the WHO figures and nothing else —
+              the whole point of basic is that it matches the chart on the
+              wall. -->
+         <div v-if="mode === 'advanced'" class="field">
+            <label class="field__label" :for="`${uid}-population`">
+               {{ COPY.body.populationLabel }}
+            </label>
+            <select
+               :id="`${uid}-population`"
+               v-model="population"
+               class="control control--select"
+               :aria-describedby="`${uid}-population-hint`"
+            >
+               <option v-for="option in BMI_POPULATIONS" :key="option" :value="option">
+                  {{ COPY.body.populations[option] }}
+               </option>
+            </select>
+            <p :id="`${uid}-population-hint`" class="field__hint">
+               {{ COPY.body.populationNote }}
+            </p>
+         </div>
       </div>
 
       <div class="card card--panel stack stack--tight">
@@ -117,6 +158,13 @@
                </strong>
             </p>
 
+            <!-- A reading is never shown without naming the standard it
+                 came from. That is what makes the selector safe. -->
+            <p v-if="mode === 'advanced'" class="bmi__range">
+               {{ COPY.body.populationApplied }}
+               <strong>{{ COPY.body.populations[population] }}</strong>
+            </p>
+
             <p class="visually-hidden" aria-live="polite">
                {{ spoken }}
             </p>
@@ -126,6 +174,15 @@
             {{ COPY.bmi.disclaimer }}
          </p>
       </div>
+
+      <BodyCompositionPanel
+         v-if="mode === 'advanced'"
+         :metres="metres"
+         :kilograms="kilograms"
+         :bmi="bmi"
+         :system="system"
+         :population="population"
+      />
    </div>
 </template>
 
@@ -136,9 +193,16 @@
 
 const SYSTEMS = ["metric", "imperial"] as const
 
+/// Two versions of the same tool. Advanced adds inputs and readings
+/// below; it never takes the division away, because nobody wants a body
+/// fat estimate *instead of* their BMI.
+const MODES = ["basic", "advanced"] as const
+
 const uid = useId()
 
 const system = ref<typeof SYSTEMS[number]>("metric")
+const mode = ref<typeof MODES[number]>("basic")
+const population = ref<BmiPopulation>(DEFAULT_BMI_POPULATION)
 
 // Seeded so the page server-renders a worked example rather than an empty
 // prompt, matching the converters and the case converter.
@@ -181,11 +245,18 @@ const bmi = computed(() =>
       : calculateBmi(kilograms.value, metres.value),
 )
 
-const category = computed(() => bmiCategory(bmi.value ?? 0))
-const bands = computed(() => bmiBandWidths())
+/// Basic is pinned to the WHO figures whatever the selector was left on,
+/// so switching back to it can never leave a non-standard threshold
+/// quietly in force.
+const activePopulation = computed(() =>
+   (mode.value === "advanced" ? population.value : DEFAULT_BMI_POPULATION))
+
+const category = computed(() => bmiCategory(bmi.value ?? 0, activePopulation.value))
+const bands = computed(() => bmiBandWidths(activePopulation.value))
 const markerOffset = computed(() => `${bmiScalePosition(bmi.value ?? 0) * 100}%`)
 
-const range = computed(() => (metres.value === null ? null : healthyWeightRange(metres.value)))
+const range = computed(() =>
+   (metres.value === null ? null : healthyWeightRange(metres.value, activePopulation.value)))
 
 /** The healthy range, shown back in the units the reader is working in. */
 const inReadingUnits = (kg: number): number =>

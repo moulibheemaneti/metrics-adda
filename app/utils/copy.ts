@@ -13,8 +13,20 @@
 /// Auto-imported by Nuxt. Tests import it relatively (see test/unit).
 /// --------------------------------------------------
 
-import type { BmiCategory } from "./bmi"
+import type { BmiCategory, BmiPopulation } from "./bmi"
+import type {
+   ActivityLevel,
+   BodyFatCategory,
+   IdealWeightFormula,
+   Sex,
+   WhrCategory,
+   WhtrCategory,
+} from "./body"
 import type { CaseId } from "./textCase"
+// Type-only, and `tools.ts` imports `ToolKey` back from here. The cycle is
+// erased at compile time, which is what keeps each module's names defined
+// where they belong rather than in a third file that exists only to break it.
+import type { ToolGroup } from "./tools"
 import type { DimensionId } from "./units"
 
 /** One key per tool. Drives the registry, the copy blocks and the SEO map. */
@@ -142,9 +154,15 @@ export const SEO: Record<PageKey, SeoCopy> = {
          "Test your typing speed in 15, 30, 60 or 120 seconds. See your words per minute, accuracy and personal best. Free, no sign-up, runs in your browser.",
    },
    bmiCalculator: {
+      /// The title is unchanged deliberately. Advanced mode is client
+      /// state, so a title promising body-fat analysis would describe
+      /// markup that is not in the server-rendered HTML — and retitling a
+      /// page that already ranks is a real risk taken for no gain. The
+      /// description earns its change: the two new FAQ answers put genuine
+      /// body-fat text into the SSR output.
       title: "BMI Calculator: Body Mass Index in kg or lb",
       description:
-         "Work out your BMI from height and weight in metric or imperial units. See your category and the weight range that reaches the healthy band.",
+         "Work out your BMI from height and weight in metric or imperial units, then switch to advanced for body fat, lean mass and daily energy needs.",
    },
    passwordGenerator: {
       title: "Strong Random Password Generator",
@@ -216,9 +234,9 @@ const TOOL_COPY: Record<ToolKey, ToolCopy> = {
    },
    bmiCalculator: {
       name: "BMI Calculator",
-      tagline: "Body mass index from height and weight",
+      tagline: "Body mass index, body fat and daily energy",
       heading: "BMI calculator",
-      lede: "Enter your height and weight in metric or imperial units. You get your BMI, the category it falls in, and the weight range that would put you in the healthy band.",
+      lede: "Enter your height and weight in metric or imperial units. You get your BMI, the category it falls in, and the weight range that would put you in the healthy band. Switch to advanced for body fat, lean mass and the calories your body burns.",
    },
    typingTest: {
       name: "Typing Speed Test",
@@ -519,9 +537,21 @@ const FAQ_COPY: Record<ToolKey, FaqEntry[]> = {
          question: "Why does BMI call a muscular person overweight?",
          answer: "Because it uses only height and weight, and cannot tell muscle from fat. Muscle is denser, so athletes often read as overweight while carrying very little fat.",
       },
+      /// The question is unchanged and must stay that way — `useToolPage`
+      /// emits these as FAQPage structured data and the questions are
+      /// stable in search results. Only the answer moved, because the
+      /// population selector made its last sentence untrue.
       {
          question: "Does BMI work for everyone?",
-         answer: "No. It does not apply to children or teenagers, who need age and sex percentiles, nor during pregnancy. WHO also suggests lower action points of 23 and 27.5 for Asian populations; this calculator uses the standard adult figures.",
+         answer: "No. It does not apply to children or teenagers, who need age and sex percentiles, nor during pregnancy. The cut-offs also differ by population: basic mode uses the standard WHO adult figures, and advanced mode can switch to the lower Asian action points of 23 and 27.5, or the Indian consensus figures of 23 and 25.",
+      },
+      {
+         question: "How is body fat percentage estimated?",
+         answer: "Two ways, shown side by side. The US Navy method uses your height, waist and neck — plus hips for women — and is the better of the two because it measures where fat actually sits. The Deurenberg method needs no tape measure but is calculated from your BMI and age, so it inherits BMI's inability to tell muscle from fat. They will disagree, and that gap is informative.",
+      },
+      {
+         question: "How accurate are these body fat and calorie figures?",
+         answer: "They are estimates from formulas fitted on particular groups of people, not measurements of you. A tape-measure body fat estimate is typically within 3 to 5 percentage points of a DEXA scan, and where you place the tape is the largest source of error. Calorie needs vary by 10 percent or more between people of identical size.",
       },
    ],
    passwordGenerator: [
@@ -551,6 +581,17 @@ export const COPY = {
       menu: "Menu",
       menuHeading: "Tools",
       close: "Close menu",
+      /// The header nav's top level. A group holding a single tool is
+      /// rendered as a direct link to that tool instead, so these two read
+      /// as category names rather than as one-item folders — but they are
+      /// all defined, because the moment a second health or security tool
+      /// lands the nav promotes the group to a dropdown on its own.
+      groups: {
+         converters: "Converters",
+         text: "Text",
+         health: "Health",
+         security: "Security",
+      } satisfies Record<ToolGroup, string>,
    },
    theme: {
       legend: "Colour theme",
@@ -706,6 +747,12 @@ export const COPY = {
       wordsPerMinute: "wpm",
    },
    bmi: {
+      /// Two versions of the same tool, named on screen rather than hidden
+      /// behind a "show more" disclosure — a disclosure names only one
+      /// state, and the point here is that there are two.
+      modeLabel: "Calculator",
+      basic: "Basic",
+      advanced: "Advanced",
       systemLabel: "Units",
       metric: "Metric",
       imperial: "Imperial",
@@ -732,6 +779,143 @@ export const COPY = {
          overweight: "Overweight",
          obese: "Obese",
       } satisfies Record<BmiCategory, string>,
+   },
+   /// The advanced calculator. A sibling block rather than more keys on
+   /// `bmi`, mirroring the component split: `BmiCalculatorPanel` owns the
+   /// division, `BodyCompositionPanel` owns the estimates. Unit symbols
+   /// are deliberately not restated here — it reads `COPY.bmi.kilograms`
+   /// and friends, so there is one spelling of "kg" on the site.
+   body: {
+      /// Not "Body composition" — that is one of the result groups below,
+      /// and a section heading identical to a group inside it reads as a
+      /// duplicate rather than a container.
+      heading: "Beyond BMI",
+      lede: "These need a little more about you. Everything still runs in your browser and nothing is sent anywhere.",
+
+      sexLabel: "Sex",
+      sexes: {
+         female: "Female",
+         male: "Male",
+      } satisfies Record<Sex, string>,
+      /// A field that will otherwise read as a demand. The honest reason
+      /// is short and worth the two lines it takes.
+      sexNote: "Each formula below was fitted separately on male and female groups, so it needs this to run. There is no third set of coefficients to offer.",
+      sexPrompt: "Choose one to see body fat, lean mass and energy figures.",
+
+      ageLabel: "Age",
+      years: "years",
+      adultsOnly: "These formulas were built for adults. Enter an age of 18 or over — body fat in children and teenagers is read from age and sex percentile charts instead, which this tool does not do.",
+
+      populationLabel: "Reference population",
+      populations: {
+         who: "WHO — general",
+         asian: "WHO — Asian",
+         india: "India — 2009 consensus",
+      } satisfies Record<BmiPopulation, string>,
+      populationNote: "South Asian bodies carry more visceral fat and develop diabetes and heart disease at lower BMIs than the European groups the WHO figures were drawn from, so the same reading is read differently.",
+      populationApplied: "Categories and the healthy range use",
+
+      measurementsHeading: "Tape measurements",
+      measurementsHint: "Optional. Measure against bare skin with the tape snug but not tight, and breathe out first.",
+      waistLabel: "Waist",
+      waistHint: "At the narrowest point, usually just above the navel.",
+      neckLabel: "Neck",
+      neckHint: "Just below the larynx, sloping slightly down at the front.",
+      hipLabel: "Hips",
+      hipHint: "At the widest point of the buttocks.",
+
+      activityLabel: "Activity level",
+      activities: {
+         sedentary: "Sedentary — little or no exercise",
+         light: "Light — exercise 1 to 3 days a week",
+         moderate: "Moderate — exercise 3 to 5 days a week",
+         active: "Active — exercise 6 to 7 days a week",
+         veryActive: "Very active — hard exercise, or a physical job",
+      } satisfies Record<ActivityLevel, string>,
+
+      compositionHeading: "Body composition",
+      shapeHeading: "Shape and risk",
+      energyHeading: "Daily energy",
+      indicesHeading: "Other indices",
+      targetHeading: "Target weight",
+
+      bodyFatNavyLabel: "Body fat",
+      bodyFatNavyNote: "tape measurements",
+      bodyFatDeurenbergLabel: "Body fat",
+      bodyFatDeurenbergNote: "from BMI and age",
+      leanMassLabel: "Lean body mass",
+      fatMassLabel: "Fat mass",
+      ffmiLabel: "Fat-free mass index",
+      ffmiNormalisedLabel: "FFMI",
+      ffmiNormalisedNote: "height-corrected",
+      /// The payoff for the whole advanced mode, and the answer to a
+      /// question the FAQ already raises.
+      ffmiExplainer: "FFMI is the part BMI cannot see. It counts only lean mass, so a muscular reader whose BMI reads overweight will show a high FFMI and a low body fat percentage.",
+
+      whtrLabel: "Waist to height",
+      whtrNote: "healthy under 0.5",
+      whrLabel: "Waist to hip",
+
+      bmrLabel: "Resting energy",
+      bmrMifflinNote: "Mifflin-St Jeor",
+      bmrKatchNote: "Katch-McArdle, from lean mass",
+      tdeeLabel: "Daily energy",
+      kcalPerDay: "kcal/day",
+
+      bmiPrimeLabel: "BMI Prime",
+      bmiPrimeNote: "1.0 is the top of the healthy band",
+      ponderalLabel: "Ponderal index",
+      ponderalNote: "weight over height cubed",
+      newBmiLabel: "New BMI",
+      newBmiNote: "Trefethen's height correction",
+
+      healthyRangeLabel: "Healthy BMI range",
+      idealWeightHeading: "Ideal weight formulas",
+      idealWeightNote: "Four published formulas, all written for drug dosing rather than health. They disagree by several kilograms for the same person, which is why they are shown together and below the range above.",
+      idealWeights: {
+         hamwi: "Hamwi (1964)",
+         devine: "Devine (1974)",
+         robinson: "Robinson (1983)",
+         miller: "Miller (1983)",
+      } satisfies Record<IdealWeightFormula, string>,
+      formulaColumn: "Formula",
+      weightColumn: "Weight",
+
+      percent: "%",
+
+      /// Every reason a figure can be missing, said out loud. A row that
+      /// simply vanishes is the failure mode worth designing against.
+      needsSex: "Choose a sex above to see these.",
+      needsAge: "Enter an age to see these.",
+      needsWaistNeck: "Add your waist and neck measurements to estimate body fat from your shape.",
+      needsWaist: "Add your waist measurement to see waist-to-height ratio.",
+      needsHip: "Add your hip measurement too — the female formula needs all three.",
+      needsHipForWhr: "Add your hip measurement to see waist-to-hip ratio.",
+      waistUnderNeck: "Your waist measurement needs to be larger than your neck. Check both — it is easy to read the wrong scale on a tape.",
+      implausible: "Those measurements give a result outside the range this formula can speak to. Check the tape figures, and note that very lean or very large bodies fall outside what it was built on.",
+
+      bodyFatCategories: {
+         essential: "Essential fat",
+         athlete: "Athletic",
+         fitness: "Fitness",
+         average: "Average",
+         obese: "Obese",
+      } satisfies Record<BodyFatCategory, string>,
+      whtrCategories: {
+         slim: "Slim",
+         healthy: "Healthy",
+         raised: "Raised",
+         high: "High",
+      } satisfies Record<WhtrCategory, string>,
+      whrCategories: {
+         healthy: "Healthy",
+         raised: "Raised",
+      } satisfies Record<WhrCategory, string>,
+
+      /// Stronger than the BMI disclaimer above it, because these are
+      /// regressions rather than a definition. In the card, not behind a
+      /// link, for the same reason.
+      disclaimer: "Every figure here is an estimate from a formula fitted on a particular group of people — not a measurement of you. Body fat from a tape measure is typically within 3 to 5 percentage points of a scan, and energy needs vary by 10 percent or more between people of the same size. None of this is medical advice or a diagnosis.",
    },
    /// Every case label is written *in* the case it names, so the list
    /// doubles as its own worked example and a reader can pick the one they

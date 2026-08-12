@@ -150,6 +150,47 @@
    }
 }
 
+/// Radio buttons.
+///
+/// A standalone class rather than a `__element` of a block, because the
+/// wrapper varies — the BMI panel labels its options one way, the body
+/// composition panel another — and only the control itself is shared.
+///
+/// It exists for the same reason `.checkbox__box` above does: the reset
+/// strips `appearance` from every input, so a radio that is not restyled
+/// renders as a 0x0 invisible box. Its label still works, but nothing on
+/// screen says which option is selected.
+
+.radio-dot {
+   flex: none;
+   inline-size: px-to-rem(18);
+   block-size: px-to-rem(18);
+   border: 1px solid var(--line-strong);
+   border-radius: var(--radius-pill);
+   background-color: var(--surface);
+   cursor: pointer;
+   transition:
+      background-color var(--duration) var(--ease),
+      border-color var(--duration) var(--ease);
+
+   &:checked {
+      // Same trade as the checkbox: `--accent-solid` holds still across
+      // themes so the white dot baked into the SVG stays legible, and the
+      // fill must match `--accent-contrast` by hand because a data URI
+      // cannot read a custom property.
+      border-color: transparent;
+      background-color: var(--accent-solid);
+      background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 18 18'%3E%3Ccircle cx='9' cy='9' r='3.5' fill='%23ffffff'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: center;
+   }
+
+   &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+   }
+}
+
 /// Range slider. Track and thumb need vendor-specific selectors; they
 /// cannot be combined into one rule because an unknown pseudo-element
 /// invalidates the whole selector list in every browser.

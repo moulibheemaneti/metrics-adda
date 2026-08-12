@@ -185,9 +185,14 @@ fix rather than a drive-by one.
   freshly added export in `app/utils/` fails typecheck until they are
   regenerated. commitguard runs typecheck pre-commit, so this bites at commit
   time.
-- **`ToolNav.vue`'s horizontal scroll is now the constraint, not a worry.** At
-  11 tools the row scrolls on most laptop widths. Ctrl+K search moves from
-  "nice" to "needed" if Tier 2 lands in full.
+- **`ToolNav.vue`'s horizontal scroll — fixed, and this time it stays
+  fixed.** At 13 tools the flat row came to 1940px of links and scrolled at
+  *every* viewport width, 1920px included. The nav now lists **groups**, each
+  opening a dropdown, and a group holding one tool renders as a direct link to
+  it. The top level is 455px and `$single-row` came *down*, from 78rem to
+  60rem. The width is now bounded by the number of categories rather than the
+  number of tools, so Tier 2 landing in full does not touch it — and
+  `toolsByGroup()` finally has a caller that is not a test.
 
 ---
 
@@ -202,7 +207,12 @@ Recorded so the reasons survive.
 - **India-specific tools** — GST calculator, EMI/loan calculator, land-area
   units (gaj, cent, guntha, bigha, ground). High intent, but a second pass after
   the generic set is in.
-- **Platform UX** — Ctrl+K tool search, favourites, PWA/offline. See the nav
-  note above; this is closer to necessary than it was.
+- **Platform UX** — Ctrl+K tool search, favourites, PWA/offline. The grouped
+  nav took the urgency out of search: it was being considered as a *fix* for
+  the overflowing row, which was the wrong job for it. Search is an
+  accelerator for someone who already knows the tool's name, and it adds no
+  crawlable links — it belongs on top of a browsable nav, not instead of one.
+  Worth building when the tool count makes scanning a dropdown slow, which is
+  not yet.
 - **Test and CI infrastructure** — Playwright E2E, an axe-core runner in the
   repo, `seo:verify` and Lighthouse wired into CI.

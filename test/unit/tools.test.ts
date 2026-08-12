@@ -48,6 +48,36 @@ describe("registry and copy agree", () => {
       }
    })
 
+   /// The header nav's top level is one item per non-empty group, so its
+   /// width is bounded by the number of groups rather than by the number
+   /// of tools. That is the whole point of the change — the previous flat
+   /// row came to 1940px of links and overflowed at every viewport width,
+   /// including 1920px. This is the assertion that keeps the bound real.
+   it("labels every group, and keeps the top level short", () => {
+      const TOP_LEVEL_BUDGET = 6
+
+      for (const group of TOOL_GROUPS) {
+         expect(COPY.nav.groups[group], `${group} has no nav label`).toBeDefined()
+         expect(COPY.nav.groups[group].trim()).not.toBe("")
+      }
+
+      const occupied = TOOL_GROUPS.filter((group) => toolsByGroup(group).length > 0)
+
+      expect(occupied.length, "the header nav has outgrown one row").toBeLessThanOrEqual(
+         TOP_LEVEL_BUDGET,
+      )
+   })
+
+   /// A group holding one tool renders as a direct link to it; the label
+   /// only appears once the group has two. Both paths have to be reachable
+   /// from the registry, or one of them is dead code nobody notices.
+   it("has both a single-tool group and a multi-tool group", () => {
+      const sizes = TOOL_GROUPS.map((group) => toolsByGroup(group).length).filter(Boolean)
+
+      expect(sizes).toContain(1)
+      expect(sizes.some((size) => size > 1)).toBe(true)
+   })
+
    it("gives every tool search metadata", () => {
       for (const tool of TOOLS) {
          expect(SEO[tool.key], `${tool.key} has no SEO entry`).toBeDefined()
