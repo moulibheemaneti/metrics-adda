@@ -48,6 +48,45 @@ Things that will be got wrong if they are not written down:
   affine — `base = value * factor + offset` cannot express it. It needs an
   engine change, so it is deferred rather than bolted on.
 
+### Sequencing — three passes, not five, and not one
+
+The table above makes these look interchangeable. The maths is; the work is
+not. Ship them as:
+
+1. **`/speed-converter` alone — the pilot.** Five units, every factor exact,
+   no ambiguity to resolve. The cheapest example that still touches every
+   surface: the `DimensionId` and `ToolKey` unions, four separate blocks in
+   `copy.ts`, the registry, a page, `units.test.ts`, `verify.sh`, the README
+   table. Whatever is implicit in "adding a tool" surfaces once, here, rather
+   than five times.
+2. **`/volume-converter` + `/area-converter` + `/time-converter` together.**
+   The same move, once the pilot has proved it. What is left is copy, not
+   code — the US/imperial ids and the 365-day year are decisions about
+   wording and unit ids, made once and applied three times.
+3. **`/data-storage-converter` alone.** Not a registry add. Sixteen units
+   means a flat 16-option `<select>` rendered twice
+   (`UnitConverter.vue:25-29`, `:62-66` — there is no `<optgroup>` support)
+   and a 16-row always-visible table (`:98-111`), double today's largest.
+   Decimal and binary need visual separation to be usable at all, so this is
+   a component change wearing a converter's clothes.
+
+Why not one batch of five: each tool needs three FAQ answers with real facts
+in them, a title under 60 characters and a description under 155 — both
+enforced by `test/unit/seo.test.ts` — plus a tagline, heading, lede and ~10
+unit names. Five at once is ~50 unit labels and 15 factual answers written in
+one sitting, which is where quality quietly goes, and it is the part a
+reviewer cannot skim.
+
+Why not five separate passes: volume, area and time are genuinely mechanical
+once speed has landed. Five branches, plan docs, README edits and
+semantic-release bumps for three repeats is ceremony without payoff.
+
+**Decide during the pilot:** `scripts/seo/verify.sh` hardcodes its `ROUTES`
+list and `README.md` hardcodes its tools table. Both have *already* drifted —
+`/typing-speed-test` is missing from each. Four more routes will drift the
+same way, so the pilot is the moment to derive both from `TOOLS` rather than
+the fifth time someone forgets.
+
 ---
 
 ## Tier 2 — new panels, still no engine change
