@@ -15,6 +15,9 @@ and structured data.
 | `/height-converter` | cm and metres ⇄ feet and inches, plus all length units |
 | `/temperature-converter` | Celsius, Fahrenheit, kelvin |
 | `/speed-converter` | km/h, mph, m/s, ft/s, knots |
+| `/volume-converter` | ml, litres, m³, and US **and** imperial gallons, pints, cups |
+| `/area-converter` | mm², cm², m², hectares, km², in², ft², yd², acres, mi² |
+| `/time-converter` | ms, seconds, minutes, hours, days, weeks, years |
 | `/word-counter` | Words, characters, sentences, paragraphs, reading time |
 | `/typing-speed-test` | Timed WPM test with accuracy and a personal best |
 | `/password-generator` | Strong random passwords with an entropy readout |

@@ -52,6 +52,24 @@ export const TOOLS: ToolEntry[] = [
       group: "converters",
    },
    {
+      slug: "volume-converter",
+      path: "/volume-converter",
+      key: "volumeConverter",
+      group: "converters",
+   },
+   {
+      slug: "area-converter",
+      path: "/area-converter",
+      key: "areaConverter",
+      group: "converters",
+   },
+   {
+      slug: "time-converter",
+      path: "/time-converter",
+      key: "timeConverter",
+      group: "converters",
+   },
+   {
       slug: "word-counter",
       path: "/word-counter",
       key: "wordCounter",

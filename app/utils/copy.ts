@@ -21,6 +21,9 @@ export type ToolKey
      | "heightConverter"
      | "temperatureConverter"
      | "speedConverter"
+     | "volumeConverter"
+     | "areaConverter"
+     | "timeConverter"
      | "wordCounter"
      | "typingTest"
      | "passwordGenerator"
@@ -98,6 +101,21 @@ export const SEO: Record<PageKey, SeoCopy> = {
       description:
          "Convert speed between kilometres per hour, miles per hour, metres per second and knots. Type a value and read every unit at once — free and instant.",
    },
+   volumeConverter: {
+      title: "Volume Converter: litres, gallons, cups & ml",
+      description:
+         "Convert volume between litres, millilitres, US and imperial gallons, pints, cups and fluid ounces. Type a value and read every unit at once.",
+   },
+   areaConverter: {
+      title: "Area Converter: m², sq ft, acres & hectares",
+      description:
+         "Convert area between square metres, square feet, acres, hectares and square miles. Type a value and read every unit at once — free and instant.",
+   },
+   timeConverter: {
+      title: "Time Converter: seconds, minutes, hours & days",
+      description:
+         "Convert time between milliseconds, seconds, minutes, hours, days, weeks and years. Type a value and read every unit at once — free and instant.",
+   },
    wordCounter: {
       title: "Word & Character Counter",
       description:
@@ -139,6 +157,24 @@ const TOOL_COPY: Record<ToolKey, ToolCopy> = {
       tagline: "km/h, mph, m/s, ft/s and knots",
       heading: "Speed converter",
       lede: "Convert between metric, imperial and nautical speeds. Type a value and every other unit updates as you go.",
+   },
+   volumeConverter: {
+      name: "Volume Converter",
+      tagline: "Litres, millilitres, gallons, pints and cups",
+      heading: "Volume converter",
+      lede: "Convert between metric, US and imperial volumes. US and imperial units are listed separately, because a pint is not the same size in both.",
+   },
+   areaConverter: {
+      name: "Area Converter",
+      tagline: "m², sq ft, acres, hectares and sq miles",
+      heading: "Area converter",
+      lede: "Convert between metric and imperial areas, from square millimetres to square miles. Type a value and every other unit updates as you go.",
+   },
+   timeConverter: {
+      name: "Time Converter",
+      tagline: "Milliseconds, seconds, minutes, hours and days",
+      heading: "Time converter",
+      lede: "Convert between milliseconds, seconds, minutes, hours, days, weeks and years. Type a value and read every unit at once.",
    },
    wordCounter: {
       name: "Word Counter",
@@ -192,6 +228,48 @@ const UNIT_COPY: Record<DimensionId, Record<string, UnitCopy>> = {
       mph: { name: "Mile per hour", symbol: "mph" },
       fps: { name: "Foot per second", symbol: "ft/s" },
       kn: { name: "Knot", symbol: "kn" },
+   },
+   // Every US and imperial name is qualified. Left bare, "Pint" and "Pint"
+   // would sit in the same dropdown twice and read as a duplicate rather
+   // than as the two different sizes they are.
+   volume: {
+      "ml": { name: "Millilitre", symbol: "ml" },
+      "l": { name: "Litre", symbol: "l" },
+      "m3": { name: "Cubic metre", symbol: "m³" },
+      // Qualifier first, matching "US ton" in the mass block. The panel
+      // renders a unit as "name (symbol)", so a trailing "(US)" would come
+      // out as "Fluid ounce (US) (fl oz)".
+      "us-tsp": { name: "US teaspoon", symbol: "tsp" },
+      "us-tbsp": { name: "US tablespoon", symbol: "tbsp" },
+      "us-floz": { name: "US fluid ounce", symbol: "fl oz" },
+      "us-cup": { name: "US cup", symbol: "cup" },
+      "us-pt": { name: "US pint", symbol: "pt" },
+      "us-qt": { name: "US quart", symbol: "qt" },
+      "us-gal": { name: "US gallon", symbol: "gal" },
+      "imp-floz": { name: "Imperial fluid ounce", symbol: "fl oz" },
+      "imp-pt": { name: "Imperial pint", symbol: "pt" },
+      "imp-gal": { name: "Imperial gallon", symbol: "gal" },
+   },
+   area: {
+      mm2: { name: "Square millimetre", symbol: "mm²" },
+      cm2: { name: "Square centimetre", symbol: "cm²" },
+      m2: { name: "Square metre", symbol: "m²" },
+      ha: { name: "Hectare", symbol: "ha" },
+      km2: { name: "Square kilometre", symbol: "km²" },
+      in2: { name: "Square inch", symbol: "in²" },
+      ft2: { name: "Square foot", symbol: "ft²" },
+      yd2: { name: "Square yard", symbol: "yd²" },
+      acre: { name: "Acre", symbol: "ac" },
+      mi2: { name: "Square mile", symbol: "mi²" },
+   },
+   time: {
+      ms: { name: "Millisecond", symbol: "ms" },
+      s: { name: "Second", symbol: "s" },
+      min: { name: "Minute", symbol: "min" },
+      h: { name: "Hour", symbol: "h" },
+      d: { name: "Day", symbol: "d" },
+      wk: { name: "Week", symbol: "wk" },
+      yr: { name: "Year", symbol: "yr" },
    },
 }
 
@@ -254,6 +332,48 @@ const FAQ_COPY: Record<ToolKey, FaqEntry[]> = {
       {
          question: "How do I convert metres per second to km/h?",
          answer: "Multiply by 3.6. A speed of one metre per second covers 3,600 metres in an hour, which is 3.6 kilometres. Divide by 3.6 to go back the other way.",
+      },
+   ],
+   volumeConverter: [
+      {
+         question: "Is a US gallon the same as an imperial gallon?",
+         answer: "No. A US gallon is 3.785 litres; an imperial gallon is exactly 4.54609 litres, about 20% larger. Both are listed separately here so neither is assumed.",
+      },
+      {
+         question: "How many fluid ounces are in a pint?",
+         answer: "A US pint is 16 US fluid ounces; an imperial pint is 20 imperial fluid ounces. The two pints differ by roughly a fifth, so the figures do not interchange.",
+      },
+      {
+         question: "How many millilitres are in a cup?",
+         answer: "A US cup is 236.59 ml. Recipes written elsewhere often mean a 250 ml metric cup instead, so it is worth checking which one a recipe assumes before scaling it.",
+      },
+   ],
+   areaConverter: [
+      {
+         question: "How many square feet are in a square metre?",
+         answer: "One square metre is 10.76391 square feet. The ratio is the length conversion squared: a metre is 3.2808399 feet, and 3.2808399 × 3.2808399 is 10.76391.",
+      },
+      {
+         question: "How big is an acre?",
+         answer: "An acre is 4,840 square yards, or 4,046.86 square metres. A hectare is 10,000 square metres, so one hectare is about 2.471 acres.",
+      },
+      {
+         question: "Why can I not reuse a length conversion for an area?",
+         answer: "Because area conversions are the length factor squared. A foot is 0.3048 metres, so a square foot is 0.3048², which is 0.09290304 square metres — not 0.3048.",
+      },
+   ],
+   timeConverter: [
+      {
+         question: "Why is there no month?",
+         answer: "Months run from 28 to 31 days, so a month has no fixed length. Converting one would mean averaging and then presenting the guess as exact, so this tool stops at weeks and years.",
+      },
+      {
+         question: "How many seconds are in a day?",
+         answer: "86,400 — sixty seconds in a minute, sixty minutes in an hour and twenty-four hours in a day. A week is seven of those, or 604,800 seconds.",
+      },
+      {
+         question: "How long is the year used here?",
+         answer: "365 days, which is 31,536,000 seconds. Leap years and the 365.2425-day calendar year are deliberately not applied, so the figure stays predictable.",
       },
    ],
    wordCounter: [

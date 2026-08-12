@@ -91,6 +91,106 @@ describe("convert — speed", () => {
    })
 })
 
+/// Volume is the dimension where a wrong answer looks most plausible: the
+/// US and imperial units share names, so a mix-up reads as a normal number
+/// rather than as an obvious error. Both systems are pinned here.
+
+describe("convert — volume", () => {
+   const { volume } = DIMENSIONS
+
+   it("derives the US gallon from 231 cubic inches exactly", () => {
+      expect(convert(1, "us-gal", "l", volume)).toBeCloseTo(3.785411784, 12)
+   })
+
+   it("uses the exact 1985 definition of the imperial gallon", () => {
+      expect(convert(1, "imp-gal", "l", volume)).toBeCloseTo(4.54609, 12)
+   })
+
+   it("keeps the two gallons about a fifth apart", () => {
+      expect(convert(1, "imp-gal", "us-gal", volume)).toBeCloseTo(1.2009499255, 9)
+   })
+
+   it("divides each gallon by its own number of fluid ounces", () => {
+      // 128 for the US gallon, 160 for the imperial one.
+      expect(convert(1, "us-gal", "us-floz", volume)).toBeCloseTo(128, 10)
+      expect(convert(1, "imp-gal", "imp-floz", volume)).toBeCloseTo(160, 10)
+   })
+
+   it("keeps the two pints distinct", () => {
+      expect(convert(1, "us-pt", "ml", volume)).toBeCloseTo(473.176473, 9)
+      expect(convert(1, "imp-pt", "ml", volume)).toBeCloseTo(568.26125, 9)
+   })
+
+   it("nests the US spoons and cups inside the gallon", () => {
+      expect(convert(1, "us-floz", "us-tbsp", volume)).toBeCloseTo(2, 10)
+      expect(convert(1, "us-tbsp", "us-tsp", volume)).toBeCloseTo(3, 10)
+      expect(convert(1, "us-cup", "us-floz", volume)).toBeCloseTo(8, 10)
+      expect(convert(1, "us-qt", "us-pt", volume)).toBeCloseTo(2, 10)
+   })
+
+   it("scales the metric units against the litre", () => {
+      expect(convert(1, "m3", "l", volume)).toBeCloseTo(1000, 10)
+      expect(convert(1, "l", "ml", volume)).toBeCloseTo(1000, 10)
+   })
+})
+
+/// Area factors are length factors squared, which is the one thing a
+/// reader is most likely to assume works linearly.
+
+describe("convert — area", () => {
+   const { area } = DIMENSIONS
+
+   it("squares the length conversion rather than reusing it", () => {
+      expect(convert(1, "m2", "ft2", area)).toBeCloseTo(10.7639104167, 8)
+      // Not 3.2808399 — that would be the unsquared length ratio.
+      expect(convert(1, "ft2", "m2", area)).toBeCloseTo(0.09290304, 10)
+   })
+
+   it("converts square inches exactly", () => {
+      expect(convert(1, "in2", "cm2", area)).toBeCloseTo(6.4516, 10)
+   })
+
+   it("defines the acre as 4,840 square yards", () => {
+      expect(convert(1, "acre", "yd2", area)).toBeCloseTo(4840, 8)
+      expect(convert(1, "acre", "m2", area)).toBeCloseTo(4046.8564224, 7)
+   })
+
+   it("relates the hectare and the acre", () => {
+      expect(convert(1, "ha", "m2", area)).toBeCloseTo(10_000, 8)
+      expect(convert(1, "ha", "acre", area)).toBeCloseTo(2.4710538147, 8)
+   })
+
+   it("makes a square mile 640 acres", () => {
+      expect(convert(1, "mi2", "acre", area)).toBeCloseTo(640, 6)
+   })
+})
+
+describe("convert — time", () => {
+   const { time } = DIMENSIONS
+
+   it("converts the everyday units", () => {
+      expect(convert(1, "min", "s", time)).toBeCloseTo(60, 10)
+      expect(convert(1, "h", "min", time)).toBeCloseTo(60, 10)
+      expect(convert(1, "d", "h", time)).toBeCloseTo(24, 10)
+      expect(convert(1, "wk", "d", time)).toBeCloseTo(7, 10)
+   })
+
+   it("puts 86,400 seconds in a day", () => {
+      expect(convert(1, "d", "s", time)).toBeCloseTo(86_400, 8)
+      expect(convert(1, "wk", "s", time)).toBeCloseTo(604_800, 8)
+   })
+
+   it("uses a 365-day year, as the FAQ states", () => {
+      expect(convert(1, "yr", "d", time)).toBeCloseTo(365, 8)
+      expect(convert(1, "yr", "s", time)).toBeCloseTo(31_536_000, 6)
+   })
+
+   it("offers no month, which has no fixed length", () => {
+      expect(time.units.map((unit) => unit.id)).not.toContain("mo")
+      expect(() => convert(1, "mo", "d", time)).toThrow(/Unknown time unit/)
+   })
+})
+
 /// Temperature is the reason units are modelled as affine transforms
 /// rather than plain multipliers, so it gets the closest look.
 

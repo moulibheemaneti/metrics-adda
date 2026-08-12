@@ -17,7 +17,14 @@
 /// Auto-imported by Nuxt. Tests import it relatively (see test/unit).
 /// --------------------------------------------------
 
-export type DimensionId = "mass" | "length" | "temperature" | "speed"
+export type DimensionId
+   = | "mass"
+     | "length"
+     | "temperature"
+     | "speed"
+     | "volume"
+     | "area"
+     | "time"
 
 export interface UnitDefinition {
    /** Stable key. Also the copy key under `COPY.units.<dimension>.<id>`. */
@@ -51,6 +58,25 @@ const METRES_PER_NAUTICAL_MILE = 1852
 /** Seconds per hour, spelled out where it divides a per-hour speed. */
 const SECONDS_PER_HOUR = 3600
 
+/** Metres per foot and per yard — exact, from the exact inch. */
+const METRES_PER_FOOT = METRES_PER_INCH * 12
+const METRES_PER_YARD = METRES_PER_INCH * 36
+
+/** Metres per mile — exact, and squared for the square mile. */
+const METRES_PER_MILE = METRES_PER_INCH * INCHES_PER_MILE
+
+/**
+ * Litres per gallon — and there are two gallons.
+ *
+ * The US gallon is defined as exactly 231 cubic inches; the imperial gallon
+ * was redefined in 1985 as exactly 4.54609 litres. They differ by about 20%,
+ * which is why every US unit below derives from the first constant and every
+ * imperial one from the second. Deriving a pint from "the" gallon without
+ * saying which is exactly how a volume converter ends up quietly wrong.
+ */
+const LITRES_PER_US_GALLON = 231 * (METRES_PER_INCH * 100) ** 3 / 1000
+const LITRES_PER_IMPERIAL_GALLON = 4.54609
+
 export const DIMENSIONS: Record<DimensionId, Dimension> = {
    mass: {
       id: "mass",
@@ -75,9 +101,9 @@ export const DIMENSIONS: Record<DimensionId, Dimension> = {
          { id: "m", factor: 1 },
          { id: "km", factor: 1000 },
          { id: "in", factor: METRES_PER_INCH },
-         { id: "ft", factor: METRES_PER_INCH * 12 },
-         { id: "yd", factor: METRES_PER_INCH * 36 },
-         { id: "mi", factor: METRES_PER_INCH * INCHES_PER_MILE },
+         { id: "ft", factor: METRES_PER_FOOT },
+         { id: "yd", factor: METRES_PER_YARD },
+         { id: "mi", factor: METRES_PER_MILE },
       ],
    },
    speed: {
@@ -90,8 +116,8 @@ export const DIMENSIONS: Record<DimensionId, Dimension> = {
       units: [
          { id: "mps", factor: 1 },
          { id: "kmh", factor: 1000 / SECONDS_PER_HOUR },
-         { id: "mph", factor: METRES_PER_INCH * INCHES_PER_MILE / SECONDS_PER_HOUR },
-         { id: "fps", factor: METRES_PER_INCH * 12 },
+         { id: "mph", factor: METRES_PER_MILE / SECONDS_PER_HOUR },
+         { id: "fps", factor: METRES_PER_FOOT },
          { id: "kn", factor: METRES_PER_NAUTICAL_MILE / SECONDS_PER_HOUR },
       ],
    },
@@ -104,6 +130,72 @@ export const DIMENSIONS: Record<DimensionId, Dimension> = {
          { id: "c", factor: 1, offset: 0 },
          { id: "f", factor: 5 / 9, offset: -160 / 9 },
          { id: "k", factor: 1, offset: -273.15 },
+      ],
+   },
+   volume: {
+      // Base is the litre rather than the cubic metre: it keeps the metric
+      // factors at the scale people actually type, and the cubic metre is
+      // then simply a thousand of them.
+      //
+      // Unit ids carry their measurement system as a prefix because the
+      // names collide — a US pint and an imperial pint are both "a pint",
+      // and they differ by a fifth.
+      id: "volume",
+      base: "l",
+      units: [
+         { id: "ml", factor: 0.001 },
+         { id: "l", factor: 1 },
+         { id: "m3", factor: 1000 },
+         // A US gallon is 128 fl oz, 16 cups, 8 pints or 4 quarts; a fl oz
+         // is 2 tbsp or 6 tsp, which puts 768 teaspoons in the gallon.
+         { id: "us-tsp", factor: LITRES_PER_US_GALLON / 768 },
+         { id: "us-tbsp", factor: LITRES_PER_US_GALLON / 256 },
+         { id: "us-floz", factor: LITRES_PER_US_GALLON / 128 },
+         { id: "us-cup", factor: LITRES_PER_US_GALLON / 16 },
+         { id: "us-pt", factor: LITRES_PER_US_GALLON / 8 },
+         { id: "us-qt", factor: LITRES_PER_US_GALLON / 4 },
+         { id: "us-gal", factor: LITRES_PER_US_GALLON },
+         // The imperial gallon divides into 160 fluid ounces, not 128 —
+         // one more reason the two systems cannot share a unit id.
+         { id: "imp-floz", factor: LITRES_PER_IMPERIAL_GALLON / 160 },
+         { id: "imp-pt", factor: LITRES_PER_IMPERIAL_GALLON / 8 },
+         { id: "imp-gal", factor: LITRES_PER_IMPERIAL_GALLON },
+      ],
+   },
+   area: {
+      // Every imperial factor is the matching length factor squared, so
+      // they inherit the exact inch rather than restating a rounded
+      // constant. The acre is the one that is not a square of anything
+      // tidy: it is defined as 4,840 square yards.
+      id: "area",
+      base: "m2",
+      units: [
+         { id: "mm2", factor: 0.000_001 },
+         { id: "cm2", factor: 0.000_1 },
+         { id: "m2", factor: 1 },
+         { id: "ha", factor: 10_000 },
+         { id: "km2", factor: 1_000_000 },
+         { id: "in2", factor: METRES_PER_INCH ** 2 },
+         { id: "ft2", factor: METRES_PER_FOOT ** 2 },
+         { id: "yd2", factor: METRES_PER_YARD ** 2 },
+         { id: "acre", factor: METRES_PER_YARD ** 2 * 4840 },
+         { id: "mi2", factor: METRES_PER_MILE ** 2 },
+      ],
+   },
+   time: {
+      // No month. A month has no fixed length, so any factor for one would
+      // be a guess printed to eight significant digits. The year is the
+      // common 365 days, which the FAQ states rather than leaves inferred.
+      id: "time",
+      base: "s",
+      units: [
+         { id: "ms", factor: 0.001 },
+         { id: "s", factor: 1 },
+         { id: "min", factor: 60 },
+         { id: "h", factor: SECONDS_PER_HOUR },
+         { id: "d", factor: SECONDS_PER_HOUR * 24 },
+         { id: "wk", factor: SECONDS_PER_HOUR * 24 * 7 },
+         { id: "yr", factor: SECONDS_PER_HOUR * 24 * 365 },
       ],
    },
 }
