@@ -91,7 +91,7 @@ export const SEO: Record<PageKey, SeoCopy> = {
    home: {
       title: "Metrics Adda — Unit Converters & Text Tools",
       description:
-         "Free, fast unit converters for weight, height and temperature, plus a word counter, a typing speed test and a password generator. No sign-up needed.",
+         "Free, fast converters for weight, height, temperature, speed, volume, area, time and data, plus text tools, a BMI calculator and a password generator.",
    },
    privacy: {
       title: "Privacy Policy",
@@ -652,13 +652,15 @@ export const COPY = {
       toolsHeading: "Jump to a tool",
    },
    home: {
-      eyebrow: "Six tools, no sign-up",
+      // `{count}` is filled in from `TOOLS.length` on the page, so the
+      // number can never drift out of date when a tool is added.
+      eyebrow: "{count} tools, no sign-up",
       // The headline is split so one phrase can carry the brand gradient
       // while the rest stays solid — see `.hero__accent`.
-      headingLead: "Everyday converters that are",
+      headingLead: "Everyday tools that are",
       headingAccent: "instant and exact",
-      heading: "Everyday converters that are instant and exact",
-      tagline: "Weight, height and temperature converters, a word counter, a typing speed test and a password generator. Nothing to install, and nothing you type ever leaves your browser.",
+      heading: "Everyday tools that are instant and exact",
+      tagline: "Converters for weight, height, temperature, speed, volume, area, time and data, plus a word counter, a case converter, a typing speed test, a BMI calculator and a password generator. Nothing to install, and nothing you type ever leaves your browser.",
       toolsHeading: "All tools",
    },
    /// The privacy policy. Kept here with the rest of the copy rather than
