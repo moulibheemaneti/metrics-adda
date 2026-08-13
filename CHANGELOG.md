@@ -3,6 +3,12 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.9.1](https://github.com/moulibheemaneti/metrics-adda/compare/v1.9.0...v1.9.1) (2026-08-13)
+
+### 🐛 Bug Fixes
+
+* **home:** refresh the hero copy for the full tool set ([56b8f88](https://github.com/moulibheemaneti/metrics-adda/commit/56b8f88b6d478b112ad430d78e258749a2033736))
+
 ## [1.9.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.8.0...v1.9.0) (2026-08-13)
 
 ### ✨ Features
