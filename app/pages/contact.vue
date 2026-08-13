@@ -29,6 +29,9 @@
          <p v-for="paragraph in section.body" :key="paragraph" class="prose__body">
             {{ paragraph }}
          </p>
+         <p v-if="section.link" class="prose__body">
+            {{ section.link.before }}<NuxtLink class="prose__link" :to="section.link.to">{{ section.link.label }}</NuxtLink>{{ section.link.after }}
+         </p>
       </section>
    </main>
 </template>
@@ -72,6 +75,13 @@ useSchemaOrg([
    /// it gets the accent rather than inheriting body colour.
    &__address {
       color: var(--accent);
+   }
+
+   /// An inline link inside a sentence, so it is underlined as well as
+   /// accented — colour alone is not enough to mark it up in running text.
+   &__link {
+      color: var(--accent);
+      text-decoration: underline;
    }
 }
 </style>

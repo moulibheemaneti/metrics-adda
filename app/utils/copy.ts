@@ -77,6 +77,30 @@ export interface FaqEntry {
 }
 
 /**
+ * One section of the contact page.
+ *
+ * `link` is the escape hatch for the one thing a plain string cannot carry:
+ * a paragraph with an internal link inside it. The sentence is split around
+ * the anchor rather than marked up, so the copy stays plain text and the
+ * template stays free of `v-html`.
+ */
+export interface ContactSection {
+   heading: string
+   /** Paragraphs rendered as-is, before `link`. */
+   body: string[]
+   link?: {
+      /** Sentence up to the anchor. Keep the trailing space. */
+      before: string
+      /** The anchor's own text. */
+      label: string
+      /** Internal route, passed straight to `NuxtLink`. */
+      to: string
+      /** The rest of the sentence, starting with its punctuation. */
+      after: string
+   }
+}
+
+/**
  * Per-page search metadata.
  *
  * Every entry is length-checked against the SERP budgets in `utils/seo.ts`
@@ -789,11 +813,15 @@ export const COPY = {
          },
          {
             heading: "Privacy and advertising",
-            body: [
-               "Questions about what the site stores, or about the advertising cookies, are answered in full by the privacy policy. If something there is unclear or does not match what you are seeing, write and say so.",
-            ],
+            body: [],
+            link: {
+               before: "Questions about what the site stores, or about the advertising cookies, are answered in full by the ",
+               label: "privacy policy",
+               to: "/privacy-policy",
+               after: ". If something there is unclear or does not match what you are seeing, write and say so.",
+            },
          },
-      ],
+      ] as ContactSection[],
    },
    converter: {
       fromLabel: "From",

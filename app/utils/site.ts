@@ -4,4 +4,4 @@
  */
 
 /** The single public contact address — shown in the footer and the policy. */
-export const SITE_EMAIL = "metricsadda@gmail.com"
+export const SITE_EMAIL = "moulibheemaneti.apps@gmail.com"
