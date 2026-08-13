@@ -46,7 +46,7 @@ export type ToolKey
      | "passwordGenerator"
 
 /** Pages that carry their own search metadata. */
-export type PageKey = ToolKey | "home" | "privacy"
+export type PageKey = ToolKey | "home" | "privacy" | "about" | "contact"
 
 export interface SeoCopy {
    /** Rendered as <title>. Budget: SEO_TITLE_MAX. */
@@ -97,6 +97,16 @@ export const SEO: Record<PageKey, SeoCopy> = {
       title: "Privacy Policy",
       description:
          "How Metrics Adda handles your data: the tools run entirely in your browser and send nothing to a server. Cookies are used only for advertising.",
+   },
+   about: {
+      title: "About Metrics Adda",
+      description:
+         "Who runs Metrics Adda and why it exists: a small set of everyday converters and text tools that run entirely in your browser, with no accounts.",
+   },
+   contact: {
+      title: "Contact",
+      description:
+         "Get in touch with Metrics Adda about a wrong conversion, a tool you would like to see, or anything to do with privacy and advertising on the site.",
    },
    weightConverter: {
       title: "Weight Converter: kg, lb, oz, g & stone",
@@ -600,6 +610,7 @@ export const COPY = {
       dark: "Dark",
    },
    footer: {
+      about: "About",
       contact: "Contact",
       privacy: "Privacy",
       /// Names the footer's link group for screen readers — a second <nav>
@@ -706,6 +717,81 @@ export const COPY = {
       ],
       contactHeading: "Questions",
       contactBody: "Anything about this policy, or about the site generally:",
+   },
+   /// The about page. Google's own pre-review checklist names an "About us"
+   /// page as expected of a site carrying AdSense, and a site that is
+   /// nothing but calculators is exactly the profile its reviewers read as
+   /// low-value — so this page states who runs it and what it is for.
+   ///
+   /// `{count}` is filled in from `TOOLS.length` on the page, so the number
+   /// cannot drift out of date when a tool is added.
+   about: {
+      heading: "About Metrics Adda",
+      lede: "Metrics Adda is a small collection of everyday converters and text tools. Every one of them runs in your browser, loads in well under a second, and asks nothing of you before it works.",
+      sections: [
+         {
+            heading: "Why it exists",
+            body: [
+               "Converting kilograms to pounds should take one page load. Most of the results you get for that search do not: they carry an interstitial before the answer, a cookie wall over it, and a form asking for an email address beside it. The arithmetic involved is trivial and none of that is necessary to do it.",
+               "Metrics Adda is the version of those pages that skips all of it. There are {count} tools, each doing one thing, each reachable in a single click from the front page.",
+            ],
+         },
+         {
+            heading: "How the tools work",
+            body: [
+               "Everything is computed on your own device in client-side JavaScript. The values you type are never sent to a server, never written to a database and never logged — which is not a policy promise so much as an architectural fact: once a page has loaded, you can disconnect from the network and every tool still works.",
+               "That also means there is nothing to sign up for. No accounts exist on this site, so there is no password to forget and no profile to delete.",
+            ],
+         },
+         {
+            heading: "Who makes it",
+            body: [
+               "Metrics Adda is built and maintained by Mouli Bheemaneti, an independent software developer. It is a personal project rather than a company, which is why there is one email address at the bottom of this page rather than a support desk — mail sent there reaches the person who wrote the code.",
+            ],
+         },
+         {
+            heading: "How it pays for itself",
+            body: [
+               "The site carries a single advertisement, in one fixed position at the bottom of the page, served by Google AdSense. There is one ad per page and there will not be more: no pop-ups, no interstitials between pages, and nothing that covers what you came to read.",
+               "That unit reserves its space in the layout before it loads, so the page does not jump when an ad arrives. The privacy policy sets out exactly which cookies it involves and how to opt out of personalised advertising.",
+            ],
+         },
+         {
+            heading: "Accuracy",
+            body: [
+               "Conversion factors are the exact internationally defined ones wherever an exact definition exists — one inch is 25.4 millimetres by definition, not by approximation — and results are rounded only for display. The tools are covered by an automated test suite that runs on every change.",
+               "They are still general-purpose utilities, though, and nothing here is offered as medical, engineering, legal or financial advice. If a result is going into something that matters, check it against a second source. If you find one that is wrong, please tell us — that is the most useful mail this site receives.",
+            ],
+         },
+      ],
+      contactHeading: "Get in touch",
+      contactBody: "Corrections, requests for a tool, or anything else:",
+   },
+   /// The contact page. A `mailto:` in the footer is not what Google's
+   /// checklist means by a "Contact us" page, and a reachable page is also
+   /// the thing a reader looks for when a converter gives a wrong answer.
+   contact: {
+      heading: "Contact",
+      lede: "One address, read by the person who builds the site. There is no ticket queue behind it and no auto-reply — just mail.",
+      emailHeading: "Email",
+      emailBody: "Write to:",
+      responseNote: "Expect a reply within a few days. This is a personal project rather than a staffed product, so it is not instant, but every message is read.",
+      sections: [
+         {
+            heading: "Especially worth writing about",
+            body: [
+               "A wrong result. Conversion factors and rounding are covered by tests, but a tool can still be wrong in a way no test anticipated. If you tell us what you entered, what you got and what you expected, it can usually be fixed the same week.",
+               "A tool that is missing. The list grows based on what people ask for. If you converted something today by opening a search engine instead of this site, that is worth knowing.",
+               "Something that does not work on your device or with your screen reader. Accessibility problems are treated as bugs, not as requests.",
+            ],
+         },
+         {
+            heading: "Privacy and advertising",
+            body: [
+               "Questions about what the site stores, or about the advertising cookies, are answered in full by the privacy policy. If something there is unclear or does not match what you are seeing, write and say so.",
+            ],
+         },
+      ],
    },
    converter: {
       fromLabel: "From",

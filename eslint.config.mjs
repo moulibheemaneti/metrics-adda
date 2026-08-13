@@ -79,9 +79,13 @@ export default withNuxt(
          "vue/component-api-style": ["error", ["script-setup"]],
 
          // Component names must be multi-word (e.g. UserCard, not Card)
-         // Exceptions: pages and layouts follow Nuxt file conventions
+         // Exceptions: pages and layouts follow Nuxt file conventions, where
+         // the filename is a route rather than a component name — "about"
+         // and "contact" are the URLs readers and Google expect, and
+         // renaming them to satisfy this rule would change /about to
+         // /about-us for no benefit.
          "vue/multi-word-component-names": ["error", {
-            ignores: ["index", "default", "error", "[...slug]"],
+            ignores: ["index", "default", "error", "[...slug]", "about", "contact"],
          }],
 
          // Props must have types defined
