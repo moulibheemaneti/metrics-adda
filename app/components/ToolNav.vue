@@ -26,7 +26,21 @@
                   @click="toggle(group.id)"
                >
                   {{ group.label }}
-                  <span aria-hidden="true" class="tool-nav__chevron">▾</span>
+                  <!-- An SVG rather than "▾": that glyph sits low in its em
+                       box, so rotating it 180deg swings the visible mark to
+                       the top of the line instead of flipping it in place. -->
+                  <svg
+                     aria-hidden="true"
+                     class="tool-nav__chevron"
+                     viewBox="0 0 10 6"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.5"
+                     stroke-linecap="round"
+                     stroke-linejoin="round"
+                  >
+                     <path d="M1 1.25 5 4.75 9 1.25" />
+                  </svg>
                </button>
 
                <!-- Rendered whether open or not, and hidden with CSS. These
@@ -199,8 +213,10 @@ watch(() => route.path, () => {
    }
 
    &__chevron {
-      font-size: px-to-rem(11);
-      line-height: 1;
+      // Sized here rather than in the markup so the box stays symmetrical
+      // about its own centre, which is what `rotate` turns around.
+      inline-size: px-to-rem(10);
+      block-size: px-to-rem(6);
       transition: rotate var(--duration) var(--ease);
 
       .tool-nav__trigger[aria-expanded="true"] & {
