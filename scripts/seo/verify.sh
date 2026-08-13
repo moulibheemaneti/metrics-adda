@@ -31,12 +31,12 @@ PORT="${PORT:-3123}"
 # hand-maintained list this replaces had already drifted — /typing-speed-test
 # shipped without ever being asserted here.
 #
-# Only the two pages that are not tools stay written out.
+# Only the pages that are not tools stay written out.
 TOOL_ROUTES="$(bun -e 'import { TOOLS } from "./app/utils/tools.ts"; console.log(TOOLS.map((t) => t.path).join(" "))')" || {
    echo "could not read the tool registry — is bun on PATH?" >&2
    exit 1
 }
-ROUTES="${ROUTES:-/ $TOOL_ROUTES /privacy-policy}"
+ROUTES="${ROUTES:-/ $TOOL_ROUTES /about /contact /privacy-policy}"
 SERVER_PID=""
 
 # ── pretty output ────────────────────────────────────────────────────────────

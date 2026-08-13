@@ -7,18 +7,19 @@ import SiteFooter from "../../app/components/SiteFooter.vue"
 /// runtime — a broken auto-import fails here rather than in production.
 
 describe("SiteFooter", () => {
-   it("renders the contact address as a mailto link", async() => {
+   /// AdSense approval depends on the policy, the about page and the
+   /// contact page being reachable from every page, and the footer is the
+   /// only thing on every page that links them. Google's pre-review
+   /// checklist asks for all three by name, so losing a link here is an
+   /// approval risk rather than a cosmetic regression.
+   it.each([
+      ["/about"],
+      ["/contact"],
+      ["/privacy-policy"],
+   ])("links %s", async(href) => {
       const footer = await mountSuspended(SiteFooter)
 
-      expect(footer.find("a[href^=\"mailto:\"]").attributes("href")).toBe(`mailto:${SITE_EMAIL}`)
-   })
-
-   /// AdSense approval depends on the policy being reachable from every
-   /// page, and the footer is the only thing on every page that links it.
-   it("links the privacy policy", async() => {
-      const footer = await mountSuspended(SiteFooter)
-
-      expect(footer.find("a[href=\"/privacy-policy\"]").exists()).toBe(true)
+      expect(footer.find(`a[href="${href}"]`).exists()).toBe(true)
    })
 
    it("renders the current year in the copyright line", async() => {

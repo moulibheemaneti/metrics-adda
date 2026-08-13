@@ -4,12 +4,20 @@
          © {{ year }} {{ COPY.site.name }}. {{ COPY.footer.rights }}
       </p>
       <nav class="site-footer__links" :aria-label="COPY.footer.navLabel">
+         <NuxtLink to="/about">
+            {{ COPY.footer.about }}
+         </NuxtLink>
+         <!-- A route rather than the `mailto:` this used to be. Google's
+              pre-review checklist asks for a reachable "Contact us" page,
+              and a bare `mailto:` is a dead end for anyone reading without
+              a mail client configured. The address itself still lives one
+              click away, on the page. -->
+         <NuxtLink to="/contact">
+            {{ COPY.footer.contact }}
+         </NuxtLink>
          <NuxtLink to="/privacy-policy">
             {{ COPY.footer.privacy }}
          </NuxtLink>
-         <a :href="`mailto:${SITE_EMAIL}`">
-            {{ COPY.footer.contact }}
-         </a>
       </nav>
    </footer>
 </template>
