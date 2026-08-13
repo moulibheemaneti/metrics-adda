@@ -2,7 +2,7 @@
    <main class="page stack stack--loose">
       <section class="hero">
          <p class="hero__eyebrow">
-            {{ COPY.home.eyebrow }}
+            {{ eyebrow }}
          </p>
          <h1 class="hero__title">
             {{ COPY.home.headingLead }}
@@ -27,6 +27,10 @@
 </template>
 
 <script lang="ts" setup>
+// The eyebrow states how many tools the grid below holds, so it reads the
+// count off the registry rather than repeating it in the copy.
+const eyebrow = COPY.home.eyebrow.replace("{count}", String(TOOLS.length))
+
 useAppSeo({
    title: SEO.home.title,
    description: SEO.home.description,
