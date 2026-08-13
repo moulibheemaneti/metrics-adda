@@ -3,6 +3,12 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.9.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.8.0...v1.9.0) (2026-08-13)
+
+### ✨ Features
+
+* **pages:** add about and contact pages ([f2eb3a6](https://github.com/moulibheemaneti/metrics-adda/commit/f2eb3a63d63a882d1a2d90386fd020dcc571d2ea))
+
 ## [1.8.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.7.0...v1.8.0) (2026-08-12)
 
 ### ✨ Features
