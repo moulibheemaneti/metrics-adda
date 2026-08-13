@@ -3,6 +3,13 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.9.2](https://github.com/moulibheemaneti/metrics-adda/compare/v1.9.1...v1.9.2) (2026-08-13)
+
+### 🐛 Bug Fixes
+
+* **contact:** correct the address and link the privacy policy ([1901426](https://github.com/moulibheemaneti/metrics-adda/commit/1901426464843540cd316607883ea73722ceb22b))
+* **nav:** centre the dropdown chevron when the panel is open ([e57026b](https://github.com/moulibheemaneti/metrics-adda/commit/e57026be28d64b6c13daca729d69c208c084717a))
+
 ## [1.9.1](https://github.com/moulibheemaneti/metrics-adda/compare/v1.9.0...v1.9.1) (2026-08-13)
 
 ### 🐛 Bug Fixes
