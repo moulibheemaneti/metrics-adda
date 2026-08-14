@@ -17,7 +17,8 @@ work; this is the list they get picked from.
 anything needing a server are deliberately later — see
 [Out of scope](#out-of-scope).
 
-**Where things stand:** 15 tools. Tier 1 is done; Tier 2 is about half done.
+**Where things stand:** 15 tools. Tier 1 is done; Tier 2 has 4 of its 10 panels
+shipped. Programmatic SEO has not started.
 
 ---
 
@@ -63,24 +64,20 @@ the same shapes.
   affine — `base = value * factor + offset` cannot express it. Deferred, not
   forgotten.
 
-### What the three-pass split was worth
+### What batching taught
 
-Kept because the same question will come up for Tier 2.
+The three-pass sequencing question is settled — Tier 2 has been shipping in
+small batches for the same reasons. Two conclusions still bind on future work.
 
-- **The pilot earned its keep.** Speed alone surfaced the `DimensionId` /
-  `ToolKey` union shape, the four separate copy blocks, and the `verify.sh`
-  drift — once, on five units, instead of five times.
-- **Deriving beat hand-editing.** `scripts/seo/verify.sh` now reads its routes
-  from `TOOLS` via `bun -e`. The four later routes were asserted the moment
-  they were registered, with no edit to the script. It also fixed a real gap:
-  `/typing-speed-test` had shipped without its SEO surface ever being checked.
-- **The registry-drift guards auto-extended.** `test/unit/tools.test.ts`
-  iterates `TOOLS` and `DIMENSIONS`, so it picked up every new dimension and
-  checked its copy and unit labels without being touched.
+- **Derive, don't hand-edit.** `scripts/seo/verify.sh` reads its routes from
+  `TOOLS` via `bun -e`, and `test/unit/tools.test.ts` iterates `TOOLS` and
+  `DIMENSIONS`, so both picked up every later dimension untouched. Deriving
+  also fixed a real gap: `/typing-speed-test` had shipped without its SEO
+  surface ever being checked.
 - **Copy is the part that scales badly, not code.** Each tool is ~10 unit
   labels, 3 FAQ answers with real facts in them, and a title/description inside
-  the 60/155 budgets `test/unit/seo.test.ts` enforces. That is why five in one
-  sitting was the wrong shape.
+  the 60/155 budgets `test/unit/seo.test.ts` enforces. That is why several in
+  one sitting is the wrong shape.
 
 ---
 
@@ -115,6 +112,11 @@ that wants to be its own decision rather than a side effect of this one.
   revisited; the alternatives are heavier and drag in Node-only code.
 
 **Suggested order:** percentage → age → the encoders.
+
+The nav does not constrain this. `ToolNav.vue` lists groups rather than tools,
+so its width is bounded by the number of categories — the whole of Tier 2
+landing at once, `"calculators"` included, does not bring back the horizontal
+scroll that the flat row had at 13 tools.
 
 ### What the four shipped ones turned out to teach
 
@@ -166,11 +168,12 @@ Each step depends on the one above it.
    own: it makes a conversion shareable. Use `router.replace`, not `push`, so
    typing a value doesn't fill the back stack.
 2. **Category hub pages** — `/converters`, `/text-tools`, `/security-tools`.
-   The cheapest new pages on this list: `toolsByGroup()` already exists in
-   `app/utils/tools.ts` and is **still called only by tests**. These pages give
-   it a real caller and add a middle layer of internal linking between the hub
-   and the tools — which matters more now that `/converters` alone would hold
-   eight.
+   Still the cheapest new pages on this list: `toolsByGroup()` in
+   `app/utils/tools.ts` already returns exactly what a hub page renders, and
+   `ToolNav.vue` and `SiteMenu.vue` prove the grouping holds up in the UI. The
+   win here is crawlable pages and a middle layer of internal linking between
+   the home page and the tools — which matters more now that `/converters`
+   alone would hold eight.
 3. **Pair routes** — `/weight-converter/kg-to-lb`, one dynamic page per
    dimension. Titles and descriptions generated, not hand-authored.
 4. **Value routes** — `/weight-converter/70-kg-to-lb`. Highest volume of all,
@@ -222,30 +225,25 @@ fix rather than a drive-by one.
   — but the wide dimensions make it obvious. A `notation: "scientific"`
   threshold in `app/utils/format.ts` would fix it, and would change every tool's
   output, so it is its own change.
-- **The `scss` test project fails intermittently, about one run in four.**
-  `test/scss/scss.spec.ts` dies with `Compiler caused error: Invalid protobuf:
-  illegal tag: field no 0 wire type 0` from `sass-embedded`, and the run
-  reports a failed *file* with zero failed tests — which is easy to misread as
-  a real regression. It is the embedded Sass compiler process, not the SCSS:
+- **The `scss` test project fails intermittently, about one run in four — and
+  it is now in CI.** `test/scss/scss.spec.ts` dies with `Compiler caused error:
+  Invalid protobuf: illegal tag: field no 0 wire type 0` from `sass-embedded`,
+  and the run reports a failed *file* with zero failed tests — easy to misread
+  as a real regression. It is the embedded Sass compiler process, not the SCSS:
   measured at 2 failures in 8 full-suite runs on an otherwise untouched tree,
   and 0 in 12 when the `scss` project runs on its own, so it wants the other
-  projects running alongside it. Worth pinning down before `bun run test` goes
-  into CI, or the pipeline will go red at random. `sass-embedded` and `sass`
-  are both direct devDependencies at slightly different versions
-  (`^1.100.0` and `^1.102.0`), which is the first thing to rule out.
+  projects running alongside it. Reconfirmed at 1 failure in 3 runs on the
+  current tree. The `Tests` job in `.github/workflows/ci.yml` runs
+  `bun run test`, so this is already turning the pipeline red at random rather
+  than being a risk ahead of it — **the highest-priority item on this list.**
+  `sass-embedded` and `sass` are both direct devDependencies at slightly
+  different versions (`^1.100.0` and `^1.102.0`), which is the first thing to
+  rule out.
 - **New auto-imported exports need `nuxi prepare` before typecheck.** `.nuxt`'s
   generated types are what `vue-tsc` resolves auto-imports against, so a
   freshly added export in `app/utils/` fails typecheck until they are
   regenerated. commitguard runs typecheck pre-commit, so this bites at commit
   time.
-- **`ToolNav.vue`'s horizontal scroll — fixed, and this time it stays
-  fixed.** At 13 tools the flat row came to 1940px of links and scrolled at
-  *every* viewport width, 1920px included. The nav now lists **groups**, each
-  opening a dropdown, and a group holding one tool renders as a direct link to
-  it. The top level is 455px and `$single-row` came *down*, from 78rem to
-  60rem. The width is now bounded by the number of categories rather than the
-  number of tools, so Tier 2 landing in full does not touch it — and
-  `toolsByGroup()` finally has a caller that is not a test.
 
 ---
 
@@ -267,5 +265,8 @@ Recorded so the reasons survive.
   crawlable links — it belongs on top of a browsable nav, not instead of one.
   Worth building when the tool count makes scanning a dropdown slow, which is
   not yet.
-- **Test and CI infrastructure** — Playwright E2E, an axe-core runner in the
-  repo, `seo:verify` and Lighthouse wired into CI.
+- **Test and CI infrastructure beyond what CI already runs.** `ci.yml` covers
+  lint, typecheck, `bun run test` and build. Still not wired up, and
+  deliberately: Playwright E2E, an axe-core runner in the repo, and
+  `seo:verify` / `seo:lighthouse` in CI — both of those need a built preview
+  server in the job, which is a bigger step than adding a script call.
