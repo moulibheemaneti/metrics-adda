@@ -3,6 +3,20 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.11.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.10.0...v1.11.0) (2026-08-14)
+
+### ✨ Features
+
+* **nav:** collapse the phone sheet's groups like the header ([976df1f](https://github.com/moulibheemaneti/metrics-adda/commit/976df1f0ef0b7288b1a2a7bb6c12302c667a8886))
+
+### 🐛 Bug Fixes
+
+* **test:** stop the scss project failing at random ([0ce8e6e](https://github.com/moulibheemaneti/metrics-adda/commit/0ce8e6e02154b47a41cd49fd33bfb43b192389a0))
+
+### 📚 Documentation
+
+* **roadmap:** refresh against the shipped state ([005fa2c](https://github.com/moulibheemaneti/metrics-adda/commit/005fa2ce034bb71e7f9e1641ca8329686dfd6e0a))
+
 ## [1.10.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.9.2...v1.10.0) (2026-08-14)
 
 ### ✨ Features
