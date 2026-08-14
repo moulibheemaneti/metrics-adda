@@ -17,7 +17,7 @@ work; this is the list they get picked from.
 anything needing a server are deliberately later — see
 [Out of scope](#out-of-scope).
 
-**Where things stand:** 11 tools on 13 routes. Tier 1 is done.
+**Where things stand:** 15 tools. Tier 1 is done; Tier 2 is about half done.
 
 ---
 
@@ -86,38 +86,80 @@ Kept because the same question will come up for Tier 2.
 
 ## Tier 2 — new panels, no engine change
 
-The next work. Ordered roughly by effort.
+### Shipped
 
-- **`/case-converter`** — upper, lower, title, sentence, camel, snake, kebab.
-  Reuses `CopyButton.vue` and the `Intl.Segmenter` word-splitting already in
-  `app/utils/text.ts`.
+| Route | Notes |
+| --- | --- |
+| `/case-converter` | Ten cases, split into text and identifier families |
+| `/bmi-calculator` | Plus the advanced body-composition mode; added `"health"` |
+| `/lorem-ipsum-generator` | Seeded generation, so it server-renders |
+| `/uuid-generator` | v4, with a `getRandomValues` fallback |
+
+The last two added a `"generators"` group. `password-generator` was left in
+`"security"` rather than moved into it — it is arguably a generator too, but
+moving a shipped tool changes a nav label people may already recognise, and
+that wants to be its own decision rather than a side effect of this one.
+
+### Still to build
+
 - **`/percentage-calculator`**, **`/age-calculator`** — pure arithmetic, no
-  dependencies.
-- **`/bmi-calculator`** — reuses `units.ts` for kg/lb and cm/ft-in, and the
-  feet+inches composite input from `HeightConverter.vue`. Needs a new
-  `ToolGroup` (`"health"`).
+  dependencies. Neither fits an existing group; they want a `"calculators"` one.
 - **`/base64-encoder`**, **`/url-encoder`** — trivial, and they reinforce the
   privacy line rather than strain it.
-- **`/uuid-generator`** — `crypto.randomUUID()`.
 - **`/hash-generator`** — SHA-1/256/384/512 via `crypto.subtle.digest`.
   `app/utils/password.ts` already establishes how WebCrypto is used here.
 - **`/json-formatter`** — format, minify, validate, with the error position.
-- **`/lorem-ipsum-generator`** — mirrors the word-bank pattern in
-  `app/utils/typing.ts`.
-- **`/qr-code-generator`** — the only item needing a new dependency. Renders to
-  canvas/SVG locally; nothing is uploaded.
+- **`/qr-code-generator`** — **deferred on the dependency.** It is the only
+  item on this list needing one, and the call is to stay dependency-free for
+  now. `uqr` (unjs, zero-dep, MIT, SVG output) is the candidate when that is
+  revisited; the alternatives are heavier and drag in Node-only code.
 
-**Suggested order:** case-converter → BMI → percentage → the encoders.
+**Suggested order:** percentage → age → the encoders.
 
-Case-converter first for the same reason speed went first: it is the cheapest
-one that still exercises a *new panel component*, which is the surface Tier 1
-never touched. Every Tier 1 tool reused `UnitConverter.vue`; none of these can.
+### What the four shipped ones turned out to teach
+
+- **SSR is the fork in the road for a generator.** Two of these generate
+  content, and they resolve it opposite ways on purpose. Lorem ipsum is seeded
+  from a fixed integer, so the server and the client produce identical text,
+  hydration is silent, and a crawler gets real placeholder copy. UUIDs are
+  generated client-only in `onMounted`, because a value baked into cached HTML
+  would be handed to every visitor — the same rule `PasswordGeneratorPanel.vue`
+  already followed. The deciding question is whether a repeated value is merely
+  dull or actually a bug.
+- **Reformatting is not regeneration.** Ticking "uppercase" on the UUID panel
+  restyles the values already on screen instead of drawing new ones. The
+  obvious `watch(options, regenerate)` — which is right for the password
+  panel — would swap the list under someone who had just pasted the first one
+  somewhere.
+- **One definition of "word", in one module.** The lorem panel counts its
+  output with `analyseText` from `utils/text.ts` rather than a local split, so
+  the number agrees with the word counter's.
+- **Clamp on `NaN`, not on `!isFinite`.** An emptied number input yields `NaN`,
+  which passes through `Math.min`/`Math.max` untouched and needs the guard. The
+  infinities do not — they are genuinely out of range and clamp correctly on
+  their own, so lumping them in with `NaN` sends a too-large request to the
+  *minimum*, which is the opposite of what was asked for.
 
 ---
 
 ## Programmatic SEO
 
-Each step depends on the one above it. Nothing here has started.
+**Parked until there is real traffic to reason about.** Nothing here has
+started, and the order below is kept because the dependencies between the
+steps still hold — but step 1 was previously described as an SEO win, and it
+is not one. Query parameters do not earn indexable pages: `site.url` in
+`nuxt.config.ts` drives a path-only canonical, so `?from=kg&to=lb` would emit
+`<link rel="canonical">` pointing back at the bare route, telling Google to
+ignore it. The server HTML is identical for every parameter combination, and
+none of those URLs are in the sitemap or linked internally. Its real value is
+shareability plus the state-hydration refactor that steps 3 and 4 would reuse
+— worth doing for those reasons, not for search.
+
+The page-count play is steps 3 and 4, because a path is a real page: its own
+prerendered HTML, its own title and H1, its own sitemap entry. Step 2 is the
+cheapest genuine win and does not depend on step 1 at all.
+
+Each step depends on the one above it.
 
 1. **Query-param deep links** — `?from=kg&to=lb&value=70` in
    `UnitConverter.vue`. Prerequisite for everything below, and useful on its
@@ -180,6 +222,17 @@ fix rather than a drive-by one.
   — but the wide dimensions make it obvious. A `notation: "scientific"`
   threshold in `app/utils/format.ts` would fix it, and would change every tool's
   output, so it is its own change.
+- **The `scss` test project fails intermittently, about one run in four.**
+  `test/scss/scss.spec.ts` dies with `Compiler caused error: Invalid protobuf:
+  illegal tag: field no 0 wire type 0` from `sass-embedded`, and the run
+  reports a failed *file* with zero failed tests — which is easy to misread as
+  a real regression. It is the embedded Sass compiler process, not the SCSS:
+  measured at 2 failures in 8 full-suite runs on an otherwise untouched tree,
+  and 0 in 12 when the `scss` project runs on its own, so it wants the other
+  projects running alongside it. Worth pinning down before `bun run test` goes
+  into CI, or the pipeline will go red at random. `sass-embedded` and `sass`
+  are both direct devDependencies at slightly different versions
+  (`^1.100.0` and `^1.102.0`), which is the first thing to rule out.
 - **New auto-imported exports need `nuxi prepare` before typecheck.** `.nuxt`'s
   generated types are what `vue-tsc` resolves auto-imports against, so a
   freshly added export in `app/utils/` fails typecheck until they are

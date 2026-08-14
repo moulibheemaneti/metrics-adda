@@ -23,7 +23,7 @@ import type { ToolKey } from "./copy"
  * three by hand and would have silently under-counted the moment a fourth
  * arrived.
  */
-export const TOOL_GROUPS = ["converters", "text", "security", "health"] as const
+export const TOOL_GROUPS = ["converters", "text", "generators", "security", "health"] as const
 
 export type ToolGroup = typeof TOOL_GROUPS[number]
 
@@ -109,6 +109,18 @@ export const TOOLS: ToolEntry[] = [
       path: "/bmi-calculator",
       key: "bmiCalculator",
       group: "health",
+   },
+   {
+      slug: "lorem-ipsum-generator",
+      path: "/lorem-ipsum-generator",
+      key: "loremIpsumGenerator",
+      group: "generators",
+   },
+   {
+      slug: "uuid-generator",
+      path: "/uuid-generator",
+      key: "uuidGenerator",
+      group: "generators",
    },
    {
       slug: "password-generator",

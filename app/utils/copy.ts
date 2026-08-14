@@ -22,6 +22,7 @@ import type {
    WhrCategory,
    WhtrCategory,
 } from "./body"
+import type { LoremUnit } from "./lorem"
 import type { CaseId } from "./textCase"
 // Type-only, and `tools.ts` imports `ToolKey` back from here. The cycle is
 // erased at compile time, which is what keeps each module's names defined
@@ -43,6 +44,8 @@ export type ToolKey
      | "caseConverter"
      | "bmiCalculator"
      | "typingTest"
+     | "loremIpsumGenerator"
+     | "uuidGenerator"
      | "passwordGenerator"
 
 /** Pages that carry their own search metadata. */
@@ -115,7 +118,7 @@ export const SEO: Record<PageKey, SeoCopy> = {
    home: {
       title: "Metrics Adda — Unit Converters & Text Tools",
       description:
-         "Free, fast converters for weight, height, temperature, speed, volume, area, time and data, plus text tools, a BMI calculator and a password generator.",
+         "Free converters for weight, height, temperature, speed, volume, area, time and data, plus text tools, a BMI calculator and password and UUID generators.",
    },
    privacy: {
       title: "Privacy Policy",
@@ -198,6 +201,16 @@ export const SEO: Record<PageKey, SeoCopy> = {
       description:
          "Work out your BMI from height and weight in metric or imperial units, then switch to advanced for body fat, lean mass and daily energy needs.",
    },
+   loremIpsumGenerator: {
+      title: "Lorem Ipsum Generator: Placeholder Text",
+      description:
+         "Generate lorem ipsum placeholder text by the paragraph, sentence or word. Start with the classic opening line or skip it, then copy it in one click.",
+   },
+   uuidGenerator: {
+      title: "UUID Generator: Random v4 UUIDs",
+      description:
+         "Generate random version 4 UUIDs, up to 100 at a time. Choose uppercase, hyphens or braces, and copy the lot. Generated in your browser, never on a server.",
+   },
    passwordGenerator: {
       title: "Strong Random Password Generator",
       description:
@@ -277,6 +290,18 @@ const TOOL_COPY: Record<ToolKey, ToolCopy> = {
       tagline: "Words per minute, accuracy and your best",
       heading: "Typing speed test",
       lede: "Type the words as they appear and see your speed in words per minute. Pick a length, a topic and a difficulty, mix in numbers and punctuation if you want them, and the clock starts with your first keystroke.",
+   },
+   loremIpsumGenerator: {
+      name: "Lorem Ipsum Generator",
+      tagline: "Placeholder text by paragraph, sentence or word",
+      heading: "Lorem ipsum generator",
+      lede: "Generate placeholder text for a layout or a mockup. Pick paragraphs, sentences or words, choose how many, and copy the result in one click.",
+   },
+   uuidGenerator: {
+      name: "UUID Generator",
+      tagline: "Random version 4 UUIDs, up to 100 at once",
+      heading: "UUID generator",
+      lede: "Generate random version 4 UUIDs. Choose how many you need and how they are formatted. They are produced by your browser's cryptographic random number generator and never sent anywhere.",
    },
    passwordGenerator: {
       name: "Password Generator",
@@ -588,6 +613,34 @@ const FAQ_COPY: Record<ToolKey, FaqEntry[]> = {
          answer: "They are estimates from formulas fitted on particular groups of people, not measurements of you. A tape-measure body fat estimate is typically within 3 to 5 percentage points of a DEXA scan, and where you place the tape is the largest source of error. Calorie needs vary by 10 percent or more between people of identical size.",
       },
    ],
+   loremIpsumGenerator: [
+      {
+         question: "What is lorem ipsum?",
+         answer: "Scrambled Latin, taken from a first-century BC text by Cicero, used as placeholder copy since the 1500s. It reads as text without being readable, so it shows how a layout looks without anyone stopping to read it.",
+      },
+      {
+         question: "Why not just type “text text text”?",
+         answer: "Repeated words give an unrealistic rhythm: the word lengths and line breaks are wrong, so the block looks nothing like real copy. Lorem ipsum has roughly the word-length distribution of English prose.",
+      },
+      {
+         question: "Is the text the same every time?",
+         answer: "No. Each press of Generate produces a different passage. The first one you see on loading the page is fixed, so the text is there before any script runs.",
+      },
+   ],
+   uuidGenerator: [
+      {
+         question: "What is a version 4 UUID?",
+         answer: "A 128-bit identifier with 122 of those bits taken at random; the other six mark the version and variant. Version 4 is the random one, as opposed to versions built from a timestamp or a MAC address.",
+      },
+      {
+         question: "Can two of these ever collide?",
+         answer: "In practice, no. There are 2^122 possible values, so you would need to generate about a billion a second for 85 years to reach a one-in-a-billion chance of a single repeat.",
+      },
+      {
+         question: "Are these generated on a server?",
+         answer: "No. They come from your browser's cryptographic random number generator, the same source used for encryption keys, and are never transmitted. That is also why the box is empty until the page finishes loading.",
+      },
+   ],
    passwordGenerator: [
       {
          question: "Are these passwords safe to use?",
@@ -623,6 +676,7 @@ export const COPY = {
       groups: {
          converters: "Converters",
          text: "Text",
+         generators: "Generators",
          health: "Health",
          security: "Security",
       } satisfies Record<ToolGroup, string>,
@@ -684,7 +738,7 @@ export const COPY = {
       headingLead: "Everyday tools that are",
       headingAccent: "instant and exact",
       heading: "Everyday tools that are instant and exact",
-      tagline: "Converters for weight, height, temperature, speed, volume, area, time and data, plus a word counter, a case converter, a typing speed test, a BMI calculator and a password generator. Nothing to install, and nothing you type ever leaves your browser.",
+      tagline: "Converters for weight, height, temperature, speed, volume, area, time and data, plus a word counter, a case converter, a typing speed test, a BMI calculator, and generators for passwords, UUIDs and placeholder text. Nothing to install, and nothing you type ever leaves your browser.",
       toolsHeading: "All tools",
    },
    /// The privacy policy. Kept here with the rest of the copy rather than
@@ -1103,6 +1157,28 @@ export const COPY = {
       finishedAnnouncement: "Time up.",
       wordsPerMinuteSpoken: "words per minute",
       accuracySpoken: "accuracy",
+   },
+   lorem: {
+      unitLabel: "Generate",
+      units: {
+         paragraphs: "Paragraphs",
+         sentences: "Sentences",
+         words: "Words",
+      } satisfies Record<LoremUnit, string>,
+      countLabel: "How many",
+      startWithLorem: "Start with “Lorem ipsum dolor sit amet…”",
+      generate: "Generate new text",
+      outputLabel: "Placeholder text",
+      wordCount: "Words",
+   },
+   uuid: {
+      outputLabel: "Generated UUIDs",
+      countLabel: "How many",
+      generate: "Generate new UUIDs",
+      formatLegend: "Format",
+      hyphens: "Hyphens (8-4-4-4-12)",
+      uppercase: "Uppercase",
+      braces: "Braces {…}",
    },
    password: {
       outputLabel: "Generated password",
