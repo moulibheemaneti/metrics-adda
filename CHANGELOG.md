@@ -3,6 +3,12 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.10.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.9.2...v1.10.0) (2026-08-14)
+
+### ✨ Features
+
+* **generators:** add the lorem ipsum and uuid generators ([5192c22](https://github.com/moulibheemaneti/metrics-adda/commit/5192c2225209ca1bc750515b81b0549c893fcde4))
+
 ## [1.9.2](https://github.com/moulibheemaneti/metrics-adda/compare/v1.9.1...v1.9.2) (2026-08-13)
 
 ### 🐛 Bug Fixes
