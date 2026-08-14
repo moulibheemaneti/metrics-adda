@@ -225,20 +225,16 @@ fix rather than a drive-by one.
   — but the wide dimensions make it obvious. A `notation: "scientific"`
   threshold in `app/utils/format.ts` would fix it, and would change every tool's
   output, so it is its own change.
-- **The `scss` test project fails intermittently, about one run in four — and
-  it is now in CI.** `test/scss/scss.spec.ts` dies with `Compiler caused error:
-  Invalid protobuf: illegal tag: field no 0 wire type 0` from `sass-embedded`,
-  and the run reports a failed *file* with zero failed tests — easy to misread
-  as a real regression. It is the embedded Sass compiler process, not the SCSS:
-  measured at 2 failures in 8 full-suite runs on an otherwise untouched tree,
-  and 0 in 12 when the `scss` project runs on its own, so it wants the other
-  projects running alongside it. Reconfirmed at 1 failure in 3 runs on the
-  current tree. The `Tests` job in `.github/workflows/ci.yml` runs
-  `bun run test`, so this is already turning the pipeline red at random rather
-  than being a risk ahead of it — **the highest-priority item on this list.**
-  `sass-embedded` and `sass` are both direct devDependencies at slightly
-  different versions (`^1.100.0` and `^1.102.0`), which is the first thing to
-  rule out.
+- **Anything else that blocks on a pipe may do what the `scss` flake did.**
+  That one is fixed — sass-true now compiles with pure-JS `sass` rather than
+  letting it default to `sass-embedded`, and `test/scss/scss.spec.ts` carries
+  the reasoning. The general lesson outlived it: the failure was
+  `sass-embedded` blocking on its child process through a worker thread and
+  `Atomics.wait`, which is reliable under `node` and not under `bun --bun`,
+  and `bun --bun` is how `bun run test` and CI run the suite. It surfaced as a
+  failed *file* with zero failed tests, roughly one full-suite run in four. A
+  dependency that shells out to a native helper and waits on it synchronously
+  is the shape to be suspicious of.
 - **New auto-imported exports need `nuxi prepare` before typecheck.** `.nuxt`'s
   generated types are what `vue-tsc` resolves auto-imports against, so a
   freshly added export in `app/utils/` fails typecheck until they are
