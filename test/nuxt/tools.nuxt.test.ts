@@ -3,6 +3,7 @@ import { mountSuspended } from "@nuxt/test-utils/runtime"
 import BmiCalculatorPanel from "../../app/components/BmiCalculatorPanel.vue"
 import HeightConverter from "../../app/components/HeightConverter.vue"
 import PasswordGeneratorPanel from "../../app/components/PasswordGeneratorPanel.vue"
+import SiteMenu from "../../app/components/SiteMenu.vue"
 import TextStatsPanel from "../../app/components/TextStatsPanel.vue"
 import ToolNav from "../../app/components/ToolNav.vue"
 import UnitConverter from "../../app/components/UnitConverter.vue"
@@ -454,6 +455,89 @@ describe("ToolNav", () => {
 
       for (const [tool] of singles) {
          const link = nav.find(`.tool-nav__list > li > a[href="${tool?.path}"]`)
+
+         expect(link.exists(), `${tool?.slug} is not a top-level link`).toBe(true)
+      }
+   })
+})
+
+describe("SiteMenu", () => {
+   /// The same guarantee the header carries: the sheet is where every
+   /// internal link lives at phone width, so a tool missing from it is a
+   /// tool with no route into it below 40rem.
+   it("links to every registered tool", async() => {
+      const menu = await mountSuspended(SiteMenu)
+      const hrefs = menu.findAll("a").map((link) => link.attributes("href"))
+
+      expect(hrefs.toSorted()).toEqual(TOOLS.map((tool) => tool.path).toSorted())
+   })
+
+   /// Collapsing must not cost the links their place in the HTML. A closed
+   /// <details> keeps its contents in the DOM — that is the whole reason
+   /// for using it over mounting the list on demand — and this is the test
+   /// that fails if anyone "optimises" it into a v-if later.
+   it("renders the tools of a collapsed group rather than mounting on demand", async() => {
+      const menu = await mountSuspended(SiteMenu)
+      const shut = menu.findAll(".site-menu__group").filter((group) =>
+         !(group.element as HTMLDetailsElement).open)
+
+      expect(shut.length).toBeGreaterThan(0)
+
+      for (const group of shut) {
+         expect(group.findAll("a").length).toBeGreaterThan(0)
+      }
+   })
+
+   /// Mounted off any tool route, so no group is the current one. Every
+   /// group starts shut, which is the point of the change: the whole site
+   /// is one screen of category rows rather than a screen and a half of
+   /// links.
+   it("starts every group collapsed away from a tool page", async() => {
+      const menu = await mountSuspended(SiteMenu)
+
+      for (const group of menu.findAll(".site-menu__group")) {
+         expect((group.element as HTMLDetailsElement).open).toBe(false)
+      }
+   })
+
+   /// The other half of that trade: arriving on a tool page opens the
+   /// group holding it, so the sheet opens on where you are and the
+   /// neighbouring tools — the cross-navigation it exists for — are still
+   /// one tap away rather than two.
+   it("opens the group holding the current page", async() => {
+      const menu = await mountSuspended(SiteMenu, { route: "/weight-converter" })
+      const open = menu.findAll(".site-menu__group")
+         .filter((group) => (group.element as HTMLDetailsElement).open)
+
+      expect(open.length).toBe(1)
+      expect(open[0]?.find("a[href=\"/weight-converter\"]").exists()).toBe(true)
+   })
+
+   /// One open at a time is the browser's job via `name`, not something to
+   /// arrange in script — so what is asserted here is that the attribute
+   /// is actually on the elements and shared across them.
+   it("names the groups into a single accordion", async() => {
+      const menu = await mountSuspended(SiteMenu)
+      const names = menu.findAll(".site-menu__group")
+         .map((group) => group.attributes("name"))
+
+      expect(names.length).toBeGreaterThan(1)
+      expect(new Set(names).size).toBe(1)
+      expect(names[0]).toBeTruthy()
+   })
+
+   /// A group of one is a link to that tool, exactly as in the header —
+   /// `useToolGroups` is what makes that one rule rather than two.
+   it("renders a single-tool group as a direct link", async() => {
+      const menu = await mountSuspended(SiteMenu)
+      const singles = TOOL_GROUPS
+         .map((group) => toolsByGroup(group))
+         .filter((tools) => tools.length === 1)
+
+      expect(singles.length).toBeGreaterThan(0)
+
+      for (const [tool] of singles) {
+         const link = menu.find(`.site-menu__groups > li > a[href="${tool?.path}"]`)
 
          expect(link.exists(), `${tool?.slug} is not a top-level link`).toBe(true)
       }

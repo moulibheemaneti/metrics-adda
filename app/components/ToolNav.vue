@@ -26,21 +26,7 @@
                   @click="toggle(group.id)"
                >
                   {{ group.label }}
-                  <!-- An SVG rather than "▾": that glyph sits low in its em
-                       box, so rotating it 180deg swings the visible mark to
-                       the top of the line instead of flipping it in place. -->
-                  <svg
-                     aria-hidden="true"
-                     class="tool-nav__chevron"
-                     viewBox="0 0 10 6"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.5"
-                     stroke-linecap="round"
-                     stroke-linejoin="round"
-                  >
-                     <path d="M1 1.25 5 4.75 9 1.25" />
-                  </svg>
+                  <NavChevron class="tool-nav__chevron" />
                </button>
 
                <!-- Rendered whether open or not, and hidden with CSS. These
@@ -73,7 +59,9 @@
 /// row with room to spare, and they keep fitting as tools land — the
 /// registry decides how deep each list is, not the header's width.
 ///
-/// Built from `toolsByGroup`, which until now was called only by tests.
+/// The groups themselves come from `useToolGroups`, shared with the phone
+/// sheet so the two cannot drift apart about which groups exist or which
+/// of them collapse to a single link.
 ///
 /// A disclosure, deliberately not `role="menu"`. That role is for
 /// application menus and makes a screen reader announce these as
@@ -94,23 +82,10 @@ function setTrigger(group: ToolGroup, el: Element | ComponentPublicInstance | nu
    else triggers.delete(group)
 }
 
-const groups = computed(() =>
-   TOOL_GROUPS
-      .map((id) => {
-         const tools = toolsByGroup(id)
-
-         return {
-            id,
-            label: COPY.nav.groups[id],
-            tools,
-            only: tools.length === 1 ? tools[0] : undefined,
-         }
-      })
-      .filter((group) => group.tools.length > 0))
+const groups = useToolGroups()
 
 /** The group the current page belongs to, so its trigger reads as active. */
-const currentGroup = computed(() =>
-   TOOLS.find((tool) => tool.path === route.path)?.group ?? null)
+const currentGroup = useCurrentToolGroup()
 
 function toggle(group: ToolGroup) {
    open.value = open.value === group ? null : group
@@ -213,12 +188,6 @@ watch(() => route.path, () => {
    }
 
    &__chevron {
-      // Sized here rather than in the markup so the box stays symmetrical
-      // about its own centre, which is what `rotate` turns around.
-      inline-size: px-to-rem(10);
-      block-size: px-to-rem(6);
-      transition: rotate var(--duration) var(--ease);
-
       .tool-nav__trigger[aria-expanded="true"] & {
          rotate: 180deg;
       }
