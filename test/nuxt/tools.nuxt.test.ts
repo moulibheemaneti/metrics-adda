@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { mountSuspended } from "@nuxt/test-utils/runtime"
 import AgeCalculatorPanel from "../../app/components/AgeCalculatorPanel.vue"
+import Base64EncoderPanel from "../../app/components/Base64EncoderPanel.vue"
 import BmiCalculatorPanel from "../../app/components/BmiCalculatorPanel.vue"
 import HeightConverter from "../../app/components/HeightConverter.vue"
 import PasswordGeneratorPanel from "../../app/components/PasswordGeneratorPanel.vue"
@@ -342,6 +343,102 @@ describe("AgeCalculatorPanel", () => {
 
       expect(panel.find(".age__note").text()).toBe(COPY.age.empty)
       expect(panel.find(".age__value").exists()).toBe(false)
+   })
+})
+
+describe("Base64EncoderPanel", () => {
+   /// Radios in DOM order: the two directions, then the two alphabets —
+   /// which are only on screen while encoding.
+   const DECODE = 1
+   const URL_SAFE = 3
+
+   type Panel = Awaited<ReturnType<typeof mountSuspended<typeof Base64EncoderPanel>>>
+
+   const output = (panel: Panel): string =>
+      panel.findAll<HTMLTextAreaElement>("textarea")[1]?.element.value ?? ""
+
+   const type = async(panel: Panel, text: string): Promise<void> => {
+      await panel.findAll("textarea")[0]?.setValue(text)
+   }
+
+   it("encodes a worked example before any interaction", async() => {
+      const panel = await mountSuspended(Base64EncoderPanel)
+
+      expect(output(panel)).toBe("TWV0cmljcyBBZGRh")
+   })
+
+   /// The reason the module exists rather than a bare `btoa`, checked
+   /// through the panel as well as the function: `btoa` throws here.
+   it("encodes text outside Latin-1", async() => {
+      const panel = await mountSuspended(Base64EncoderPanel)
+
+      await type(panel, "café")
+
+      expect(output(panel)).toBe("Y2Fmw6k=")
+   })
+
+   it("switches alphabet without changing direction", async() => {
+      const panel = await mountSuspended(Base64EncoderPanel)
+
+      await type(panel, "ÿþ")
+      await panel.findAll("input[type=\"radio\"]")[URL_SAFE]?.setValue()
+
+      expect(output(panel)).not.toContain("/")
+   })
+
+   it("decodes when the direction is flipped", async() => {
+      const panel = await mountSuspended(Base64EncoderPanel)
+
+      await panel.findAll("input[type=\"radio\"]")[DECODE]?.setValue()
+      await type(panel, "TWV0cmljcyBBZGRh")
+
+      expect(output(panel)).toBe("Metrics Adda")
+   })
+
+   /// The alphabet and padding controls do nothing on a decode, so they
+   /// come off screen rather than sitting there inert.
+   it("hides the writing options while decoding", async() => {
+      const panel = await mountSuspended(Base64EncoderPanel)
+
+      expect(panel.findAll("input[type=\"radio\"]")).toHaveLength(4)
+
+      await panel.findAll("input[type=\"radio\"]")[DECODE]?.setValue()
+
+      expect(panel.findAll("input[type=\"radio\"]")).toHaveLength(2)
+   })
+
+   it("tells the two decode failures apart", async() => {
+      const panel = await mountSuspended(Base64EncoderPanel)
+
+      await panel.findAll("input[type=\"radio\"]")[DECODE]?.setValue()
+
+      await type(panel, "not base64!")
+      expect(panel.find(".base64__fault").text()).toBe(COPY.base64.faults.notBase64)
+
+      // Well-formed base64 carrying bytes that are not UTF-8 text.
+      await type(panel, "//79")
+      expect(panel.find(".base64__fault").text()).toBe(COPY.base64.faults.notText)
+   })
+
+   /// Round-tripping is how someone checks their own work, and doing it by
+   /// hand is a copy, a direction change and a paste in that order.
+   it("turns around when the result is reused as the input", async() => {
+      const panel = await mountSuspended(Base64EncoderPanel)
+
+      await type(panel, "café")
+      await panel.findAll("button").find((button) =>
+         button.text().includes(COPY.base64.useResult))?.trigger("click")
+
+      expect(panel.findAll<HTMLTextAreaElement>("textarea")[0]?.element.value).toBe("Y2Fmw6k=")
+      expect(output(panel)).toBe("café")
+   })
+
+   it("prompts rather than encoding nothing", async() => {
+      const panel = await mountSuspended(Base64EncoderPanel)
+
+      await type(panel, "")
+
+      expect(panel.find(".base64__note").text()).toBe(COPY.base64.empty)
    })
 })
 

@@ -14,6 +14,7 @@
 /// --------------------------------------------------
 
 import type { Weekday } from "./age"
+import type { Base64Alphabet, Base64Fault } from "./base64"
 import type { BmiCategory, BmiPopulation } from "./bmi"
 import type {
    ActivityLevel,
@@ -46,6 +47,7 @@ export type ToolKey
      | "ageCalculator"
      | "wordCounter"
      | "caseConverter"
+     | "base64Encoder"
      | "bmiCalculator"
      | "typingTest"
      | "loremIpsumGenerator"
@@ -199,6 +201,11 @@ export const SEO: Record<PageKey, SeoCopy> = {
       description:
          "Convert text to UPPER CASE, lower case, Title Case, Sentence case, camelCase, snake_case or kebab-case. Instant, free and runs in your browser.",
    },
+   base64Encoder: {
+      title: "Base64 Encoder and Decoder: Text to Base64",
+      description:
+         "Encode text to base64 or decode it back, with full Unicode support and the URL-safe alphabet. Runs in your browser — nothing you paste is uploaded.",
+   },
    typingTest: {
       title: "Typing Speed Test: Words Per Minute",
       description:
@@ -304,6 +311,12 @@ const TOOL_COPY: Record<ToolKey, ToolCopy> = {
       tagline: "UPPER, lower, Title, camelCase and snake_case",
       heading: "Case converter",
       lede: "Paste text and read it back in ten cases at once. Copy any one of them with a single click.",
+   },
+   base64Encoder: {
+      name: "Base64 Encoder",
+      tagline: "Encode and decode base64, Unicode included",
+      heading: "Base64 encoder and decoder",
+      lede: "Paste text to encode it as base64, or paste base64 to read it back. Text is encoded as UTF-8, so accents and emoji survive the trip — and the URL-safe alphabet is one checkbox away.",
    },
    bmiCalculator: {
       name: "BMI Calculator",
@@ -645,6 +658,24 @@ const FAQ_COPY: Record<ToolKey, FaqEntry[]> = {
          answer: "No. The test runs entirely in your browser and nothing is sent to a server. Your settings and personal best are kept in your browser's own local storage on this device, and clearing your site data removes them.",
       },
    ],
+   base64Encoder: [
+      {
+         question: "What is base64 used for?",
+         answer: "It writes arbitrary bytes using 64 printable characters, so binary survives channels that only carry text — email attachments, data URIs, JSON fields. The encoded form is about a third larger.",
+      },
+      {
+         question: "Is base64 a form of encryption?",
+         answer: "No. It is an encoding, not a cipher: anyone can decode it without a key, and this page does it in one paste. Never use base64 to hide a password, a token or anything else secret.",
+      },
+      {
+         question: "Why do accents and emoji break in other base64 tools?",
+         answer: "Base64 encodes bytes, not characters, so text has to become UTF-8 first. Tools built on the browser's btoa alone fail above Latin-1 — btoa(\"café\") throws. This one encodes as UTF-8.",
+      },
+      {
+         question: "What is URL-safe base64?",
+         answer: "Plus and slash both have meaning inside a URL, so RFC 4648 defines an alternative using minus and underscore instead. JWTs use it, usually with the trailing equals padding removed.",
+      },
+   ],
    bmiCalculator: [
       {
          question: "How is BMI calculated?",
@@ -978,6 +1009,43 @@ export const COPY = {
       speakingSpeedLabel: "Speaking speed",
       useRecommended: "Use the recommended speeds",
       wordsPerMinute: "wpm",
+   },
+   base64: {
+      directionLabel: "Direction",
+      directions: {
+         encode: "Encode to base64",
+         decode: "Decode from base64",
+      },
+      /// Both fields are named for what they hold in the current
+      /// direction. "Input" and "Output" would be accurate and would make
+      /// the reader work out which end they are at.
+      inputLabels: {
+         encode: "Text",
+         decode: "Base64",
+      },
+      outputLabels: {
+         encode: "Base64",
+         decode: "Text",
+      },
+      alphabetLegend: "Alphabet",
+      alphabets: {
+         standard: "Standard — + and /",
+         urlSafe: "URL-safe — - and _",
+      } satisfies Record<Base64Alphabet, string>,
+      padding: "Include the = padding",
+      /// Shown only while encoding. Decoding accepts either alphabet and
+      /// any amount of padding without being told, so the controls would
+      /// be inert there — and an inert control reads as a broken one.
+      optionsNote: "Decoding accepts either alphabet, padded or not.",
+      useResult: "Use the result as the input",
+      empty: "Paste something to convert it.",
+      /// Two failures with two different fixes, so two messages. Telling
+      /// someone their valid base64 is "invalid" when it is simply a PNG
+      /// sends them to check the wrong thing.
+      faults: {
+         notBase64: "That is not base64 — it has characters outside the alphabet, or it has been cut short.",
+         notText: "That is valid base64, but the bytes inside it are not UTF-8 text. It is probably a file rather than a message.",
+      } satisfies Record<Base64Fault, string>,
    },
    age: {
       birthLabel: "Date of birth",

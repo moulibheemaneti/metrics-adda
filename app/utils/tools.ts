@@ -111,6 +111,12 @@ export const TOOLS: ToolEntry[] = [
       group: "text",
    },
    {
+      slug: "base64-encoder",
+      path: "/base64-encoder",
+      key: "base64Encoder",
+      group: "text",
+   },
+   {
       slug: "typing-speed-test",
       path: "/typing-speed-test",
       key: "typingTest",

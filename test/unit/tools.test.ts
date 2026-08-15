@@ -24,9 +24,15 @@ describe("TOOLS", () => {
       }
    })
 
+   /// Digits are allowed inside a segment but not at the start of one:
+   /// `base64-encoder` is a slug, and the hash generator will want
+   /// `sha256` in one too. The pattern still rejects what it was written
+   /// to reject — capitals, underscores, spaces, and a leading, trailing
+   /// or doubled hyphen — so widening it here keeps the guard rather than
+   /// relaxing it around one awkward route.
    it("uses lowercase kebab-case slugs", () => {
       for (const tool of TOOLS) {
-         expect(tool.slug).toMatch(/^[a-z]+(-[a-z]+)*$/)
+         expect(tool.slug).toMatch(/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/)
       }
    })
 })

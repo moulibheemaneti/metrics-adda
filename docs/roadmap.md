@@ -17,8 +17,8 @@ work; this is the list they get picked from.
 anything needing a server are deliberately later — see
 [Out of scope](#out-of-scope).
 
-**Where things stand:** 17 tools. Tier 1 is done; Tier 2 has shipped six of
-its panels, with four queued and two deferred. Programmatic SEO has not
+**Where things stand:** 18 tools. Tier 1 is done; Tier 2 has shipped seven of
+its panels, with three queued and two deferred. Programmatic SEO has not
 started.
 
 ---
@@ -94,6 +94,7 @@ small batches for the same reasons. Two conclusions still bind on future work.
 | `/uuid-generator` | v4, with a `getRandomValues` fallback |
 | `/percentage-calculator` | Four modes over one pair of fields; added `"calculators"` |
 | `/age-calculator` | Calendar arithmetic with no `Date` in it; second `"calculators"` tool |
+| `/base64-encoder` | Both directions, UTF-8 throughout; filed under `"text"` |
 
 The generators added a `"generators"` group, and the percentage calculator a
 `"calculators"` one — which takes the header's top level to six, the cap
@@ -114,14 +115,23 @@ That reads as a priority list and was never one. The encoders being cheap to
 build is not a reason to ship them ahead of the tools people actually search
 for.
 
-1. **`/json-formatter`** — format, minify, validate, with the error position.
-   Highest intent of the developer cluster and the one people bookmark.
-   `JSON.parse` carries the whole thing; the work is reporting the error
-   position and the editor affordances, not the parsing.
-2. **`/base64-encoder`**, **`/url-encoder`** — trivial, ship together, and
-   they reinforce the privacy line rather than strain it.
+1. **`/json-formatter`** — **parked on the nav decision below, not on the
+   work.** Format, minify, validate, with the error position. Highest intent
+   of the developer cluster and the one people bookmark. `JSON.parse`
+   carries validity; the work is reporting the error position and the editor
+   affordances, not the parsing.
+2. **`/url-encoder`** — percent-encoding both ways. The `"text"` group took
+   `/base64-encoder`, and this one fits beside it on the same argument.
 3. **`/hash-generator`** — SHA-1/256/384/512 via `crypto.subtle.digest`.
    `app/utils/password.ts` already establishes how WebCrypto is used here.
+   The one item here that `"text"` cannot honestly hold.
+
+The encoders were listed to ship together and did not. Writing one tool's
+copy — a lede, four FAQ answers with real facts in them, and a title and
+description inside the SERP budgets — is the part of a tool that takes the
+time, and doing two in a sitting is the shape this file already warned
+against under [What batching taught](#what-batching-taught). The code for
+the second one is genuinely trivial; the copy is not.
 
 ### Deferred, and why
 
@@ -140,18 +150,30 @@ for.
 
 ### What ordering by demand runs into
 
-- **The developer cluster is a group decision, and the nav has one slot left.**
-  `test/unit/tools.test.ts` caps the header's top level at six occupied
-  groups. `"calculators"` took the sixth. A `"developer"` group for the three items above
-  would be the seventh and fails that test — deliberately,
-  because the cap is what keeps the nav from re-growing the horizontal scroll
-  the flat row had. Three honest ways out: file the developer tools under
-  existing groups (`"text"` fits the encoders badly and JSON worse), raise the
-  budget as its own decision with the widths re-measured, or consolidate —
-  moving `bmiCalculator` into `"calculators"` empties `"health"` and frees the
-  slot. That last one is the same move the `password-generator` note above
-  parks, and it wants the same treatment: a decision of its own, not a side
-  effect of shipping a JSON formatter.
+- **The six-group cap is not currently holding the line it was written for,
+  and this was measured rather than assumed.** `test/unit/tools.test.ts` caps
+  the header's top level at six occupied groups, on the reasoning that the
+  count of categories bounds the nav's width. `"calculators"` took the sixth.
+  But measured in the browser at 960px — `$single-row` in
+  `app/layouts/default.vue`, where the three-across header starts — the six
+  groups need 650px of track and get 466px, so **the nav already scrolls
+  horizontally there today**. At 1280px it fits, with about 160px spare.
+  Two things follow. First, a seventh group makes an existing problem worse
+  rather than introducing a new one, so the cap is not the clean gate it
+  looks like. Second, the widest items are not groups at all: the
+  single-tool rule renders `"security"` and `"health"` as their tool names,
+  so "Password Generator" is 161px and "BMI Calculator" 120px — 281px of
+  that 650 between them. Whatever is decided about a `"developer"` group,
+  the cheaper fix is that rule.
+- **So the developer cluster is still a group decision, with three ways
+  out.** File them under existing groups — `"text"` holds `/base64-encoder`
+  honestly enough and would hold `/url-encoder`, but not a hash generator.
+  Raise the budget deliberately, accepting the 960px scroll. Or consolidate:
+  moving `bmiCalculator` into `"calculators"` empties `"health"`, which both
+  frees the slot and removes a 120px item, so it is the only option that
+  does not make the nav wider. That last one is the same move the
+  `password-generator` note above parks, and it wants the same treatment — a
+  decision of its own, not a side effect of shipping a JSON formatter.
 - **Developer traffic monetises worse than general traffic.** Revenue is one
   AdSense slot per page; ad-blocking among developers runs far above the
   general rate and the CPMs are lower to begin with, so a `/json-formatter`
@@ -170,7 +192,7 @@ for.
 
 The nav does not otherwise constrain the order. `ToolNav.vue` lists groups
 rather than tools, so its width is bounded by the number of categories, and
-all four landing at once does not bring back the horizontal scroll that the
+the rest landing at once does not bring back the horizontal scroll that the
 flat row had at 13 tools — the six-group cap above is the only limit in play.
 
 ### What the case, BMI, lorem and UUID panels taught
@@ -196,6 +218,32 @@ flat row had at 13 tools — the six-group cap above is the only limit in play.
   infinities do not — they are genuinely out of range and clamp correctly on
   their own, so lumping them in with `NaN` sends a too-large request to the
   *minimum*, which is the opposite of what was asked for.
+
+### What the base64 encoder turned out to teach
+
+- **`btoa` is not a base64 encoder.** It takes a *binary string* — one
+  character per byte — and throws outright above code point 255, so
+  `btoa("café")` is an exception rather than an encoding. Text has to become
+  UTF-8 bytes first and those bytes a binary string. The mangled-emoji bug
+  in half the base64 tools on the web is that missing step, and it is the
+  reason this one is worth having rather than being a two-line wrapper.
+- **Two failures with different fixes need two messages.** Input that is not
+  base64 at all and input that is valid base64 carrying bytes which are not
+  UTF-8 — a PNG, a key — are unrelated problems. Reporting both as "invalid"
+  sends someone with a perfectly good token off to check the wrong thing.
+  `TextDecoder` in fatal mode is what separates them; without `fatal` the
+  second case comes back as a screenful of replacement characters.
+- **Spreading a typed array into an argument list is a size-dependent
+  bug.** `String.fromCharCode(...bytes)` works in every test written by hand
+  and overflows the call stack somewhere in the tens of kilobytes. Chunking
+  costs three lines. The unit test uses 200,000 characters, because a
+  limit this one only fails past is not a limit a small fixture will find.
+- **The registry guard needed widening, not relaxing.** `base64-encoder` is
+  the first slug with a digit in it, and the kebab-case assertion in
+  `test/unit/tools.test.ts` rejected it. The fix was a pattern that still
+  rejects capitals, underscores and stray hyphens while allowing digits
+  inside a segment — `sha256` will want the same. Relaxing the assertion to
+  let one route through would have retired the guard by inches.
 
 ### What the calculators turned out to teach
 
