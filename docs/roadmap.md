@@ -17,8 +17,9 @@ work; this is the list they get picked from.
 anything needing a server are deliberately later — see
 [Out of scope](#out-of-scope).
 
-**Where things stand:** 15 tools. Tier 1 is done; Tier 2 has 4 of its 10 panels
-shipped. Programmatic SEO has not started.
+**Where things stand:** 16 tools. Tier 1 is done; Tier 2 has shipped five of
+its panels, with five queued and two deferred. Programmatic SEO has not
+started.
 
 ---
 
@@ -91,34 +92,91 @@ small batches for the same reasons. Two conclusions still bind on future work.
 | `/bmi-calculator` | Plus the advanced body-composition mode; added `"health"` |
 | `/lorem-ipsum-generator` | Seeded generation, so it server-renders |
 | `/uuid-generator` | v4, with a `getRandomValues` fallback |
+| `/percentage-calculator` | Four modes over one pair of fields; added `"calculators"` |
 
-The last two added a `"generators"` group. `password-generator` was left in
-`"security"` rather than moved into it — it is arguably a generator too, but
-moving a shipped tool changes a nav label people may already recognise, and
-that wants to be its own decision rather than a side effect of this one.
+The generators added a `"generators"` group, and the percentage calculator a
+`"calculators"` one — which takes the header's top level to six, the cap
+`test/unit/tools.test.ts` enforces. Every group after this one has to displace
+another; see [What ordering by demand runs into](#what-ordering-by-demand-runs-into).
+`password-generator` was left in `"security"` rather than moved into
+`"generators"` — it is arguably a generator too, but moving a shipped tool
+changes a nav label people may already recognise, and that wants to be its own
+decision rather than a side effect of this one.
 
 ### Still to build
 
-- **`/percentage-calculator`**, **`/age-calculator`** — pure arithmetic, no
-  dependencies. Neither fits an existing group; they want a `"calculators"` one.
-- **`/base64-encoder`**, **`/url-encoder`** — trivial, and they reinforce the
-  privacy line rather than strain it.
-- **`/hash-generator`** — SHA-1/256/384/512 via `crypto.subtle.digest`.
-  `app/utils/password.ts` already establishes how WebCrypto is used here.
-- **`/json-formatter`** — format, minify, validate, with the error position.
-- **`/qr-code-generator`** — **deferred on the dependency.** It is the only
-  item on this list needing one, and the call is to stay dependency-free for
-  now. `uqr` (unjs, zero-dep, MIT, SVG output) is the candidate when that is
-  revisited; the alternatives are heavier and drag in Node-only code.
+Ordered by search demand, not by build cost. The order used to be
+percentage → age → the encoders, which was picked by how little each one
+needed: pure arithmetic first, then the trivial ones, with `/json-formatter`
+and `/hash-generator` trailing because they are more panel than the rest.
+That reads as a priority list and was never one. The encoders being cheap to
+build is not a reason to ship them ahead of the tools people actually search
+for.
 
-**Suggested order:** percentage → age → the encoders.
+1. **`/age-calculator`** — the same tier of volume as the percentage
+   calculator, and the largest of these in India specifically. Reuses the
+   `"calculators"` group that one opened, which makes it the cheapest next
+   step as well as the right one.
+2. **`/json-formatter`** — format, minify, validate, with the error position.
+   Highest intent of the developer cluster and the one people bookmark.
+   `JSON.parse` carries the whole thing; the work is reporting the error
+   position and the editor affordances, not the parsing.
+3. **`/base64-encoder`**, **`/url-encoder`** — trivial, ship together, and
+   they reinforce the privacy line rather than strain it.
+4. **`/hash-generator`** — SHA-1/256/384/512 via `crypto.subtle.digest`.
+   `app/utils/password.ts` already establishes how WebCrypto is used here.
 
-The nav does not constrain this. `ToolNav.vue` lists groups rather than tools,
-so its width is bounded by the number of categories — the whole of Tier 2
-landing at once, `"calculators"` included, does not bring back the horizontal
-scroll that the flat row had at 13 tools.
+### Deferred, and why
 
-### What the four shipped ones turned out to teach
+- **`/qr-code-generator`** — deferred on the dependency. It is the only item
+  above needing one, and the call is to stay dependency-free for now. `uqr`
+  (unjs, zero-dep, MIT, SVG output) is the candidate when that is revisited;
+  the alternatives are heavier and drag in Node-only code.
+- **`/markdown-preview`** — the obvious sixth developer tool, and the one that
+  does not fit. A preview needs a parser *and* an HTML sanitizer, neither of
+  which can be hand-rolled safely, so it is a two-dependency ask where the QR
+  code was a one-dependency one. Worse, it renders visitor input as HTML in
+  the tool whose entire pitch is that visitor input is safe here: an unescaped
+  `<script>` in someone's pasted README is an XSS hole in exactly the page
+  claiming there is nowhere for the text to go. Revisit only alongside the
+  dependency rule, not around it.
+
+### What ordering by demand runs into
+
+- **The developer cluster is a group decision, and the nav has one slot left.**
+  `test/unit/tools.test.ts` caps the header's top level at six occupied
+  groups. `"calculators"` took the sixth. A `"developer"` group for items 2–4
+  would be the seventh and fails that test — deliberately,
+  because the cap is what keeps the nav from re-growing the horizontal scroll
+  the flat row had. Three honest ways out: file the developer tools under
+  existing groups (`"text"` fits the encoders badly and JSON worse), raise the
+  budget as its own decision with the widths re-measured, or consolidate —
+  moving `bmiCalculator` into `"calculators"` empties `"health"` and frees the
+  slot. That last one is the same move the `password-generator` note above
+  parks, and it wants the same treatment: a decision of its own, not a side
+  effect of shipping a JSON formatter.
+- **Developer traffic monetises worse than general traffic.** Revenue is one
+  AdSense slot per page; ad-blocking among developers runs far above the
+  general rate and the CPMs are lower to begin with, so a `/json-formatter`
+  visit is worth materially less than a `/percentage-calculator` one. Not a
+  reason to skip the cluster — the client-only story is a real differentiator
+  against incumbents that round-trip pasted JSON to a server, and it belongs
+  in the H1 — but a reason to keep it behind the general-audience calculators
+  rather than in front of them. Which is what the order above does.
+- **Head terms may not be winnable on this domain yet.** Every tool on this
+  list competes with an entrenched single-purpose site. A domain without
+  authority wins long-tail before it wins the bare query, which is an argument
+  for the pair routes in Programmatic SEO rather than for more head-term
+  tools. That section is parked pending traffic — but once Search Console has
+  a few months in it, this ordering should be re-checked against real
+  impressions rather than against priors.
+
+The nav does not otherwise constrain the order. `ToolNav.vue` lists groups
+rather than tools, so its width is bounded by the number of categories, and
+items 1–4 landing at once does not bring back the horizontal scroll that the
+flat row had at 13 tools — the six-group cap above is the only limit in play.
+
+### What the case, BMI, lorem and UUID panels taught
 
 - **SSR is the fork in the road for a generator.** Two of these generate
   content, and they resolve it opposite ways on purpose. Lorem ipsum is seeded

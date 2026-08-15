@@ -23,6 +23,7 @@ import type {
    WhtrCategory,
 } from "./body"
 import type { LoremUnit } from "./lorem"
+import type { PercentageMode, PercentageReadout } from "./percentage"
 import type { CaseId } from "./textCase"
 // Type-only, and `tools.ts` imports `ToolKey` back from here. The cycle is
 // erased at compile time, which is what keeps each module's names defined
@@ -40,6 +41,7 @@ export type ToolKey
      | "areaConverter"
      | "timeConverter"
      | "dataStorageConverter"
+     | "percentageCalculator"
      | "wordCounter"
      | "caseConverter"
      | "bmiCalculator"
@@ -175,6 +177,11 @@ export const SEO: Record<PageKey, SeoCopy> = {
       description:
          "Convert data storage between bytes, KB, MB, GB, TB and their binary counterparts KiB, MiB, GiB and TiB. See why a 1 TB drive shows as 931 GB.",
    },
+   percentageCalculator: {
+      title: "Percentage Calculator: Percent Of, Change & Increase",
+      description:
+         "Work out a percentage of a number, what percent one number is of another, and the increase or decrease between two values. Free, in your browser.",
+   },
    wordCounter: {
       title: "Word & Character Counter",
       description:
@@ -266,6 +273,12 @@ const TOOL_COPY: Record<ToolKey, ToolCopy> = {
       tagline: "Bytes, KB, MB, GB, TB and KiB, MiB, GiB, TiB",
       heading: "Data storage converter",
       lede: "Convert between decimal and binary storage units. They are listed separately because a kilobyte is 1,000 bytes and a kibibyte is 1,024.",
+   },
+   percentageCalculator: {
+      name: "Percentage Calculator",
+      tagline: "Percent of, percent change, increase and decrease",
+      heading: "Percentage calculator",
+      lede: "Four percentage questions in one panel: what a percentage of a number comes to, what percentage one number is of another, the change between two values, and a value with a percentage added or taken off. Pick the question and the two numbers stay where they are.",
    },
    wordCounter: {
       name: "Word Counter",
@@ -547,6 +560,24 @@ const FAQ_COPY: Record<ToolKey, FaqEntry[]> = {
          answer: "A full stop and a space look identical whether they end a sentence or an abbreviation, and telling them apart needs a dictionary. Decimals are safe: the stop in 3.50 is followed by a digit.",
       },
    ],
+   percentageCalculator: [
+      {
+         question: "How do I work out a percentage of a number?",
+         answer: "Multiply the number by the percentage and divide by 100. So 20% of 80 is 80 × 20 ÷ 100, which is 16. The first mode above does exactly that.",
+      },
+      {
+         question: "How do I calculate a percentage increase?",
+         answer: "Subtract the old value from the new one, divide by the old value, then multiply by 100. From 80 to 100 is (100 − 80) ÷ 80 × 100, which is a 25% increase.",
+      },
+      {
+         question: "Why doesn't a 20% fall cancel a 20% rise?",
+         answer: "Because the second percentage applies to a bigger number. 80 plus 20% is 96, and 96 minus 20% is 76.8 rather than 80. Undoing a 20% rise takes a fall of 16.67%.",
+      },
+      {
+         question: "What is the difference between percent and percentage points?",
+         answer: "A rate moving from 20% to 25% has risen five percentage points, but that is a percentage increase of 25%. Interest and unemployment figures are quoted in points to avoid the ambiguity.",
+      },
+   ],
    wordCounter: [
       {
          question: "Is my text uploaded anywhere?",
@@ -675,6 +706,7 @@ export const COPY = {
       /// lands the nav promotes the group to a dropdown on its own.
       groups: {
          converters: "Converters",
+         calculators: "Calculators",
          text: "Text",
          generators: "Generators",
          health: "Health",
@@ -915,6 +947,60 @@ export const COPY = {
       speakingSpeedLabel: "Speaking speed",
       useRecommended: "Use the recommended speeds",
       wordsPerMinute: "wpm",
+   },
+   percentage: {
+      modeLabel: "What do you want to work out?",
+      modes: {
+         of: "Percentage of a number",
+         ratio: "One number as a percentage",
+         change: "Change between two numbers",
+         adjust: "Add or take off a percentage",
+      } satisfies Record<PercentageMode, string>,
+      /// Both fields are relabelled per mode rather than swapped out, so
+      /// the two numbers stay put when the question changes — someone
+      /// checking two of the four answers against the same pair does not
+      /// have to retype them.
+      firstLabels: {
+         of: "Percentage",
+         ratio: "This number",
+         change: "From",
+         adjust: "Number",
+      } satisfies Record<PercentageMode, string>,
+      secondLabels: {
+         of: "Of this number",
+         ratio: "Out of",
+         change: "To",
+         adjust: "Percentage",
+      } satisfies Record<PercentageMode, string>,
+      rows: {
+         of: "Result",
+         ratio: "Result",
+         change: "Change",
+         increased: "Increased",
+         decreased: "Decreased",
+      } satisfies Record<PercentageReadout["id"], string>,
+      /// `{a}` and `{b}` are the two fields as typed, `{result}` the
+      /// answer. Written as whole sentences because they are the part a
+      /// reader checks their own working against — and the part a crawler
+      /// reads as an answer rather than as a bare number.
+      captions: {
+         of: "{a}% of {b} is {result}.",
+         ratio: "{a} is {result}% of {b}.",
+         change: "From {a} to {b} is a change of {result}%.",
+         increased: "{a} plus {b}% is {result}.",
+         decreased: "{a} minus {b}% is {result}.",
+      } satisfies Record<PercentageReadout["id"], string>,
+      directions: {
+         increase: "Increase",
+         decrease: "Decrease",
+         unchanged: "No change",
+      },
+      empty: "Enter both numbers to see the answer.",
+      /// Two separate sentences rather than one "undefined" line, because
+      /// the two zeroes fail for different reasons and a reader who hit
+      /// one wants to know which.
+      undefinedRatio: "Nothing is a percentage of zero — every answer would be as good as any other.",
+      undefinedChange: "Change from zero has no percentage: any rise off a zero base is infinite, however small it looks.",
    },
    bmi: {
       /// Two versions of the same tool, named on screen rather than hidden

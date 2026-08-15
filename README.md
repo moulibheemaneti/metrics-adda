@@ -19,6 +19,7 @@ and structured data.
 | `/area-converter` | mm², cm², m², hectares, km², in², ft², yd², acres, mi² |
 | `/time-converter` | ms, seconds, minutes, hours, days, weeks, years |
 | `/data-storage-converter` | bits, bytes, decimal KB–PB **and** binary KiB–PiB |
+| `/percentage-calculator` | Percent of a number, percent change, increase and decrease |
 | `/word-counter` | Words, characters, sentences, paragraphs, reading time |
 | `/case-converter` | UPPER, lower, Title, Sentence, camelCase, snake_case + 4 more |
 | `/typing-speed-test` | Timed WPM test with accuracy and a personal best |

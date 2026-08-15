@@ -3,6 +3,7 @@ import { mountSuspended } from "@nuxt/test-utils/runtime"
 import BmiCalculatorPanel from "../../app/components/BmiCalculatorPanel.vue"
 import HeightConverter from "../../app/components/HeightConverter.vue"
 import PasswordGeneratorPanel from "../../app/components/PasswordGeneratorPanel.vue"
+import PercentageCalculatorPanel from "../../app/components/PercentageCalculatorPanel.vue"
 import SiteMenu from "../../app/components/SiteMenu.vue"
 import TextStatsPanel from "../../app/components/TextStatsPanel.vue"
 import ToolNav from "../../app/components/ToolNav.vue"
@@ -178,6 +179,82 @@ describe("PasswordGeneratorPanel", () => {
 /// The BMI panel had no component test before advanced mode was added.
 /// The basic-mode block is the guard on "basic is the tool that already
 /// existed" — it has to keep passing whatever advanced grows into.
+describe("PercentageCalculatorPanel", () => {
+   /// Radios in DOM order: the four modes, as PERCENTAGE_MODES lists them.
+   const MODE_RATIO = 1
+   const MODE_CHANGE = 2
+   const MODE_ADJUST = 3
+
+   it("renders a worked example before any interaction", async() => {
+      const panel = await mountSuspended(PercentageCalculatorPanel)
+
+      expect(panel.find(".percentage__value").text()).toBe("16")
+      expect(panel.find(".percentage__caption").text()).toBe("20% of 80 is 16.")
+   })
+
+   /// The point of relabelling the two fields rather than swapping them
+   /// out: the numbers survive the change of question, so the same pair
+   /// can be read four ways without being retyped.
+   it("keeps both numbers when the question changes", async() => {
+      const panel = await mountSuspended(PercentageCalculatorPanel)
+
+      await panel.findAll("input[type=\"radio\"]")[MODE_RATIO]?.setValue()
+
+      // Typed explicitly: an attribute selector does not narrow to
+      // HTMLInputElement the way the bare "input" one does, so `.value`
+      // is not on the element without it.
+      const fields = panel.findAll<HTMLInputElement>("input[type=\"text\"]")
+
+      expect(fields[0]?.element.value).toBe("20")
+      expect(fields[1]?.element.value).toBe("80")
+      expect(panel.find(".percentage__value").text()).toBe("25%")
+   })
+
+   it("labels the direction of a change", async() => {
+      const panel = await mountSuspended(PercentageCalculatorPanel)
+
+      await panel.findAll("input[type=\"radio\"]")[MODE_CHANGE]?.setValue()
+
+      expect(panel.find(".percentage__value").text()).toBe("300%")
+      expect(panel.find(".percentage__direction").text())
+         .toBe(COPY.percentage.directions.increase)
+   })
+
+   it("answers both directions at once in adjust mode", async() => {
+      const panel = await mountSuspended(PercentageCalculatorPanel)
+
+      await panel.findAll("input[type=\"radio\"]")[MODE_ADJUST]?.setValue()
+
+      const values = panel.findAll(".percentage__value")
+
+      // The seeded pair reads as "20, adjusted by 80%" in this mode.
+      expect(values).toHaveLength(2)
+      expect(values[0]?.text()).toBe("36")
+      expect(values[1]?.text()).toBe("4")
+   })
+
+   /// A half-typed field is not an error, and the undefined-answer message
+   /// would be both wrong and rude while someone is still entering it.
+   it("prompts rather than answering when a field is empty", async() => {
+      const panel = await mountSuspended(PercentageCalculatorPanel)
+
+      await panel.findAll("input[type=\"text\"]")[1]?.setValue("")
+
+      expect(panel.find(".percentage__note").text()).toBe(COPY.percentage.empty)
+      expect(panel.find(".percentage__value").exists()).toBe(false)
+   })
+
+   it("says so when the question has no answer", async() => {
+      const panel = await mountSuspended(PercentageCalculatorPanel)
+
+      await panel.findAll("input[type=\"radio\"]")[MODE_RATIO]?.setValue()
+      await panel.findAll("input[type=\"text\"]")[1]?.setValue("0")
+
+      expect(panel.find(".percentage__note").text()).toBe(COPY.percentage.undefinedRatio)
+      expect(panel.find(".percentage__value").exists()).toBe(false)
+   })
+})
+
 describe("BmiCalculatorPanel", () => {
    /// Radios in DOM order: mode (basic, advanced), then units (metric,
    /// imperial), then sex once the advanced panel is on screen.

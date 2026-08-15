@@ -23,7 +23,7 @@ import type { ToolKey } from "./copy"
  * three by hand and would have silently under-counted the moment a fourth
  * arrived.
  */
-export const TOOL_GROUPS = ["converters", "text", "generators", "security", "health"] as const
+export const TOOL_GROUPS = ["converters", "calculators", "text", "generators", "security", "health"] as const
 
 export type ToolGroup = typeof TOOL_GROUPS[number]
 
@@ -85,6 +85,12 @@ export const TOOLS: ToolEntry[] = [
       path: "/data-storage-converter",
       key: "dataStorageConverter",
       group: "converters",
+   },
+   {
+      slug: "percentage-calculator",
+      path: "/percentage-calculator",
+      key: "percentageCalculator",
+      group: "calculators",
    },
    {
       slug: "word-counter",
