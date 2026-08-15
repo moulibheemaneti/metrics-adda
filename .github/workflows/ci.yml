@@ -1,15 +1,15 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+   push:
+      branches: [main]
+   pull_request:
 
 # Cancel in-progress runs on the same branch when a new commit is pushed
 # Saves CI minutes — no point finishing a stale run
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+   group: ci-${{ github.ref }}
+   cancel-in-progress: true
 
 # node_modules is cached against bun.lock + package.json. `bun install
 # --frozen-lockfile` only runs on a cache miss (i.e. when dependencies
@@ -17,192 +17,191 @@ concurrency:
 # install also skips the `nuxt prepare` postinstall, jobs that need Nuxt's
 # generated types run `nuxt prepare` explicitly.
 env:
-  DEPS_KEY_PREFIX: bun
+   DEPS_KEY_PREFIX: bun
 
 jobs:
+   # ─── Shared setup — install once, cache for all jobs ─────────────────────
+   setup:
+      name: Setup
+      runs-on: ubuntu-latest
+      steps:
+         - name: Checkout code
+           uses: actions/checkout@v7
 
-  # ─── Shared setup — install once, cache for all jobs ─────────────────────
-  setup:
-    name: Setup
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
+         - name: Setup Bun
+           uses: oven-sh/setup-bun@v2
+           with:
+              bun-version: latest
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
+         - name: Cache dependencies
+           uses: actions/cache@v6
+           id: deps
+           with:
+              path: node_modules
+              # Exact-match only (no restore-keys prefix fallback): a stale
+              # node_modules from a previous lockfile must never be layered under
+              # a frozen install. Keyed on both bun.lock and package.json so the
+              # cache invalidates whenever dependencies change.
+              key: ${{ env.DEPS_KEY_PREFIX }}-${{ runner.os }}-${{ hashFiles('bun.lock', 'package.json') }}
 
-      - name: Cache dependencies
-        uses: actions/cache@v6
-        id: deps
-        with:
-          path: node_modules
-          # Exact-match only (no restore-keys prefix fallback): a stale
-          # node_modules from a previous lockfile must never be layered under
-          # a frozen install. Keyed on both bun.lock and package.json so the
-          # cache invalidates whenever dependencies change.
-          key: ${{ env.DEPS_KEY_PREFIX }}-${{ runner.os }}-${{ hashFiles('bun.lock', 'package.json') }}
+         - name: Install dependencies
+           if: steps.deps.outputs.cache-hit != 'true'
+           run: bun install --frozen-lockfile
 
-      - name: Install dependencies
-        if: steps.deps.outputs.cache-hit != 'true'
-        run: bun install --frozen-lockfile
+         - name: Generate Nuxt
+           run: bun nuxt prepare
 
-      - name: Generate Nuxt
-        run: bun nuxt prepare
+         - name: Cache .nuxt
+           uses: actions/cache@v6
+           with:
+              path: .nuxt
+              key: nuxt-${{ runner.os }}-${{ hashFiles('nuxt.config.ts') }}
 
-      - name: Cache .nuxt
-        uses: actions/cache@v6
-        with:
-          path: .nuxt
-          key: nuxt-${{ runner.os }}-${{ hashFiles('nuxt.config.ts') }}
+   # ─── Gate 1: Lint ────────────────────────────────────────────────────────
+   lint:
+      name: Lint
+      runs-on: ubuntu-latest
+      needs: setup
+      steps:
+         - name: Checkout code
+           uses: actions/checkout@v7
 
-  # ─── Gate 1: Lint ────────────────────────────────────────────────────────
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    needs: setup
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
+         - name: Setup Bun
+           uses: oven-sh/setup-bun@v2
+           with:
+              bun-version: latest
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
+         - name: Restore dependencies cache
+           uses: actions/cache@v6
+           id: deps
+           with:
+              path: node_modules
+              key: ${{ env.DEPS_KEY_PREFIX }}-${{ runner.os }}-${{ hashFiles('bun.lock', 'package.json') }}
 
-      - name: Restore dependencies cache
-        uses: actions/cache@v6
-        id: deps
-        with:
-          path: node_modules
-          key: ${{ env.DEPS_KEY_PREFIX }}-${{ runner.os }}-${{ hashFiles('bun.lock', 'package.json') }}
+         - name: Restore .nuxt cache
+           uses: actions/cache@v6
+           with:
+              path: .nuxt
+              key: nuxt-${{ runner.os }}-${{ hashFiles('nuxt.config.ts') }}
 
-      - name: Restore .nuxt cache
-        uses: actions/cache@v6
-        with:
-          path: .nuxt
-          key: nuxt-${{ runner.os }}-${{ hashFiles('nuxt.config.ts') }}
+         - name: Install dependencies
+           if: steps.deps.outputs.cache-hit != 'true'
+           run: bun install --frozen-lockfile
 
-      - name: Install dependencies
-        if: steps.deps.outputs.cache-hit != 'true'
-        run: bun install --frozen-lockfile
+         - name: Generate Nuxt types
+           run: bun nuxt prepare
 
-      - name: Generate Nuxt types
-        run: bun nuxt prepare
+         - name: Run ESLint
+           run: bun eslint .
 
-      - name: Run ESLint
-        run: bun eslint .
+         - name: Run Stylelint
+           run: bun stylelint "**/*.scss"
 
-      - name: Run Stylelint
-        run: bun stylelint "**/*.scss"
+   # ─── Gate 2: Typecheck ───────────────────────────────────────────────────
+   typecheck:
+      name: Typecheck
+      runs-on: ubuntu-latest
+      needs: lint
+      steps:
+         - name: Checkout code
+           uses: actions/checkout@v7
 
-  # ─── Gate 2: Typecheck ───────────────────────────────────────────────────
-  typecheck:
-    name: Typecheck
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
+         - name: Setup Bun
+           uses: oven-sh/setup-bun@v2
+           with:
+              bun-version: latest
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
+         - name: Restore dependencies cache
+           uses: actions/cache@v6
+           id: deps
+           with:
+              path: node_modules
+              key: ${{ env.DEPS_KEY_PREFIX }}-${{ runner.os }}-${{ hashFiles('bun.lock', 'package.json') }}
 
-      - name: Restore dependencies cache
-        uses: actions/cache@v6
-        id: deps
-        with:
-          path: node_modules
-          key: ${{ env.DEPS_KEY_PREFIX }}-${{ runner.os }}-${{ hashFiles('bun.lock', 'package.json') }}
+         - name: Restore .nuxt cache
+           uses: actions/cache@v6
+           with:
+              path: .nuxt
+              key: nuxt-${{ runner.os }}-${{ hashFiles('nuxt.config.ts') }}
 
-      - name: Restore .nuxt cache
-        uses: actions/cache@v6
-        with:
-          path: .nuxt
-          key: nuxt-${{ runner.os }}-${{ hashFiles('nuxt.config.ts') }}
+         - name: Install dependencies
+           if: steps.deps.outputs.cache-hit != 'true'
+           run: bun install --frozen-lockfile
 
-      - name: Install dependencies
-        if: steps.deps.outputs.cache-hit != 'true'
-        run: bun install --frozen-lockfile
+         - name: Generate Nuxt types
+           run: bun nuxt prepare
 
-      - name: Generate Nuxt types
-        run: bun nuxt prepare
+         - name: Run TypeScript typecheck
+           run: bun typecheck
 
-      - name: Run TypeScript typecheck
-        run: bun typecheck
+   # ─── Gate 3: Tests ───────────────────────────────────────────────────────
+   test:
+      name: Tests
+      runs-on: ubuntu-latest
+      needs: typecheck
+      steps:
+         - name: Checkout code
+           uses: actions/checkout@v7
 
-  # ─── Gate 3: Tests ───────────────────────────────────────────────────────
-  test:
-    name: Tests
-    runs-on: ubuntu-latest
-    needs: typecheck
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
+         - name: Setup Bun
+           uses: oven-sh/setup-bun@v2
+           with:
+              bun-version: latest
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
+         - name: Restore dependencies cache
+           uses: actions/cache@v6
+           id: deps
+           with:
+              path: node_modules
+              key: ${{ env.DEPS_KEY_PREFIX }}-${{ runner.os }}-${{ hashFiles('bun.lock', 'package.json') }}
 
-      - name: Restore dependencies cache
-        uses: actions/cache@v6
-        id: deps
-        with:
-          path: node_modules
-          key: ${{ env.DEPS_KEY_PREFIX }}-${{ runner.os }}-${{ hashFiles('bun.lock', 'package.json') }}
+         - name: Restore .nuxt cache
+           uses: actions/cache@v6
+           with:
+              path: .nuxt
+              key: nuxt-${{ runner.os }}-${{ hashFiles('nuxt.config.ts') }}
 
-      - name: Restore .nuxt cache
-        uses: actions/cache@v6
-        with:
-          path: .nuxt
-          key: nuxt-${{ runner.os }}-${{ hashFiles('nuxt.config.ts') }}
+         - name: Install dependencies
+           if: steps.deps.outputs.cache-hit != 'true'
+           run: bun install --frozen-lockfile
 
-      - name: Install dependencies
-        if: steps.deps.outputs.cache-hit != 'true'
-        run: bun install --frozen-lockfile
+         - name: Generate Nuxt types
+           run: bun nuxt prepare
 
-      - name: Generate Nuxt types
-        run: bun nuxt prepare
+         - name: Run tests
+           run: bun run test
 
-      - name: Run tests
-        run: bun run test
+   # ─── Gate 4: Build ───────────────────────────────────────────────────────
+   build:
+      name: Build
+      runs-on: ubuntu-latest
+      needs: test
+      steps:
+         - name: Checkout code
+           uses: actions/checkout@v7
 
-  # ─── Gate 4: Build ───────────────────────────────────────────────────────
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    needs: test
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
+         - name: Setup Bun
+           uses: oven-sh/setup-bun@v2
+           with:
+              bun-version: latest
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
+         - name: Restore dependencies cache
+           uses: actions/cache@v6
+           id: deps
+           with:
+              path: node_modules
+              key: ${{ env.DEPS_KEY_PREFIX }}-${{ runner.os }}-${{ hashFiles('bun.lock', 'package.json') }}
 
-      - name: Restore dependencies cache
-        uses: actions/cache@v6
-        id: deps
-        with:
-          path: node_modules
-          key: ${{ env.DEPS_KEY_PREFIX }}-${{ runner.os }}-${{ hashFiles('bun.lock', 'package.json') }}
+         - name: Install dependencies
+           if: steps.deps.outputs.cache-hit != 'true'
+           run: bun install --frozen-lockfile
 
-      - name: Install dependencies
-        if: steps.deps.outputs.cache-hit != 'true'
-        run: bun install --frozen-lockfile
+         - name: Build Nuxt app
+           run: bun run build
 
-      - name: Build Nuxt app
-        run: bun run build
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: nuxt-build
-          path: .output/
-          retention-days: 1
+         - name: Upload build artifact
+           uses: actions/upload-artifact@v7
+           with:
+              name: nuxt-build
+              path: .output/
+              retention-days: 1

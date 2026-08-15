@@ -28,8 +28,8 @@ quote_type = double
 # trim_trailing_whitespace = false
 
 # YAML (GitHub Actions, etc.)
-# [*.{yml,yaml}]
-# indent_size = 3
+[*.{yml,yaml}]
+indent_size = 3
 
 # Shell scripts
 [*.sh]

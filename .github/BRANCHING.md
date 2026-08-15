@@ -14,8 +14,8 @@ docs/*        → documentation only.  e.g. docs/update-readme
 refactor/*    → code restructuring.  e.g. refactor/auth-composable
 ```
 
-The prefixes mirror the commit types accepted by
-[`commitlint.config.ts`](../commitlint.config.ts), so the branch name and the
+The prefixes mirror the commit types accepted by the `conventional` preset in
+[`commitguard.yaml`](../commitguard.yaml), so the branch name and the
 commits on it describe the same kind of change.
 
 ## Flow

@@ -1,5 +1,5 @@
 commitguard:
-  verbose: true
+   verbose: true
 
 pre-commit:
    commands:

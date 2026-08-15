@@ -18,6 +18,7 @@
       "mrmlnc.vscode-scss",
       // Bun runtime support
       "oven.bun-vscode",
-      "stylelint.vscode-stylelint"
+      "stylelint.vscode-stylelint",
+      "redhat.vscode-yaml"
    ]
 }
