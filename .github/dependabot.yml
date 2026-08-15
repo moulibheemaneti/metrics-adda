@@ -33,7 +33,6 @@ updates:
           - "stylelint*"
           - "@stylistic/*"
           - "@moulibheemaneti/commitguard"
-          - "@commitlint/*"
         update-types:
           - "minor"
           - "patch"

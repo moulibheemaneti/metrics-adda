@@ -92,7 +92,7 @@
       "release.config.mjs": "lighthouserc.json, lighthouserc.*.json",
       "package.json": "bun.lock",
       "nuxt.config.*": ".nuxtignore, .nuxtrc, tsconfig.json, vitest.config.ts",
-      "eslint.config.*": ".eslintignore, stylelint.config.mjs, commitlint.config.ts",
+      "eslint.config.*": ".eslintignore, stylelint.config.mjs",
       ".editorconfig": ".vscode",
       ".env.example": ".env, .env.dev, .env.stage, .env.prod",
       "README.md": "CHANGELOG.md, LICENSE"

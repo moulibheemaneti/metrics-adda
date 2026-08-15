@@ -23,7 +23,7 @@ app.config.ts @moulibheemaneti
 # Linting and code style config
 eslint.config.mjs @moulibheemaneti
 stylelint.config.mjs @moulibheemaneti
-commitlint.config.ts @moulibheemaneti
+commitguard.yaml @moulibheemaneti
 
 # Environment and secrets — never merge without review
 .env.example @moulibheemaneti
