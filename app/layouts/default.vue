@@ -20,8 +20,12 @@
       <!-- After the content, before the footer: the one position on the
            page that can't trigger Google's intrusive-interstitial or
            above-the-fold ad-density treatments. Renders nothing at all
-           unless the AdSense env vars are set. -->
-      <AdSlot />
+           unless the AdSense env vars are set.
+
+           Parked while the site runs ad-free. `components/AdSlot.vue`, the
+           runtimeConfig keys and the env vars are all still in place — put
+           this line back when the ads return. -->
+      <!-- <AdSlot /> -->
       <SiteFooter />
    </div>
 </template>
