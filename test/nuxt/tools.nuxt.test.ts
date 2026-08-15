@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { mountSuspended } from "@nuxt/test-utils/runtime"
+import AgeCalculatorPanel from "../../app/components/AgeCalculatorPanel.vue"
 import BmiCalculatorPanel from "../../app/components/BmiCalculatorPanel.vue"
 import HeightConverter from "../../app/components/HeightConverter.vue"
 import PasswordGeneratorPanel from "../../app/components/PasswordGeneratorPanel.vue"
@@ -252,6 +253,95 @@ describe("PercentageCalculatorPanel", () => {
 
       expect(panel.find(".percentage__note").text()).toBe(COPY.percentage.undefinedRatio)
       expect(panel.find(".percentage__value").exists()).toBe(false)
+   })
+})
+
+describe("AgeCalculatorPanel", () => {
+   /// Date fields in DOM order: date of birth, then the date measured to.
+   const BIRTH = 0
+   const AS_OF = 1
+
+   /// `todayLocal()` runs after mount, so the seeded example is replaced by
+   /// the real date before any of these assert on it. Every case sets the
+   /// as-of date explicitly rather than leaning on whatever today is —
+   /// a test that passes only in July is worse than no test.
+   type Panel = Awaited<ReturnType<typeof mountSuspended<typeof AgeCalculatorPanel>>>
+
+   const withDates = async(birth: string, asOf: string): Promise<Panel> => {
+      const panel = await mountSuspended(AgeCalculatorPanel)
+      const fields = panel.findAll<HTMLInputElement>("input[type=\"date\"]")
+
+      await fields[BIRTH]?.setValue(birth)
+      await fields[AS_OF]?.setValue(asOf)
+
+      return panel
+   }
+
+   it("fills the as-of field with today after mounting", async() => {
+      const panel = await mountSuspended(AgeCalculatorPanel)
+      const now = new Date()
+      const today = [
+         String(now.getFullYear()).padStart(4, "0"),
+         String(now.getMonth() + 1).padStart(2, "0"),
+         String(now.getDate()).padStart(2, "0"),
+      ].join("-")
+
+      expect(panel.findAll<HTMLInputElement>("input[type=\"date\"]")[AS_OF]?.element.value)
+         .toBe(today)
+   })
+
+   it("reports an age in years, months and days", async() => {
+      const panel = await withDates("1990-03-10", "2024-07-25")
+
+      expect(panel.find(".age__value").text()).toBe("34 years, 4 months, 15 days")
+   })
+
+   /// Zero parts are noise on the figure someone came for, so they come
+   /// off — but never all of them.
+   it("leaves the empty parts off", async() => {
+      const exact = await withDates("2000-06-15", "2025-06-15")
+
+      expect(exact.find(".age__value").text()).toBe("25 years")
+
+      const sameDay = await withDates("2025-06-15", "2025-06-15")
+
+      expect(sameDay.find(".age__value").text()).toBe("0 days")
+   })
+
+   it("uses the singular for a count of one", async() => {
+      const panel = await withDates("2024-06-14", "2025-07-15")
+
+      expect(panel.find(".age__value").text()).toBe("1 year, 1 month, 1 day")
+   })
+
+   it("names the weekday and the totals", async() => {
+      const panel = await withDates("2000-01-01", "2000-03-01")
+      const values = panel.findAll(".stat__value").map((tile) => tile.text())
+
+      expect(values).toContain("Saturday")
+      expect(values).toContain("60")
+      expect(values).toContain("8")
+   })
+
+   it("calls the birthday itself today rather than zero days", async() => {
+      const panel = await withDates("2000-03-10", "2025-03-10")
+      const values = panel.findAll(".stat__value").map((tile) => tile.text())
+
+      expect(values).toContain(COPY.age.birthdayToday)
+   })
+
+   it("says so when the birth date is after the date measured to", async() => {
+      const panel = await withDates("2030-01-01", "2025-01-01")
+
+      expect(panel.find(".age__note").text()).toBe(COPY.age.future)
+      expect(panel.find(".age__value").exists()).toBe(false)
+   })
+
+   it("prompts rather than answering when the birth date is incomplete", async() => {
+      const panel = await withDates("", "2025-01-01")
+
+      expect(panel.find(".age__note").text()).toBe(COPY.age.empty)
+      expect(panel.find(".age__value").exists()).toBe(false)
    })
 })
 

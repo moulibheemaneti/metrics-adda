@@ -17,8 +17,8 @@ work; this is the list they get picked from.
 anything needing a server are deliberately later — see
 [Out of scope](#out-of-scope).
 
-**Where things stand:** 16 tools. Tier 1 is done; Tier 2 has shipped five of
-its panels, with five queued and two deferred. Programmatic SEO has not
+**Where things stand:** 17 tools. Tier 1 is done; Tier 2 has shipped six of
+its panels, with four queued and two deferred. Programmatic SEO has not
 started.
 
 ---
@@ -93,6 +93,7 @@ small batches for the same reasons. Two conclusions still bind on future work.
 | `/lorem-ipsum-generator` | Seeded generation, so it server-renders |
 | `/uuid-generator` | v4, with a `getRandomValues` fallback |
 | `/percentage-calculator` | Four modes over one pair of fields; added `"calculators"` |
+| `/age-calculator` | Calendar arithmetic with no `Date` in it; second `"calculators"` tool |
 
 The generators added a `"generators"` group, and the percentage calculator a
 `"calculators"` one — which takes the header's top level to six, the cap
@@ -113,17 +114,13 @@ That reads as a priority list and was never one. The encoders being cheap to
 build is not a reason to ship them ahead of the tools people actually search
 for.
 
-1. **`/age-calculator`** — the same tier of volume as the percentage
-   calculator, and the largest of these in India specifically. Reuses the
-   `"calculators"` group that one opened, which makes it the cheapest next
-   step as well as the right one.
-2. **`/json-formatter`** — format, minify, validate, with the error position.
+1. **`/json-formatter`** — format, minify, validate, with the error position.
    Highest intent of the developer cluster and the one people bookmark.
    `JSON.parse` carries the whole thing; the work is reporting the error
    position and the editor affordances, not the parsing.
-3. **`/base64-encoder`**, **`/url-encoder`** — trivial, ship together, and
+2. **`/base64-encoder`**, **`/url-encoder`** — trivial, ship together, and
    they reinforce the privacy line rather than strain it.
-4. **`/hash-generator`** — SHA-1/256/384/512 via `crypto.subtle.digest`.
+3. **`/hash-generator`** — SHA-1/256/384/512 via `crypto.subtle.digest`.
    `app/utils/password.ts` already establishes how WebCrypto is used here.
 
 ### Deferred, and why
@@ -145,7 +142,7 @@ for.
 
 - **The developer cluster is a group decision, and the nav has one slot left.**
   `test/unit/tools.test.ts` caps the header's top level at six occupied
-  groups. `"calculators"` took the sixth. A `"developer"` group for items 2–4
+  groups. `"calculators"` took the sixth. A `"developer"` group for the three items above
   would be the seventh and fails that test — deliberately,
   because the cap is what keeps the nav from re-growing the horizontal scroll
   the flat row had. Three honest ways out: file the developer tools under
@@ -173,7 +170,7 @@ for.
 
 The nav does not otherwise constrain the order. `ToolNav.vue` lists groups
 rather than tools, so its width is bounded by the number of categories, and
-items 1–4 landing at once does not bring back the horizontal scroll that the
+all four landing at once does not bring back the horizontal scroll that the
 flat row had at 13 tools — the six-group cap above is the only limit in play.
 
 ### What the case, BMI, lorem and UUID panels taught
@@ -199,6 +196,40 @@ flat row had at 13 tools — the six-group cap above is the only limit in play.
   infinities do not — they are genuinely out of range and clamp correctly on
   their own, so lumping them in with `NaN` sends a too-large request to the
   *minimum*, which is the opposite of what was asked for.
+
+### What the calculators turned out to teach
+
+- **"Today" is a third answer to the SSR question.** Lorem ipsum and UUIDs
+  split it two ways — seeded so server and client agree, or generated after
+  mount so no two visitors share a value. A date calculator is neither.
+  Resolving `todayLocal()` during render bakes the *build* date into
+  prerendered HTML and serves it as "today" for as long as that page stays
+  cached; generating client-only hands a crawler an empty panel on a page
+  whose whole value is the worked example. The answer is both: a fixed
+  example in the SSR output, replaced by the real date in `onMounted`. It
+  only works because the date sits in a field the reader can see, so the
+  change reads as a default filling itself in rather than as the answer
+  moving on its own — a readout with no visible input behind it does not get
+  this option.
+- **`Date` is the wrong type for a date.** `new Date("2000-01-01")` is UTC
+  midnight and reads back as 1999-12-31 west of Greenwich, `getMonth()` is
+  zero-based while every date string is not, and a day count taken by
+  subtracting two timestamps is an hour out across a daylight-saving
+  boundary. `utils/age.ts` holds dates as three numbers and counts days from
+  the civil calendar directly; the only `Date` in it is `todayLocal()`, which
+  reads local *parts* rather than a timestamp.
+- **The obvious month-difference algorithm is wrong at the ends of months.**
+  Subtracting the fields and borrowing when the days go negative fails from
+  31 January to 1 March: it borrows February's 29 days to cover a 30-day
+  shortfall and lands on minus one. Counting forward instead — the largest
+  number of whole months that still lands on or before the target, then the
+  days left over — has no such case, and gives the total-months figure for
+  free. The test sweeps every day of a decade against a leap-day birth date,
+  which is what caught it.
+- **Where two conventions are both defensible, the FAQ has to pick one out
+  loud.** A 29 February birthday falls on the 28th here in the three years
+  out of four with no 29th; some jurisdictions use 1 March. Neither is
+  wrong, so the answer is not to choose better but to say which was chosen.
 
 ---
 

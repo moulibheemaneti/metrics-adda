@@ -93,6 +93,12 @@ export const TOOLS: ToolEntry[] = [
       group: "calculators",
    },
    {
+      slug: "age-calculator",
+      path: "/age-calculator",
+      key: "ageCalculator",
+      group: "calculators",
+   },
+   {
       slug: "word-counter",
       path: "/word-counter",
       key: "wordCounter",

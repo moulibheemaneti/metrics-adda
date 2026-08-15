@@ -20,6 +20,7 @@ and structured data.
 | `/time-converter` | ms, seconds, minutes, hours, days, weeks, years |
 | `/data-storage-converter` | bits, bytes, decimal KB–PB **and** binary KiB–PiB |
 | `/percentage-calculator` | Percent of a number, percent change, increase and decrease |
+| `/age-calculator` | Age in years, months and days, plus your next birthday |
 | `/word-counter` | Words, characters, sentences, paragraphs, reading time |
 | `/case-converter` | UPPER, lower, Title, Sentence, camelCase, snake_case + 4 more |
 | `/typing-speed-test` | Timed WPM test with accuracy and a personal best |

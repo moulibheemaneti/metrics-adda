@@ -13,6 +13,7 @@
 /// Auto-imported by Nuxt. Tests import it relatively (see test/unit).
 /// --------------------------------------------------
 
+import type { Weekday } from "./age"
 import type { BmiCategory, BmiPopulation } from "./bmi"
 import type {
    ActivityLevel,
@@ -42,6 +43,7 @@ export type ToolKey
      | "timeConverter"
      | "dataStorageConverter"
      | "percentageCalculator"
+     | "ageCalculator"
      | "wordCounter"
      | "caseConverter"
      | "bmiCalculator"
@@ -182,6 +184,11 @@ export const SEO: Record<PageKey, SeoCopy> = {
       description:
          "Work out a percentage of a number, what percent one number is of another, and the increase or decrease between two values. Free, in your browser.",
    },
+   ageCalculator: {
+      title: "Age Calculator: Your Age in Years, Months and Days",
+      description:
+         "Work out an age from a date of birth, in years, months and days — plus total weeks and days, the weekday you were born on, and your next birthday.",
+   },
    wordCounter: {
       title: "Word & Character Counter",
       description:
@@ -279,6 +286,12 @@ const TOOL_COPY: Record<ToolKey, ToolCopy> = {
       tagline: "Percent of, percent change, increase and decrease",
       heading: "Percentage calculator",
       lede: "Four percentage questions in one panel: what a percentage of a number comes to, what percentage one number is of another, the change between two values, and a value with a percentage added or taken off. Pick the question and the two numbers stay where they are.",
+   },
+   ageCalculator: {
+      name: "Age Calculator",
+      tagline: "Years, months, days and your next birthday",
+      heading: "Age calculator",
+      lede: "Enter a date of birth and read the age in years, months and days — along with the same span counted in weeks and days, the weekday it started on, and how long until the next birthday. Measure to today, or to any other date.",
    },
    wordCounter: {
       name: "Word Counter",
@@ -576,6 +589,24 @@ const FAQ_COPY: Record<ToolKey, FaqEntry[]> = {
       {
          question: "What is the difference between percent and percentage points?",
          answer: "A rate moving from 20% to 25% has risen five percentage points, but that is a percentage increase of 25%. Interest and unemployment figures are quoted in points to avoid the ambiguity.",
+      },
+   ],
+   ageCalculator: [
+      {
+         question: "How do I calculate my age from my date of birth?",
+         answer: "Count the whole years to your last birthday, then the whole months from there, then the days left over. Dividing the total days by 365 is close but drifts by a day per leap year.",
+      },
+      {
+         question: "When is the birthday of someone born on 29 February?",
+         answer: "There is no 29 February in three years out of four, so this tool turns their age over on the 28th. Some jurisdictions use 1 March instead; the two agree in leap years.",
+      },
+      {
+         question: "How many days old am I?",
+         answer: "The total days figure above counts every calendar day between the two dates, leap days included. A year averages 365.2425 days, so 10,000 days is a little over 27 years.",
+      },
+      {
+         question: "Why is a month not always the same number of days?",
+         answer: "Months run from 28 to 31 days, so this counts a month as the same date in the next month. From 31 January that lands on 28 or 29 February, because there is no 31st to land on.",
       },
    ],
    wordCounter: [
@@ -947,6 +978,64 @@ export const COPY = {
       speakingSpeedLabel: "Speaking speed",
       useRecommended: "Use the recommended speeds",
       wordsPerMinute: "wpm",
+   },
+   age: {
+      birthLabel: "Date of birth",
+      asOfLabel: "Age at this date",
+      asOfHint: "Today by default. Change it to work out an age on any other date.",
+      /// Singular and plural as separate strings rather than an "s"
+      /// appended in the template — the template has no business knowing
+      /// how English forms a plural, and the moment one unit is irregular
+      /// the trick breaks silently.
+      units: {
+         year: "year",
+         years: "years",
+         month: "month",
+         months: "months",
+         day: "day",
+         days: "days",
+         week: "week",
+         weeks: "weeks",
+      },
+      totalMonthsLabel: "Months",
+      totalWeeksLabel: "Weeks",
+      totalDaysLabel: "Days",
+      bornOnLabel: "Born on a",
+      nextBirthdayLabel: "Next birthday",
+      /// The day itself, rather than "0 days" — which is technically true
+      /// and the wrong thing to tell someone on their birthday.
+      birthdayToday: "Today",
+      turning: "Turning {age} on {date}",
+      turningToday: "Turning {age} today",
+      empty: "Enter a date of birth to see the age.",
+      future: "That date of birth is after the date you are measuring to, so there is no age to report yet.",
+      weekdays: {
+         sunday: "Sunday",
+         monday: "Monday",
+         tuesday: "Tuesday",
+         wednesday: "Wednesday",
+         thursday: "Thursday",
+         friday: "Friday",
+         saturday: "Saturday",
+      } satisfies Record<Weekday, string>,
+      /// Dates are written out from these rather than through
+      /// `Intl.DateTimeFormat`, so the wording stays in this file with
+      /// every other user-facing string, and the order stays the British
+      /// one the rest of the copy is written in.
+      months: [
+         "January",
+         "February",
+         "March",
+         "April",
+         "May",
+         "June",
+         "July",
+         "August",
+         "September",
+         "October",
+         "November",
+         "December",
+      ],
    },
    percentage: {
       modeLabel: "What do you want to work out?",
