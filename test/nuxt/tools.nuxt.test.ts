@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest"
 import { mountSuspended } from "@nuxt/test-utils/runtime"
+import AgeCalculatorPanel from "../../app/components/AgeCalculatorPanel.vue"
+import Base64EncoderPanel from "../../app/components/Base64EncoderPanel.vue"
 import BmiCalculatorPanel from "../../app/components/BmiCalculatorPanel.vue"
 import HeightConverter from "../../app/components/HeightConverter.vue"
 import PasswordGeneratorPanel from "../../app/components/PasswordGeneratorPanel.vue"
+import PercentageCalculatorPanel from "../../app/components/PercentageCalculatorPanel.vue"
 import SiteMenu from "../../app/components/SiteMenu.vue"
 import TextStatsPanel from "../../app/components/TextStatsPanel.vue"
 import ToolNav from "../../app/components/ToolNav.vue"
@@ -178,6 +181,267 @@ describe("PasswordGeneratorPanel", () => {
 /// The BMI panel had no component test before advanced mode was added.
 /// The basic-mode block is the guard on "basic is the tool that already
 /// existed" — it has to keep passing whatever advanced grows into.
+describe("PercentageCalculatorPanel", () => {
+   /// Radios in DOM order: the four modes, as PERCENTAGE_MODES lists them.
+   const MODE_RATIO = 1
+   const MODE_CHANGE = 2
+   const MODE_ADJUST = 3
+
+   it("renders a worked example before any interaction", async() => {
+      const panel = await mountSuspended(PercentageCalculatorPanel)
+
+      expect(panel.find(".percentage__value").text()).toBe("16")
+      expect(panel.find(".percentage__caption").text()).toBe("20% of 80 is 16.")
+   })
+
+   /// The point of relabelling the two fields rather than swapping them
+   /// out: the numbers survive the change of question, so the same pair
+   /// can be read four ways without being retyped.
+   it("keeps both numbers when the question changes", async() => {
+      const panel = await mountSuspended(PercentageCalculatorPanel)
+
+      await panel.findAll("input[type=\"radio\"]")[MODE_RATIO]?.setValue()
+
+      // Typed explicitly: an attribute selector does not narrow to
+      // HTMLInputElement the way the bare "input" one does, so `.value`
+      // is not on the element without it.
+      const fields = panel.findAll<HTMLInputElement>("input[type=\"text\"]")
+
+      expect(fields[0]?.element.value).toBe("20")
+      expect(fields[1]?.element.value).toBe("80")
+      expect(panel.find(".percentage__value").text()).toBe("25%")
+   })
+
+   it("labels the direction of a change", async() => {
+      const panel = await mountSuspended(PercentageCalculatorPanel)
+
+      await panel.findAll("input[type=\"radio\"]")[MODE_CHANGE]?.setValue()
+
+      expect(panel.find(".percentage__value").text()).toBe("300%")
+      expect(panel.find(".percentage__direction").text())
+         .toBe(COPY.percentage.directions.increase)
+   })
+
+   it("answers both directions at once in adjust mode", async() => {
+      const panel = await mountSuspended(PercentageCalculatorPanel)
+
+      await panel.findAll("input[type=\"radio\"]")[MODE_ADJUST]?.setValue()
+
+      const values = panel.findAll(".percentage__value")
+
+      // The seeded pair reads as "20, adjusted by 80%" in this mode.
+      expect(values).toHaveLength(2)
+      expect(values[0]?.text()).toBe("36")
+      expect(values[1]?.text()).toBe("4")
+   })
+
+   /// A half-typed field is not an error, and the undefined-answer message
+   /// would be both wrong and rude while someone is still entering it.
+   it("prompts rather than answering when a field is empty", async() => {
+      const panel = await mountSuspended(PercentageCalculatorPanel)
+
+      await panel.findAll("input[type=\"text\"]")[1]?.setValue("")
+
+      expect(panel.find(".percentage__note").text()).toBe(COPY.percentage.empty)
+      expect(panel.find(".percentage__value").exists()).toBe(false)
+   })
+
+   it("says so when the question has no answer", async() => {
+      const panel = await mountSuspended(PercentageCalculatorPanel)
+
+      await panel.findAll("input[type=\"radio\"]")[MODE_RATIO]?.setValue()
+      await panel.findAll("input[type=\"text\"]")[1]?.setValue("0")
+
+      expect(panel.find(".percentage__note").text()).toBe(COPY.percentage.undefinedRatio)
+      expect(panel.find(".percentage__value").exists()).toBe(false)
+   })
+})
+
+describe("AgeCalculatorPanel", () => {
+   /// Date fields in DOM order: date of birth, then the date measured to.
+   const BIRTH = 0
+   const AS_OF = 1
+
+   /// `todayLocal()` runs after mount, so the seeded example is replaced by
+   /// the real date before any of these assert on it. Every case sets the
+   /// as-of date explicitly rather than leaning on whatever today is —
+   /// a test that passes only in July is worse than no test.
+   type Panel = Awaited<ReturnType<typeof mountSuspended<typeof AgeCalculatorPanel>>>
+
+   const withDates = async(birth: string, asOf: string): Promise<Panel> => {
+      const panel = await mountSuspended(AgeCalculatorPanel)
+      const fields = panel.findAll<HTMLInputElement>("input[type=\"date\"]")
+
+      await fields[BIRTH]?.setValue(birth)
+      await fields[AS_OF]?.setValue(asOf)
+
+      return panel
+   }
+
+   it("fills the as-of field with today after mounting", async() => {
+      const panel = await mountSuspended(AgeCalculatorPanel)
+      const now = new Date()
+      const today = [
+         String(now.getFullYear()).padStart(4, "0"),
+         String(now.getMonth() + 1).padStart(2, "0"),
+         String(now.getDate()).padStart(2, "0"),
+      ].join("-")
+
+      expect(panel.findAll<HTMLInputElement>("input[type=\"date\"]")[AS_OF]?.element.value)
+         .toBe(today)
+   })
+
+   it("reports an age in years, months and days", async() => {
+      const panel = await withDates("1990-03-10", "2024-07-25")
+
+      expect(panel.find(".age__value").text()).toBe("34 years, 4 months, 15 days")
+   })
+
+   /// Zero parts are noise on the figure someone came for, so they come
+   /// off — but never all of them.
+   it("leaves the empty parts off", async() => {
+      const exact = await withDates("2000-06-15", "2025-06-15")
+
+      expect(exact.find(".age__value").text()).toBe("25 years")
+
+      const sameDay = await withDates("2025-06-15", "2025-06-15")
+
+      expect(sameDay.find(".age__value").text()).toBe("0 days")
+   })
+
+   it("uses the singular for a count of one", async() => {
+      const panel = await withDates("2024-06-14", "2025-07-15")
+
+      expect(panel.find(".age__value").text()).toBe("1 year, 1 month, 1 day")
+   })
+
+   it("names the weekday and the totals", async() => {
+      const panel = await withDates("2000-01-01", "2000-03-01")
+      const values = panel.findAll(".stat__value").map((tile) => tile.text())
+
+      expect(values).toContain("Saturday")
+      expect(values).toContain("60")
+      expect(values).toContain("8")
+   })
+
+   it("calls the birthday itself today rather than zero days", async() => {
+      const panel = await withDates("2000-03-10", "2025-03-10")
+      const values = panel.findAll(".stat__value").map((tile) => tile.text())
+
+      expect(values).toContain(COPY.age.birthdayToday)
+   })
+
+   it("says so when the birth date is after the date measured to", async() => {
+      const panel = await withDates("2030-01-01", "2025-01-01")
+
+      expect(panel.find(".age__note").text()).toBe(COPY.age.future)
+      expect(panel.find(".age__value").exists()).toBe(false)
+   })
+
+   it("prompts rather than answering when the birth date is incomplete", async() => {
+      const panel = await withDates("", "2025-01-01")
+
+      expect(panel.find(".age__note").text()).toBe(COPY.age.empty)
+      expect(panel.find(".age__value").exists()).toBe(false)
+   })
+})
+
+describe("Base64EncoderPanel", () => {
+   /// Radios in DOM order: the two directions, then the two alphabets —
+   /// which are only on screen while encoding.
+   const DECODE = 1
+   const URL_SAFE = 3
+
+   type Panel = Awaited<ReturnType<typeof mountSuspended<typeof Base64EncoderPanel>>>
+
+   const output = (panel: Panel): string =>
+      panel.findAll<HTMLTextAreaElement>("textarea")[1]?.element.value ?? ""
+
+   const type = async(panel: Panel, text: string): Promise<void> => {
+      await panel.findAll("textarea")[0]?.setValue(text)
+   }
+
+   it("encodes a worked example before any interaction", async() => {
+      const panel = await mountSuspended(Base64EncoderPanel)
+
+      expect(output(panel)).toBe("TWV0cmljcyBBZGRh")
+   })
+
+   /// The reason the module exists rather than a bare `btoa`, checked
+   /// through the panel as well as the function: `btoa` throws here.
+   it("encodes text outside Latin-1", async() => {
+      const panel = await mountSuspended(Base64EncoderPanel)
+
+      await type(panel, "café")
+
+      expect(output(panel)).toBe("Y2Fmw6k=")
+   })
+
+   it("switches alphabet without changing direction", async() => {
+      const panel = await mountSuspended(Base64EncoderPanel)
+
+      await type(panel, "ÿþ")
+      await panel.findAll("input[type=\"radio\"]")[URL_SAFE]?.setValue()
+
+      expect(output(panel)).not.toContain("/")
+   })
+
+   it("decodes when the direction is flipped", async() => {
+      const panel = await mountSuspended(Base64EncoderPanel)
+
+      await panel.findAll("input[type=\"radio\"]")[DECODE]?.setValue()
+      await type(panel, "TWV0cmljcyBBZGRh")
+
+      expect(output(panel)).toBe("Metrics Adda")
+   })
+
+   /// The alphabet and padding controls do nothing on a decode, so they
+   /// come off screen rather than sitting there inert.
+   it("hides the writing options while decoding", async() => {
+      const panel = await mountSuspended(Base64EncoderPanel)
+
+      expect(panel.findAll("input[type=\"radio\"]")).toHaveLength(4)
+
+      await panel.findAll("input[type=\"radio\"]")[DECODE]?.setValue()
+
+      expect(panel.findAll("input[type=\"radio\"]")).toHaveLength(2)
+   })
+
+   it("tells the two decode failures apart", async() => {
+      const panel = await mountSuspended(Base64EncoderPanel)
+
+      await panel.findAll("input[type=\"radio\"]")[DECODE]?.setValue()
+
+      await type(panel, "not base64!")
+      expect(panel.find(".base64__fault").text()).toBe(COPY.base64.faults.notBase64)
+
+      // Well-formed base64 carrying bytes that are not UTF-8 text.
+      await type(panel, "//79")
+      expect(panel.find(".base64__fault").text()).toBe(COPY.base64.faults.notText)
+   })
+
+   /// Round-tripping is how someone checks their own work, and doing it by
+   /// hand is a copy, a direction change and a paste in that order.
+   it("turns around when the result is reused as the input", async() => {
+      const panel = await mountSuspended(Base64EncoderPanel)
+
+      await type(panel, "café")
+      await panel.findAll("button").find((button) =>
+         button.text().includes(COPY.base64.useResult))?.trigger("click")
+
+      expect(panel.findAll<HTMLTextAreaElement>("textarea")[0]?.element.value).toBe("Y2Fmw6k=")
+      expect(output(panel)).toBe("café")
+   })
+
+   it("prompts rather than encoding nothing", async() => {
+      const panel = await mountSuspended(Base64EncoderPanel)
+
+      await type(panel, "")
+
+      expect(panel.find(".base64__note").text()).toBe(COPY.base64.empty)
+   })
+})
+
 describe("BmiCalculatorPanel", () => {
    /// Radios in DOM order: mode (basic, advanced), then units (metric,
    /// imperial), then sex once the advanced panel is on screen.

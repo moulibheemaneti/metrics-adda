@@ -19,8 +19,11 @@ and structured data.
 | `/area-converter` | mm², cm², m², hectares, km², in², ft², yd², acres, mi² |
 | `/time-converter` | ms, seconds, minutes, hours, days, weeks, years |
 | `/data-storage-converter` | bits, bytes, decimal KB–PB **and** binary KiB–PiB |
+| `/percentage-calculator` | Percent of a number, percent change, increase and decrease |
+| `/age-calculator` | Age in years, months and days, plus your next birthday |
 | `/word-counter` | Words, characters, sentences, paragraphs, reading time |
 | `/case-converter` | UPPER, lower, Title, Sentence, camelCase, snake_case + 4 more |
+| `/base64-encoder` | Encode and decode base64, UTF-8 and URL-safe alphabet |
 | `/typing-speed-test` | Timed WPM test with accuracy and a personal best |
 | `/bmi-calculator` | Body mass index, its category, and the healthy weight range |
 | `/lorem-ipsum-generator` | Placeholder text by the paragraph, sentence or word |
