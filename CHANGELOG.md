@@ -3,6 +3,14 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.12.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.11.0...v1.12.0) (2026-08-15)
+
+### ✨ Features
+
+* **tools:** add the age calculator ([7ec7ee6](https://github.com/moulibheemaneti/metrics-adda/commit/7ec7ee6b5a4fc4d45721d1d631b2e3b67d83e5c3))
+* **tools:** add the base64 encoder and decoder ([4558a9c](https://github.com/moulibheemaneti/metrics-adda/commit/4558a9c623be84d268163d2a9ddd8ad823270e32))
+* **tools:** add the percentage calculator ([d387099](https://github.com/moulibheemaneti/metrics-adda/commit/d387099c1cd8839b7684879af99ae9a1b2240c3e))
+
 ## [1.11.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.10.0...v1.11.0) (2026-08-14)
 
 ### ✨ Features
