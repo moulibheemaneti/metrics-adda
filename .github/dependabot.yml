@@ -2,76 +2,76 @@ version: 2
 
 updates:
 
-  # ─── Bun / npm dependencies ───────────────────────────────────────────────
-  - package-ecosystem: "npm"       # Dependabot uses npm ecosystem for bun projects
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "saturday"                # every Monday morning — start the week with fresh deps
-      time: "09:00"
-      timezone: "Asia/Kolkata"
-    open-pull-requests-limit: 10   # max open PRs at once — prevents inbox flooding
+   # ─── Bun / npm dependencies ───────────────────────────────────────────────
+   - package-ecosystem: "npm" # Dependabot uses npm ecosystem for bun projects
+     directory: "/"
+     schedule:
+        interval: "weekly"
+        day: "saturday" # every Monday morning — start the week with fresh deps
+        time: "09:00"
+        timezone: "Asia/Kolkata"
+     open-pull-requests-limit: 10 # max open PRs at once — prevents inbox flooding
 
-    # Group updates together to reduce PR noise
-    # Instead of 20 PRs for 20 packages, you get a few grouped PRs
-    groups:
-      nuxt-ecosystem:
-        patterns:
-          - "nuxt"
-          - "@nuxt/*"
-          - "vue"
-          - "@vue/*"
-        update-types:
-          - "major"
-          - "minor"
-          - "patch"
+     # Group updates together to reduce PR noise
+     # Instead of 20 PRs for 20 packages, you get a few grouped PRs
+     groups:
+        nuxt-ecosystem:
+           patterns:
+              - "nuxt"
+              - "@nuxt/*"
+              - "vue"
+              - "@vue/*"
+           update-types:
+              - "major"
+              - "minor"
+              - "patch"
 
-      linting-tools:
-        patterns:
-          - "eslint*"
-          - "@eslint/*"
-          - "stylelint*"
-          - "@stylistic/*"
-          - "@moulibheemaneti/commitguard"
-        update-types:
-          - "minor"
-          - "patch"
+        linting-tools:
+           patterns:
+              - "eslint*"
+              - "@eslint/*"
+              - "stylelint*"
+              - "@stylistic/*"
+              - "@moulibheemaneti/commitguard"
+           update-types:
+              - "minor"
+              - "patch"
 
-      testing-tools:
-        patterns:
-          - "vitest*"
-          - "@vitest/*"
-          - "@vue/test-utils"
-          - "happy-dom"
-          - "@nuxt/test-utils"
-          - "playwright*"
-        update-types:
-          - "minor"
-          - "patch"
+        testing-tools:
+           patterns:
+              - "vitest*"
+              - "@vitest/*"
+              - "@vue/test-utils"
+              - "happy-dom"
+              - "@nuxt/test-utils"
+              - "playwright*"
+           update-types:
+              - "minor"
+              - "patch"
 
-    # Commit messages follow your conventional commits standard
-    commit-message:
-      prefix: "chore"
-      prefix-development: "chore"
-      include: "scope"
+     # Commit messages follow your conventional commits standard
+     commit-message:
+        prefix: "chore"
+        prefix-development: "chore"
+        include: "scope"
 
-    # Auto-assign yourself as reviewer
-    reviewers:
-      - "moulibheemaneti"            # replace with your GitHub username
+     # Auto-assign yourself as reviewer
+     reviewers:
+        - "moulibheemaneti" # replace with your GitHub username
 
-    labels:
-      - "dependencies"
+     labels:
+        - "dependencies"
 
-  # ─── GitHub Actions ───────────────────────────────────────────────────────
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "saturday"
-      time: "09:00"
-      timezone: "Asia/Kolkata"
-    commit-message:
-      prefix: "ci"
-    labels:
-      - "dependencies"
-      - "ci"
+   # ─── GitHub Actions ───────────────────────────────────────────────────────
+   - package-ecosystem: "github-actions"
+     directory: "/"
+     schedule:
+        interval: "weekly"
+        day: "saturday"
+        time: "09:00"
+        timezone: "Asia/Kolkata"
+     commit-message:
+        prefix: "ci"
+     labels:
+        - "dependencies"
+        - "ci"

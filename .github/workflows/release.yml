@@ -1,48 +1,48 @@
 name: Release
 
 on:
-  push:
-    branches: [main]   # every push to main is evaluated for a release
+   push:
+      branches: [main] # every push to main is evaluated for a release
 
 # Never run two releases in parallel
 concurrency:
-  group: release
-  cancel-in-progress: false
+   group: release
+   cancel-in-progress: false
 
 jobs:
-  release:
-    name: Release
-    runs-on: ubuntu-latest
+   release:
+      name: Release
+      runs-on: ubuntu-latest
 
-    # Required permissions for semantic-release to push back to repo
-    permissions:
-      contents: write       # push CHANGELOG.md + package.json
-      issues: write         # comment on issues when they're fixed in a release
-      pull-requests: write  # comment on PRs when they're included in a release
+      # Required permissions for semantic-release to push back to repo
+      permissions:
+         contents: write # push CHANGELOG.md + package.json
+         issues: write # comment on issues when they're fixed in a release
+         pull-requests: write # comment on PRs when they're included in a release
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0      # semantic-release needs full git history to determine version
+      steps:
+         - name: Checkout code
+           uses: actions/checkout@v7
+           with:
+              fetch-depth: 0 # semantic-release needs full git history to determine version
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
+         - name: Setup Bun
+           uses: oven-sh/setup-bun@v2
+           with:
+              bun-version: latest
 
-      - name: Restore dependencies cache
-        id: cache
-        uses: actions/cache@v6
-        with:
-          path: node_modules
-          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+         - name: Restore dependencies cache
+           id: cache
+           uses: actions/cache@v6
+           with:
+              path: node_modules
+              key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
 
-      - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: bun install --frozen-lockfile
+         - name: Install dependencies
+           if: steps.cache.outputs.cache-hit != 'true'
+           run: bun install --frozen-lockfile
 
-      - name: Run semantic-release
-        run: bunx semantic-release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # auto-provided by GitHub, no setup needed
+         - name: Run semantic-release
+           run: bunx semantic-release
+           env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # auto-provided by GitHub, no setup needed

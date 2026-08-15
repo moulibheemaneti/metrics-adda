@@ -99,4 +99,9 @@
    },
    // --- Misc ---
    "files.eol": "\n",
+   "[yaml]": {
+      "editor.tabSize": 3,
+      "editor.detectIndentation": false,
+      "editor.defaultFormatter": "redhat.vscode-yaml"
+   }
 }
