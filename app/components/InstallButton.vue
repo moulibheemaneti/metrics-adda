@@ -29,10 +29,15 @@
 /// wrapped line at the end of the last block on the page, so the document
 /// grows downward into nothing. In the header it would move the nav.
 ///
-/// Deliberately not a banner, a toast or an interstitial. App-install
-/// interstitials are what Google's intrusive-interstitial treatment was
-/// introduced for, and organic search is this site's whole acquisition
-/// channel — that is not a trade worth making for an install.
+/// Deliberately not a banner, a toast or an interstitial of our own.
+/// App-install interstitials are what Google's intrusive-interstitial
+/// treatment was introduced for, and organic search is this site's whole
+/// acquisition channel — that is not a trade worth making for an install.
+///
+/// Chromium's *own* install banner is left switched on, though: the
+/// composable does not `preventDefault()` the event. This button is the
+/// fallback for someone who dismissed that banner or came back later, not
+/// a replacement for it.
 
 const { canInstall, install } = useInstallPrompt()
 

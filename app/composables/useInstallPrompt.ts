@@ -4,10 +4,20 @@
 /// The browser's "add this to your home screen" offer.
 ///
 /// Chromium fires `beforeinstallprompt` once it decides a site is
-/// installable, and calling `preventDefault()` on it suppresses the
-/// browser's own mini-infobar and hands the timing to us. The event object
-/// is the only way to open the real install dialog later, so it has to be
-/// kept.
+/// installable. The event object is the only way to open the real install
+/// dialog later, so it has to be kept.
+///
+/// What this deliberately does NOT do is call `preventDefault()` on it.
+/// That would suppress Chromium's own install banner — and that banner is
+/// the better ask: full-width, top of the viewport, shown at a moment the
+/// browser picked from its own engagement signals, and free. Suppressing it
+/// in favour of a button at the bottom of the footer traded the loud
+/// affordance for the quiet one, which is the opposite of the point.
+///
+/// So the two run together. The banner catches first-time visitors; the
+/// footer button is the standing fallback for anyone who dismissed it or
+/// came back later. Chromium re-fires the event on each eligible load, so
+/// the button keeps working across visits rather than being a one-shot.
 ///
 /// This is Chromium-only by nature. Safari has never implemented the event
 /// — on iOS the only route is Share → Add to Home Screen, which no API can
@@ -42,10 +52,10 @@ export function useInstallPrompt() {
    /** Registered once, at startup, from the client plugin. */
    const listen = (): void => {
       window.addEventListener("beforeinstallprompt", (event) => {
-         // Suppresses Chromium's own infobar. Without it the browser shows
-         // its prompt *and* we show a button, which is two asks for one
-         // action.
-         event.preventDefault()
+         // No `preventDefault()` here, on purpose — see the note at the top
+         // of this file. Letting the event run its default course leaves
+         // Chromium's own banner on screen; we stash the event alongside it
+         // so the footer button can open the same dialog afterwards.
          deferred = event as BeforeInstallPromptEvent
          canInstall.value = true
       })

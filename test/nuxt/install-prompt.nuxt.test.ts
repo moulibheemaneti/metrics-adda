@@ -56,8 +56,8 @@ describe("useInstallPrompt", () => {
       expect(canInstall.value).toBe(true)
    })
 
-   it("suppresses the browser's own infobar", () => {
-      const { listen } = useInstallPrompt()
+   it("leaves the browser's own banner alone", () => {
+      const { canInstall, listen } = useInstallPrompt()
 
       listen()
       const event = makePromptEvent()
@@ -65,9 +65,16 @@ describe("useInstallPrompt", () => {
 
       window.dispatchEvent(event)
 
-      // Without this the browser shows its prompt and we show a button,
-      // which is two asks for one action.
-      expect(prevented).toHaveBeenCalled()
+      // Calling preventDefault() here would suppress Chromium's install
+      // banner, which is a far more prominent ask than a footer button and
+      // costs nothing. The two are meant to run together: the banner for
+      // first-time visitors, the button as the standing fallback.
+      //
+      // This assertion is the guard on that decision — re-adding the call
+      // would silently take the banner away again.
+      expect(prevented).not.toHaveBeenCalled()
+      // ...and the event is still captured, so the button still works.
+      expect(canInstall.value).toBe(true)
    })
 
    it("opens the real dialog and reports the outcome", async() => {
