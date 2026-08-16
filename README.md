@@ -185,11 +185,20 @@ Icons and their two opacity quirks are documented in
 ### The install button
 
 `components/InstallButton.vue`, rendered by the footer. It captures
-Chromium's `beforeinstallprompt`, suppresses the browser's own infobar, and
-offers the install on our own terms instead.
+Chromium's `beforeinstallprompt` and uses it to open the install dialog on
+demand.
 
-Three constraints shaped it, and all three are why it is a quiet footer
-button rather than a banner:
+It does **not** call `preventDefault()` on that event, which means
+Chromium's own install banner still appears. That is the point: the banner
+is full-width, top of the viewport and shown at a moment the browser chose,
+which is a far better ask than anything in a footer. The two run together —
+the banner catches first-time visitors, and this button is the standing
+fallback for anyone who dismissed it or came back later.
+`test/nuxt/install-prompt.nuxt.test.ts` asserts the call is absent, because
+re-adding it would quietly remove the banner again.
+
+Three constraints shaped the button itself, and all three are why it is
+quiet and in the footer rather than a banner of our own:
 
 - **It cannot be an interstitial.** App-install interstitials are what
   Google's intrusive-interstitial treatment was introduced for, and organic
