@@ -47,7 +47,7 @@
       "@stylistic/stylelint-plugin": "^5.2.1",
       "@vite-pwa/nuxt": "^1.1.1",
       "@vue/test-utils": "^2.4.11",
-      "conventional-changelog-conventionalcommits": "^8.0.0",
+      "conventional-changelog-conventionalcommits": "^10.3.0",
       "happy-dom": "^20.11.2",
       "sass": "^1.102.0",
       "sass-embedded": "^1.102.0",
