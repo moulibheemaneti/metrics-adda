@@ -182,6 +182,37 @@ Two pieces make it true, and both live in `nuxt.config.ts`:
 Icons and their two opacity quirks are documented in
 [`public/README.md`](public/README.md).
 
+### The install button
+
+`components/InstallButton.vue`, rendered by the footer. It captures
+Chromium's `beforeinstallprompt`, suppresses the browser's own infobar, and
+offers the install on our own terms instead.
+
+Three constraints shaped it, and all three are why it is a quiet footer
+button rather than a banner:
+
+- **It cannot be an interstitial.** App-install interstitials are what
+  Google's intrusive-interstitial treatment was introduced for, and organic
+  search is this site's entire acquisition channel. Not a trade worth making.
+- **It cannot be in the header.** The topbar's single-row width is measured
+  to the pixel in `layouts/default.vue` (`$single-row: 60rem` comes from
+  brand + toggle + nav = 946px). A fifth item would push that breakpoint up
+  for everyone — including the Safari and Firefox visitors who can never
+  install anything.
+- **It cannot shift layout.** It appears mid-session, and CLS ≤ 0.1 is an
+  error-level CI gate. It takes a wrapped line at the end of the footer, so
+  the document grows downward with nothing beneath it to displace. Measured
+  at exactly 0 shift.
+
+It is Chromium-only by nature — Safari has never implemented the event and
+iOS install is manual via Share → Add to Home Screen, so on those browsers
+it renders nothing at all. That is deliberate: a button that cannot do
+anything is worse than no button.
+
+Note that Lighthouse never sees it, because `beforeinstallprompt` does not
+fire in an audit run. Its accessible name, contrast and behaviour are
+covered by `test/nuxt/install-prompt.nuxt.test.ts` instead.
+
 ### Checking it
 
 ```bash

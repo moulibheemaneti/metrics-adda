@@ -790,6 +790,18 @@ export const COPY = {
       navLabel: "Footer",
       rights: "All rights reserved.",
    },
+   /// The install button in the footer. Only ever rendered on a browser
+   /// that has offered an install, so the copy can state it plainly rather
+   /// than hedging about whether it will work.
+   install: {
+      action: "Install app",
+      /// The reason to bother, in two words — the tools are identical
+      /// either way, so offline is the whole of the pitch. Attached to the
+      /// button with `aria-describedby` rather than folded into an
+      /// `aria-label`: an accessible name that does not contain the visible
+      /// text fails WCAG 2.5.3 (Label in Name), which axe-core gates on.
+      hint: "Works offline",
+   },
    /// The label above the ad unit. Google's programme policies require an
    /// ad to be distinguishable from the content around it.
    ads: {
