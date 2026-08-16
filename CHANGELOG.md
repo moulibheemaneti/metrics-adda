@@ -3,6 +3,12 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.13.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.12.0...v1.13.0) (2026-08-16)
+
+### ✨ Features
+
+* **pwa:** make the site installable and work offline ([4e817fd](https://github.com/moulibheemaneti/metrics-adda/commit/4e817fd2d33d89bb8bd0ed1776e103991a7c5e98))
+
 ## [1.12.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.11.0...v1.12.0) (2026-08-15)
 
 ### ✨ Features
