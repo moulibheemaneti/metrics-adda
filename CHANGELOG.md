@@ -3,6 +3,12 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.14.1](https://github.com/moulibheemaneti/metrics-adda/compare/v1.14.0...v1.14.1) (2026-08-16)
+
+### 🐛 Bug Fixes
+
+* **pwa:** stop suppressing the browser's own install banner ([d980cc4](https://github.com/moulibheemaneti/metrics-adda/commit/d980cc40e4f1d4adcae71e3dfeb0ff5517d0952f))
+
 ## [1.14.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.13.0...v1.14.0) (2026-08-16)
 
 ### ✨ Features
