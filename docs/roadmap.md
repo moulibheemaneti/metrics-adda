@@ -391,13 +391,17 @@ Recorded so the reasons survive.
 - **India-specific tools** — GST calculator, EMI/loan calculator, land-area
   units (gaj, cent, guntha, bigha, ground). High intent, but a second pass after
   the generic set is in.
-- **Platform UX** — Ctrl+K tool search, favourites, PWA/offline. The grouped
+- **Platform UX** — Ctrl+K tool search, favourites. The grouped
   nav took the urgency out of search: it was being considered as a *fix* for
   the overflowing row, which was the wrong job for it. Search is an
   accelerator for someone who already knows the tool's name, and it adds no
   crawlable links — it belongs on top of a browsable nav, not instead of one.
   Worth building when the tool count makes scanning a dropdown slow, which is
   not yet.
+
+  **PWA/offline shipped** — see the PWA section in the README. It came out of
+  this group early because it was the cheap half: the tools already run in the
+  browser and send nothing, so it was packaging rather than a feature.
 - **Test and CI infrastructure beyond what CI already runs.** `ci.yml` covers
   lint, typecheck, `bun run test` and build. Still not wired up, and
   deliberately: Playwright E2E, an axe-core runner in the repo, and
