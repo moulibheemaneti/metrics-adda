@@ -74,6 +74,7 @@ Both themes are audited with axe-core at WCAG 2.1 AA on every route.
 - **Styling** — SCSS
 - **Linting** — ESLint + Stylelint
 - **Testing** — Vitest (`unit`, `nuxt` and `scss` projects)
+- **PWA** — `@vite-pwa/nuxt` (installable, works offline)
 - **Deployment** — Vercel
 
 ---
@@ -116,6 +117,7 @@ App runs at `http://localhost:3000`
 | `bun test:watch` | Run Vitest in watch mode |
 | `bun seo:verify` | Boot the production build and smoke-test every SEO surface |
 | `bun seo:lighthouse` | Run Lighthouse CI against the production build |
+| `bun pwa:verify` | Check the build is installable and precaches every route |
 | `bun clean` | Remove `.nuxt`, `.output` and `dist` |
 
 ---
@@ -131,7 +133,8 @@ App runs at `http://localhost:3000`
 │   ├── layouts/         # Nuxt layouts
 │   ├── pages/           # File-based routing
 │   └── utils/           # Auto-imported utility functions
-├── public/              # Publicly served static files
+├── public/              # Publicly served static files (see its README)
+├── scripts/pwa/         # Installability + offline precache check
 ├── scripts/seo/         # SEO smoke test + Lighthouse CI runners
 ├── test/
 │   ├── nuxt/            # Tests that need the Nuxt runtime
@@ -156,6 +159,45 @@ Vitest runs three projects in one pass (see `vitest.config.ts`):
 ```bash
 bun run test
 ```
+
+---
+
+## PWA
+
+The site is installable and works offline. That is close to free here: every
+tool already computes in the browser and talks to nothing, so once the shell
+is cached there is no second thing to make work.
+
+Two pieces make it true, and both live in `nuxt.config.ts`:
+
+- **Every route is prerendered.** `nitro.prerender` crawls from `/`, which
+  reaches all 22 pages because every tool cross-links every other one. A
+  service worker can only precache files that exist at build time, so without
+  this an offline visit to a page you had not already opened would miss.
+- **The worker precaches the shell** — markup, JS, CSS, both webfonts, the
+  favicon and the header mark. Deliberately *not* the manifest icons: the OS
+  reads those at install time and the page never does, so precaching them
+  would add ~650 KB per install for nothing.
+
+Icons and their two opacity quirks are documented in
+[`public/README.md`](public/README.md).
+
+### Checking it
+
+```bash
+bun pwa:verify
+```
+
+Asserts the manifest, the icons it promises, the worker, and a precache entry
+plus a `<link rel="manifest">` for all 22 routes. It runs in CI after the
+build, reading `.output/public` directly, so it costs no extra build.
+
+It exists because **Lighthouse cannot check any of this any more** — the PWA
+category and its `installable-manifest` / `service-worker` audits were removed
+in Lighthouse 12, so `bun seo:lighthouse` is blind to it. The failure mode is
+silent: `<link rel="manifest">` comes from a `<VitePwaManifest />` in
+`app/app.vue` that renders `null`, and deleting it still builds, still
+installs a worker, and quietly stops the site being installable.
 
 ---
 

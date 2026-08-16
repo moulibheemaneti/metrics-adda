@@ -18,6 +18,7 @@
       "typecheck": "vue-tsc --build --noEmit",
       "seo:verify": "bash scripts/seo/verify.sh",
       "seo:lighthouse": "bash scripts/seo/lighthouse.sh",
+      "pwa:verify": "bash scripts/pwa/verify.sh",
       "test": "bunx --bun vitest run",
       "test:watch": "bunx --bun vitest"
    },
@@ -44,6 +45,7 @@
       "@semantic-release/npm": "^13.1.5",
       "@semantic-release/release-notes-generator": "^14.1.1",
       "@stylistic/stylelint-plugin": "^5.2.1",
+      "@vite-pwa/nuxt": "^1.1.1",
       "@vue/test-utils": "^2.4.11",
       "conventional-changelog-conventionalcommits": "^8.0.0",
       "happy-dom": "^20.11.2",

@@ -199,6 +199,12 @@ jobs:
          - name: Build Nuxt app
            run: bun run build
 
+         # Reads .output/public from the step above, so it costs no extra
+         # build. Lighthouse dropped its PWA audits in v12, which makes this
+         # the only gate on the site staying installable and offline-capable.
+         - name: Verify PWA output
+           run: bun run pwa:verify
+
          - name: Upload build artifact
            uses: actions/upload-artifact@v7
            with:
