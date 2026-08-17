@@ -1,0 +1,63 @@
+{
+   "packageId": "com.metricsadda.twa",
+   "host": "www.metricsadda.com",
+   "name": "Metrics Adda",
+   "launcherName": "Metrics Adda",
+   "display": "standalone",
+   "themeColor": "#ffffff",
+   "themeColorDark": "#0b0f1a",
+   "navigationColor": "#ffffff",
+   "navigationColorDark": "#0b0f1a",
+   "navigationDividerColor": "#ffffff",
+   "navigationDividerColorDark": "#0b0f1a",
+   "backgroundColor": "#ffffff",
+   "enableNotifications": false,
+   "startUrl": "/",
+   "iconUrl": "https://www.metricsadda.com/pwa-512x512.png",
+   "maskableIconUrl": "https://www.metricsadda.com/pwa-maskable-512x512.png",
+   "splashScreenFadeOutDuration": 300,
+   "signingKey": {
+      "path": "./upload.jks",
+      "alias": "upload"
+   },
+   "appVersion": "1.14.1",
+   "appVersionCode": 1,
+   "shortcuts": [
+      {
+         "name": "Weight Converter",
+         "shortName": "Weight",
+         "url": "/weight-converter",
+         "chosenIconUrl": "https://www.metricsadda.com/pwa-192x192.png"
+      },
+      {
+         "name": "BMI Calculator",
+         "shortName": "BMI",
+         "url": "/bmi-calculator",
+         "chosenIconUrl": "https://www.metricsadda.com/pwa-192x192.png"
+      },
+      {
+         "name": "Word Counter",
+         "shortName": "Words",
+         "url": "/word-counter",
+         "chosenIconUrl": "https://www.metricsadda.com/pwa-192x192.png"
+      },
+      {
+         "name": "Password Generator",
+         "shortName": "Password",
+         "url": "/password-generator",
+         "chosenIconUrl": "https://www.metricsadda.com/pwa-192x192.png"
+      }
+   ],
+   "generatorApp": "bubblewrap-cli",
+   "webManifestUrl": "https://www.metricsadda.com/manifest.webmanifest",
+   "fallbackType": "customtabs",
+   "enableSiteSettingsShortcut": true,
+   "isChromeOSOnly": false,
+   "isMetaQuest": false,
+   "fullScopeUrl": "https://www.metricsadda.com/",
+   "minSdkVersion": 21,
+   "orientation": "default",
+   "fingerprints": [],
+   "additionalTrustedOrigins": [],
+   "retainedBundles": []
+}
