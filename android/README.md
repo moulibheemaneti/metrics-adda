@@ -86,6 +86,9 @@ reveals after the first AAB upload, so it cannot be filled in before then. See
 ## Things that cannot be changed later
 
 - **`packageId`** (`com.metricsadda.twa`) is permanent once published. A new
-  one means a new listing, with no upgrade path for installed users.
+  one means a new listing, with no upgrade path for installed users. It also
+  has to match `package_name` in `public/.well-known/assetlinks.json` —
+  `scripts/pwa/verify.sh` reads the id out of this manifest and asserts the
+  built `assetlinks.json` agrees, so the two cannot drift silently.
 - **The signing key.** Play App Signing mitigates the upload key being lost,
   but not the reverse.

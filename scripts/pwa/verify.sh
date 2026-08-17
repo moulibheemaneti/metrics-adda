@@ -50,6 +50,10 @@ PASS=0; FAIL=0
 
 pass()    { printf "  ${G}✔${X} %s\n" "$1"; PASS=$((PASS + 1)); }
 fail()    { printf "  ${R}✗${X} %s${D} — %s${X}\n" "$1" "$2"; FAIL=$((FAIL + 1)); }
+# Neither passed nor failed: a check that cannot run yet and is not wrong.
+# Counted in neither total, so the exit code keeps meaning "things that are
+# broken" rather than "things that are unfinished".
+skip()    { printf "  ${D}○ %s — %s${X}\n" "$1" "$2"; }
 section() { printf "\n${B}%s${X}\n" "$1"; }
 
 # assert_contains "<desc>" "<content>" "<regex>"
@@ -160,6 +164,99 @@ for route in $ROUTES; do
       fail "${C}${route}${X}" "$(IFS='; '; echo "${missing[*]}")"
    fi
 done
+
+# ── digital asset links ──────────────────────────────────────────────────────
+# The Play Store build (see android/README.md) is a Trusted Web Activity, and
+# Chrome only drops the browser chrome if this file vouches for the app's
+# signing certificate. Get it wrong and the app still launches — with an
+# address bar — which reads as a styling bug rather than a failed trust check.
+#
+# Checked here for two reasons the rest of this script does not cover:
+#
+#   1. It is the one asset that can break AFTER release. It deploys with the
+#      website, not with the app, so every installed user is affected by a
+#      change no Android release was involved in.
+#   2. It lives in a dot-directory. Nitro does copy those out of `public/`
+#      — verified against this build, not assumed — but a `**/*` glob skips
+#      dot-prefixed paths unless it opts in, so that behaviour is a choice
+#      upstream could revisit. Cheap to assert, and the failure is otherwise
+#      invisible until an installed app grows an address bar.
+section "digital asset links ${D}(Android TWA)${X}"
+
+AL_PATH="$DIST/.well-known/assetlinks.json"
+assert_file "assetlinks.json emitted" "$AL_PATH"
+
+if [[ -f "$AL_PATH" ]]; then
+   AL="$(cat "$AL_PATH")"
+
+   # Same source-of-truth rule as the tool registry above: read the package id
+   # from the Bubblewrap manifest rather than repeating it, or the two drift
+   # and the drift is invisible until an installed app grows an address bar.
+   PACKAGE_ID="$(bun -e 'console.log(JSON.parse(await Bun.file("android/twa-manifest.json").text()).packageId ?? "")' 2>/dev/null)"
+
+   if [[ -z "$PACKAGE_ID" ]]; then
+      fail "package id readable from twa-manifest" "android/twa-manifest.json missing or has no packageId"
+   else
+      assert_contains "package matches ${C}${PACKAGE_ID}${X}" "$AL" "\"package_name\":[[:space:]]*\"${PACKAGE_ID}\""
+   fi
+
+   assert_contains "android_app namespace"   "$AL" '"namespace":[[:space:]]*"android_app"'
+   assert_contains "handle_all_urls relation" "$AL" 'delegate_permission/common\.handle_all_urls'
+
+   # Reads the fingerprints out, and doubles as the JSON parse check: a
+   # malformed file throws here, which is a failure rather than something
+   # pending.
+   #
+   # The path goes through the environment rather than an argument because
+   # `bun -e` puts the first argument at process.argv[1], not [2] as a
+   # file-based script would. Getting that wrong does not error — it reads as
+   # "no fingerprints", i.e. a green build with the check silently disabled.
+   if FINGERPRINTS="$(AL_PATH="$AL_PATH" bun -e '
+      const doc = JSON.parse(await Bun.file(process.env.AL_PATH).text())
+      const fps = doc.flatMap((s) => s?.target?.sha256_cert_fingerprints ?? [])
+      console.log(fps.join("\n"))
+   ' 2>/dev/null)"; then
+      pass "parses as JSON"
+      PARSED=1
+   else
+      fail "parses as JSON" "malformed, or not an array of statements"
+      PARSED=0
+   fi
+
+   # Fingerprints are pending until the first AAB reaches Play — Google
+   # generates the app signing key and only reveals its SHA-256 afterwards.
+   # An empty list is therefore the correct pre-launch state, not a failure;
+   # failing on it would red every build until launch and teach everyone to
+   # ignore this section. Once populated, the format is checked strictly.
+   if [[ "$PARSED" -eq 0 ]]; then
+      : # already reported; saying anything about fingerprints here would be a guess
+   elif [[ -z "$FINGERPRINTS" ]]; then
+      skip "signing fingerprints" "none yet — added after the first Play upload"
+   else
+      bad=0
+      while read -r fp; do
+         [[ -z "$fp" ]] && continue
+         # SHA-256 as Play prints it: 32 colon-separated uppercase hex pairs.
+         grep -qE '^[0-9A-F]{2}(:[0-9A-F]{2}){31}$' <<<"$fp" || bad=$((bad + 1))
+      done <<<"$FINGERPRINTS"
+
+      count="$(grep -c . <<<"$FINGERPRINTS")"
+      if [[ "$bad" -eq 0 ]]; then
+         pass "signing fingerprints ${D}(${count} well-formed)${X}"
+      else
+         fail "signing fingerprints" "${bad} of ${count} are not colon-separated SHA-256"
+      fi
+
+      # Both the app signing key and the upload key belong here. With only one
+      # it is almost always the upload key that is missing, which verifies in
+      # production and fails on every locally built APK.
+      if [[ "$count" -lt 2 ]]; then
+         skip "both keys listed" "only ${count} — add the upload key as well as the app signing key"
+      else
+         pass "both keys listed"
+      fi
+   fi
+fi
 
 # ── summary ──────────────────────────────────────────────────────────────────
 printf "\n${B}Summary${X}  ${G}%d passed${X}  ${R}%d failed${X}\n" "$PASS" "$FAIL"

@@ -251,7 +251,14 @@ export default defineNuxtConfig({
          navigateFallback: "/",
          // …but these are not app routes, and answering them with the hub's
          // HTML would be worse than letting them fail.
-         navigateFallbackDenylist: [/^\/_/, /^\/__/, /^\/(robots\.txt|sitemap.*\.xml|ads\.txt)$/],
+         //
+         // `.well-known` holds `assetlinks.json`, which Android reads to
+         // verify the Play Store TWA. It is listed for completeness rather
+         // than necessity: that fetch happens outside any service worker and
+         // is not a navigation, so this rule would never fire on it. Leaving
+         // it out would make this list an incomplete inventory of the paths
+         // that are not app routes, which is the only thing it is for.
+         navigateFallbackDenylist: [/^\/_/, /^\/__/, /^\/\.well-known\//, /^\/(robots\.txt|sitemap.*\.xml|ads\.txt)$/],
       },
 
       // The SW is a production concern and rebuilding it on every HMR pass
