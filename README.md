@@ -118,6 +118,8 @@ App runs at `http://localhost:3000`
 | `bun seo:verify` | Boot the production build and smoke-test every SEO surface |
 | `bun seo:lighthouse` | Run Lighthouse CI against the production build |
 | `bun pwa:verify` | Check the build is installable and precaches every route |
+| `bun play:assets` | Generate the Play Store icon and feature graphic |
+| `bun play:screenshots` | Capture Play Store screenshots from the built site |
 | `bun clean` | Remove `.nuxt`, `.output` and `dist` |
 
 ---
@@ -238,6 +240,53 @@ in Lighthouse 12, so `bun seo:lighthouse` is blind to it. The failure mode is
 silent: `<link rel="manifest">` comes from a `<VitePwaManifest />` in
 `app/app.vue` that renders `null`, and deleting it still builds, still
 installs a worker, and quietly stops the site being installable.
+
+---
+
+## Android / Play Store
+
+The site ships to Google Play as a **Trusted Web Activity**: a thin Android
+shell that renders `https://www.metricsadda.com` in full Chrome with no
+address bar. Not a WebView, and not a second copy of the app.
+
+That buys one thing worth stating plainly — **a content change needs no Play
+release.** Deploy to Vercel and every installed app has it on next launch.
+Only the shell itself — icons, name, package id, target SDK, shortcuts — needs
+a new bundle, which is roughly once a year.
+
+It works because the site is already an installable PWA with a stable manifest
+`id`. That id is the identity Play uses to keep an updated TWA the *same* app,
+which is why `bun pwa:verify` asserts it.
+
+| Path | What |
+|---|---|
+| `android/twa-manifest.json` | The only hand-written Android config |
+| `android/README.md` | Setup, build loop, and the CI notes |
+| `scripts/android/target-sdk.sh` | Forces the Play-mandated target API level |
+| `public/.well-known/assetlinks.json` | Proves the app and the site share an owner |
+| `play-assets/` | Store icon, feature graphic, screenshots |
+| `.github/workflows/android.yml` | Builds the signed bundle on demand |
+
+```bash
+bun run play:assets        # store icon + feature graphic
+bun run play:screenshots   # 24 shots, phone/tablet x light/dark
+```
+
+Two things bite hard enough to be worth knowing before you touch any of it:
+
+- **`twa-manifest.json` has no `targetSdkVersion`.** The level comes from
+  Bubblewrap's project template and lands in a `build.gradle` that every
+  `bubblewrap update` regenerates, so `scripts/android/target-sdk.sh` has to
+  run after the update on every build. It fails loudly rather than quietly,
+  because the alternative is a bundle that builds and installs and is then
+  refused at upload.
+- **Wrong asset links show as a browser address bar**, not as an error. The
+  fingerprints cannot be filled in until Play has seen the first bundle, so
+  `assetlinks.json` ships with an empty list and `bun pwa:verify` reports it
+  as pending rather than failing.
+
+The full release runbook, Play Console checklist and store listing copy are in
+[`docs/plans/android-twa-play-store.md`](docs/plans/android-twa-play-store.md).
 
 ---
 
