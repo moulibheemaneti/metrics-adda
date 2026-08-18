@@ -19,6 +19,8 @@
       "seo:verify": "bash scripts/seo/verify.sh",
       "seo:lighthouse": "bash scripts/seo/lighthouse.sh",
       "pwa:verify": "bash scripts/pwa/verify.sh",
+      "play:assets": "bun --bun scripts/play/assets.mjs",
+      "play:screenshots": "bun --bun scripts/play/screenshots.mjs",
       "test": "bunx --bun vitest run",
       "test:watch": "bunx --bun vitest"
    },

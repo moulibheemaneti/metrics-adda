@@ -47,3 +47,8 @@ android/*.idsig
 *.jks
 *.keystore
 
+# Play Store listing artwork. The icon and feature graphic ARE committed —
+# small, stable, and wanted at every listing edit. Screenshots are not: they
+# are bulky, they change with every visual tweak, and `bun run
+# play:screenshots` regenerates all 24 in about a minute.
+play-assets/screenshots/
