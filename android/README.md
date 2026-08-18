@@ -72,6 +72,45 @@ Bubblewrap's template has lagged the current level before. `target-sdk.sh`
 fails loudly rather than quietly if it cannot find the setting, because the
 alternative is an AAB that builds and installs fine and is refused at upload.
 
+## Building in CI
+
+`.github/workflows/android.yml`, run manually from the Actions tab. It does
+the same three steps as above — update, force the target SDK, build — and
+uploads the `.aab` and `.apk` as a run artifact. It never publishes to Play.
+
+It needs three repository secrets:
+
+| Secret | What it is |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | `base64 -w0 android/upload.jks` |
+| `ANDROID_KEYSTORE_PASSWORD` | Keystore password |
+| `ANDROID_KEY_PASSWORD` | Key password (often the same) |
+
+The alias is not a secret — it comes from `signingKey.alias` in
+`twa-manifest.json`.
+
+`versionCode` comes from the workflow run number, not from semver. Play needs
+it to increase on every upload and it can never be reused or walked back,
+while `package.json`'s version can legitimately stay put across two builds.
+The store listing still shows the semver, as `appVersion`. If the workflow is
+ever recreated its run numbers restart at 1, which is what the
+`version_code` input on the manual trigger is for.
+
+The trigger is manual on purpose. Building on every release tag would make a
+broken Android toolchain show up as red CI on `main`, and the Gradle project
+it needs is not committed yet — the workflow's first step fails with a
+pointer back to this file until it is.
+
+### One thing to know before debugging it
+
+Until `~/.bubblewrap/config.json` exists, **every** bubblewrap subcommand —
+`updateConfig` and `--version` included — opens an interactive "Do you want
+Bubblewrap to install JDK?" prompt. It does not fall back to a default when
+stdin is closed; it waits. So the workflow writes that file directly instead
+of calling `updateConfig`, and the job carries a 30-minute timeout as a
+backstop. A bubblewrap step that appears to be running for a long time is
+almost certainly sitting at a prompt.
+
 ## Digital Asset Links
 
 The app and the site prove common ownership through
