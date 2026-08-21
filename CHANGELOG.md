@@ -3,6 +3,18 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.15.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.14.1...v1.15.0) (2026-08-21)
+
+### ✨ Features
+
+* **android:** add Bubblewrap TWA config for the Play Store build ([30acf13](https://github.com/moulibheemaneti/metrics-adda/commit/30acf131f09cf0c71d458da7d116e8776d389b41))
+* **android:** add digital asset links and gate them in pwa:verify ([60e5ca5](https://github.com/moulibheemaneti/metrics-adda/commit/60e5ca5960132cf4db08ff371893d6389963e24f))
+* **play:** generate store listing icon, feature graphic and screenshots ([50d2116](https://github.com/moulibheemaneti/metrics-adda/commit/50d2116d95394f754c2520cebc7a1ac2fac7fdad))
+
+### 📚 Documentation
+
+* **android:** add the play store runbook, checklist and listing copy ([6f225ad](https://github.com/moulibheemaneti/metrics-adda/commit/6f225ad68a21749895190477f5dff20e4e98bba7))
+
 ## [1.14.1](https://github.com/moulibheemaneti/metrics-adda/compare/v1.14.0...v1.14.1) (2026-08-16)
 
 ### 🐛 Bug Fixes
