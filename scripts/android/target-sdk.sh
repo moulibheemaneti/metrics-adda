@@ -43,7 +43,11 @@ GRADLE="$ROOT/android/app/build.gradle"
 patched=0
 for key in targetSdkVersion compileSdkVersion targetSdk compileSdk; do
    if grep -qE "^[[:space:]]*${key}[[:space:]]+[0-9]+" "$GRADLE"; then
-      sed -i -E "s/^([[:space:]]*)${key}[[:space:]]+[0-9]+/\1${key} ${TARGET_SDK}/" "$GRADLE"
+      # Not `sed -i -E`: BSD sed (macOS) requires an argument to -i and would
+      # swallow -E as the backup suffix, dropping extended regex and breaking
+      # the \1 backreference. A temp file behaves the same on both seds.
+      sed -E "s/^([[:space:]]*)${key}[[:space:]]+[0-9]+/\1${key} ${TARGET_SDK}/" "$GRADLE" > "$GRADLE.tmp"
+      mv "$GRADLE.tmp" "$GRADLE"
       patched=$((patched + 1))
    fi
 done
