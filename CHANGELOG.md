@@ -3,6 +3,12 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.17.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.16.0...v1.17.0) (2026-08-21)
+
+### ✨ Features
+
+* **android:** add the play app signing fingerprint to the asset links ([0f21c92](https://github.com/moulibheemaneti/metrics-adda/commit/0f21c9211250f848709b55e764288a69ff06f334))
+
 ## [1.16.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.15.0...v1.16.0) (2026-08-21)
 
 ### ✨ Features
