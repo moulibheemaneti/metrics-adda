@@ -189,6 +189,20 @@ export default withNuxt(
       },
    },
 
+   // ─── 7. REPO SCRIPTS — build-time tooling, not shipped code ─────────────
+   {
+      files: ["scripts/**/*.mjs"],
+      languageOptions: {
+         globals: {
+            // These are run with `bun`, not node — see the play:* entries in
+            // package.json. Bun's global is as available here as `process`,
+            // but nothing in the shared config knows that, because every
+            // other file in the tree runs in the browser or through Nuxt.
+            Bun: "readonly",
+         },
+      },
+   },
+
    // ─── 6. NUXT OVERRIDES — relax certain rules for Nuxt-specific files ─────
    {
       files: [

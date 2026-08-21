@@ -402,6 +402,16 @@ Recorded so the reasons survive.
   **PWA/offline shipped** — see the PWA section in the README. It came out of
   this group early because it was the cheap half: the tools already run in the
   browser and send nothing, so it was packaging rather than a feature.
+- **Capacitor, or any native rewrite.** The Play Store build is a Trusted Web
+  Activity instead — see `docs/plans/android-twa-play-store.md`. Capacitor
+  would bundle `.output/public` into the APK, which sounds tidier and is not:
+  every content change would become a Play release with a review queue in
+  front of it, where a TWA picks the change up from the next Vercel deploy.
+  It would also mean dropping AdSense for AdMob if ads ever return, since
+  AdSense is not permitted inside a plain WebView. Worth revisiting only if
+  the app needs something the web cannot do — widgets, background work, or
+  real offline-first storage.
+
 - **Test and CI infrastructure beyond what CI already runs.** `ci.yml` covers
   lint, typecheck, `bun run test` and build. Still not wired up, and
   deliberately: Playwright E2E, an axe-core runner in the repo, and

@@ -1,0 +1,168 @@
+name: Android
+
+# Builds the signed Play Store bundle from the committed Bubblewrap project.
+#
+# Deliberately NOT part of ci.yml. That workflow is a strict sequential gate
+# chain (setup → lint → typecheck → test → build) keyed on bun caches, and it
+# guards the website. This shares none of it: it needs a JDK and the Android
+# SDK, it does not need node_modules, and a broken Android toolchain must
+# never be able to block a web PR.
+#
+# Manual trigger only, for now. The obvious alternative — building on every
+# release tag — would turn a red Android build into red CI on main, and the
+# Gradle project it needs is not in the repo yet (see android/README.md). Once
+# `bubblewrap init` has been run and its output committed, add:
+#
+#   push:
+#     tags: ["v*"]
+#
+# The bundle is uploaded as an artifact and never published. Play upload stays
+# manual until releases are routine; automating it needs a Google Cloud service
+# account with the Play Developer API enabled and granted access in Play
+# Console, which is not worth standing up before the first release exists.
+
+on:
+   workflow_dispatch:
+      inputs:
+         version_code:
+            description: "Play versionCode (integer, must exceed every previous upload). Defaults to the workflow run number."
+            required: false
+            type: string
+
+concurrency:
+   group: android-${{ github.ref }}
+   cancel-in-progress: true
+
+env:
+   # Pinned rather than floating. Bubblewrap generates the Gradle project from
+   # its own template, so an unpinned CLI can change compileSdk, dependencies
+   # or the manifest shape between two builds of identical source.
+   BUBBLEWRAP_VERSION: 1.25.0
+
+jobs:
+   build:
+      name: Signed bundle
+      runs-on: ubuntu-latest
+      # A backstop, not a performance budget — the build takes a few minutes.
+      # Bubblewrap prompts interactively in situations that look like they
+      # should be errors, and a prompt with no one to answer it would
+      # otherwise burn the full six-hour default.
+      timeout-minutes: 30
+
+      steps:
+         - name: Checkout code
+           uses: actions/checkout@v7
+
+         # Fails here, loudly and early, rather than 5 minutes later inside
+         # Gradle. `bubblewrap init` is interactive, so CI cannot create this
+         # itself — it can only build a project that is already committed.
+         - name: Check the Bubblewrap project is committed
+           run: |
+              if [ ! -f android/app/build.gradle ]; then
+                echo "::error::No Gradle project at android/app. Run 'bubblewrap init' locally and commit its output — see android/README.md."
+                exit 1
+              fi
+
+         # JDK 17 specifically: it is the version Bubblewrap documents for
+         # `jdkPath`, and the Android Gradle Plugin 8.x line requires it.
+         - name: Setup JDK 17
+           uses: actions/setup-java@v5
+           with:
+              distribution: temurin
+              java-version: "17"
+              cache: gradle
+
+         - name: Setup Android SDK
+           uses: android-actions/setup-android@v4
+
+         - name: Install Bubblewrap
+           run: npm install -g "@bubblewrap/cli@${BUBBLEWRAP_VERSION}"
+
+         # config.json is written directly rather than through
+         # `bubblewrap updateConfig`, and that is not a shortcut.
+         #
+         # Until this file exists, EVERY bubblewrap subcommand — updateConfig
+         # and --version included — opens an interactive "Do you want
+         # Bubblewrap to install JDK?" prompt. It does not fall back to a
+         # default when stdin is closed; it simply waits, so a CI job that
+         # calls updateConfig first hangs until the 6-hour timeout rather than
+         # failing. Verified by running it with stdin closed.
+         #
+         # With the file present, the same commands run straight through and
+         # report a bad path as a normal error. ANDROID_HOME on the runner
+         # contains no spaces, which Bubblewrap requires of androidSdkPath.
+         - name: Point Bubblewrap at the runner toolchain
+           run: |
+              mkdir -p ~/.bubblewrap
+              printf '{"jdkPath":"%s","androidSdkPath":"%s"}' "$JAVA_HOME" "$ANDROID_HOME" \
+                > ~/.bubblewrap/config.json
+              cat ~/.bubblewrap/config.json
+              bubblewrap doctor
+
+         # The keystore never exists in the repo. It is reconstructed here and
+         # deleted in the final step, which runs even when the build fails.
+         - name: Restore the upload keystore
+           env:
+              ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+           run: |
+              if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+                echo "::error::Secret ANDROID_KEYSTORE_BASE64 is not set. See android/README.md for generating the keystore."
+                exit 1
+              fi
+              printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/upload.jks
+              echo "keystore restored ($(wc -c < android/upload.jks) bytes)"
+
+         # versionCode must increase on every upload and can never be reused or
+         # walked back, so it is taken from the run number rather than from
+         # semver, which can legitimately stay put across two builds. The
+         # workflow input overrides it — needed if this workflow is ever
+         # recreated, since run numbers restart at 1.
+         - name: Set the version
+           env:
+              VERSION_CODE: ${{ inputs.version_code || github.run_number }}
+           run: node scripts/android/version.mjs
+
+         - name: Regenerate the project from twa-manifest.json
+           working-directory: android
+           run: bubblewrap update --skipVersionUpgrade
+
+         # MUST run after `update` and before `build`, every time. Bubblewrap
+         # has no targetSdkVersion field, so the level comes from its template
+         # and lands in a build.gradle that `update` has just rewritten. Play
+         # requires API 36 for new apps and updates from 31 August 2026.
+         - name: Force the target SDK
+           run: scripts/android/target-sdk.sh
+
+         - name: Build the signed bundle
+           working-directory: android
+           env:
+              BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+              BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+           run: bubblewrap build --skipPwaValidation
+
+         # Confirms the artefact exists and is signed before it is uploaded —
+         # a Bubblewrap build that skipped signing still exits 0.
+         - name: Verify the bundle
+           working-directory: android
+           run: |
+              test -f app-release-bundle.aab || { echo "::error::no app-release-bundle.aab"; exit 1; }
+              ls -l app-release-bundle.aab app-release-signed.apk
+              # A signature block, not just META-INF/ — every zip has that,
+              # so grepping for it would pass on an unsigned bundle.
+              unzip -l app-release-bundle.aab | grep -qE "META-INF/.*\.(RSA|DSA|EC)" \
+                || { echo "::error::bundle is not signed — check the keystore secrets"; exit 1; }
+
+         - name: Upload the bundle
+           uses: actions/upload-artifact@v7
+           with:
+              name: metrics-adda-${{ inputs.version_code || github.run_number }}
+              path: |
+                 android/app-release-bundle.aab
+                 android/app-release-signed.apk
+              retention-days: 30
+
+         # `always()`, because a keystore left on a runner outlives the job
+         # that needed it.
+         - name: Remove the keystore
+           if: always()
+           run: rm -f android/upload.jks
