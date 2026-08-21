@@ -86,6 +86,20 @@ export interface FaqEntry {
 }
 
 /**
+ * One section of the privacy policy.
+ *
+ * `links` is optional because only a section that cites outside sources
+ * carries any — today none does. It stays on the type rather than being
+ * removed with the advertising section it belonged to, so restoring that
+ * section is a copy change and not a type change.
+ */
+export interface PolicySection {
+   heading: string
+   body: string[]
+   links?: { label: string, href: string }[]
+}
+
+/**
  * One section of the contact page.
  *
  * `link` is the escape hatch for the one thing a plain string cannot carry:
@@ -129,7 +143,7 @@ export const SEO: Record<PageKey, SeoCopy> = {
    privacy: {
       title: "Privacy Policy",
       description:
-         "How Metrics Adda handles your data: the tools run entirely in your browser and send nothing to a server. Cookies are used only for advertising.",
+         "How Metrics Adda handles your data: the tools run entirely in your browser and send nothing to a server. No ads, and no tracking cookies.",
    },
    about: {
       title: "About Metrics Adda",
@@ -139,7 +153,7 @@ export const SEO: Record<PageKey, SeoCopy> = {
    contact: {
       title: "Contact",
       description:
-         "Get in touch with Metrics Adda about a wrong conversion, a tool you would like to see, or anything to do with privacy and advertising on the site.",
+         "Get in touch with Metrics Adda about a wrong conversion, a tool you would like to see, or anything to do with privacy on the site.",
    },
    weightConverter: {
       title: "Weight Converter: kg, lb, oz, g & stone",
@@ -848,13 +862,17 @@ export const COPY = {
       toolsHeading: "All tools",
    },
    /// The privacy policy. Kept here with the rest of the copy rather than
-   /// in the page component so the wording is reviewable in one place —
-   /// and because AdSense approval depends on what this actually says, the
-   /// disclosures about advertising cookies below are not decorative.
+   /// in the page component so the wording is reviewable in one place.
+   ///
+   /// The advertising-cookie disclosures are PARKED, not deleted — commented
+   /// out below in step with `<AdSlot />` in `layouts/default.vue`. A policy
+   /// that describes cookies the site does not set is not a harmless
+   /// leftover: Play reads it against the Data safety and ads declarations,
+   /// where this app is declared ad-free. Restore both together or neither.
    privacy: {
       heading: "Privacy policy",
-      lede: "Metrics Adda is a set of small browser tools. The short version: what you type into them stays on your device, and the only data anyone collects here is what advertising and traffic measurement need.",
-      updated: "Last updated 10 August 2026",
+      lede: "Metrics Adda is a set of small browser tools. The short version: what you type into them stays on your device, and the only data anyone collects here is anonymous traffic measurement.",
+      updated: "Last updated 21 August 2026",
       sections: [
          {
             heading: "What the tools do with your input",
@@ -863,19 +881,20 @@ export const COPY = {
                "What you type is never stored between visits. Three preferences are, all of them in your browser's own local storage: your light or dark theme choice, so the site does not flash the wrong colours on your next visit; the reading and speaking speeds you set on the word counter; and your best score on the typing speed test. None of them leaves your device, and clearing your site data removes them.",
             ],
          },
-         {
-            heading: "Advertising cookies",
-            body: [
-               "This site shows ads served by Google AdSense. Google and its partners use cookies and similar technologies to serve and measure those ads, including on the basis of your previous visits to this and other websites.",
-               "Google's use of advertising cookies enables it and its partners to serve ads to you based on your visit to this site and other sites on the internet. You can opt out of personalised advertising at any time in Google's Ads Settings, and you can opt out of third-party vendors' use of cookies for personalised advertising at aboutads.info.",
-               "Visitors in the European Economic Area and the United Kingdom are shown a consent message before any personalised advertising cookie is set, and can change that choice at any time.",
-            ],
-            links: [
-               { label: "Google Ads Settings", href: "https://www.google.com/settings/ads" },
-               { label: "How Google uses data from sites that use its services", href: "https://policies.google.com/technologies/partner-sites" },
-               { label: "aboutads.info opt-out", href: "https://www.aboutads.info/choices/" },
-            ],
-         },
+         // PARKED with `<AdSlot />` — restore both together.
+         //          {
+         //             heading: "Advertising cookies",
+         //             body: [
+         //                "This site shows ads served by Google AdSense. Google and its partners use cookies and similar technologies to serve and measure those ads, including on the basis of your previous visits to this and other websites.",
+         //                "Google's use of advertising cookies enables it and its partners to serve ads to you based on your visit to this site and other sites on the internet. You can opt out of personalised advertising at any time in Google's Ads Settings, and you can opt out of third-party vendors' use of cookies for personalised advertising at aboutads.info.",
+         //                "Visitors in the European Economic Area and the United Kingdom are shown a consent message before any personalised advertising cookie is set, and can change that choice at any time.",
+         //             ],
+         //             links: [
+         //                { label: "Google Ads Settings", href: "https://www.google.com/settings/ads" },
+         //                { label: "How Google uses data from sites that use its services", href: "https://policies.google.com/technologies/partner-sites" },
+         //                { label: "aboutads.info opt-out", href: "https://www.aboutads.info/choices/" },
+         //             ],
+         //          },
          {
             heading: "Traffic measurement",
             body: [
@@ -900,7 +919,7 @@ export const COPY = {
                "If this policy changes in a way that affects what is collected, the date at the top of this page changes with it. There is no mailing list to notify, so that date is the record.",
             ],
          },
-      ],
+      ] as PolicySection[],
       contactHeading: "Questions",
       contactBody: "Anything about this policy, or about the site generally:",
    },
@@ -938,8 +957,8 @@ export const COPY = {
          {
             heading: "How it pays for itself",
             body: [
-               "The site carries a single advertisement, in one fixed position at the bottom of the page, served by Google AdSense. There is one ad per page and there will not be more: no pop-ups, no interstitials between pages, and nothing that covers what you came to read.",
-               "That unit reserves its space in the layout before it loads, so the page does not jump when an ad arrives. The privacy policy sets out exactly which cookies it involves and how to opt out of personalised advertising.",
+               "It does not, particularly. The site carries no advertising, sells nothing, and has no accounts to charge for. It is a personal project on cheap hosting, and a set of static pages costs very little to serve.",
+               "If that ever changes and the site carries an ad, it will be one unit in one fixed position — never a pop-up or an interstitial — and the privacy policy will say so before it appears.",
             ],
          },
          {
@@ -972,10 +991,10 @@ export const COPY = {
             ],
          },
          {
-            heading: "Privacy and advertising",
+            heading: "Privacy",
             body: [],
             link: {
-               before: "Questions about what the site stores, or about the advertising cookies, are answered in full by the ",
+               before: "Questions about what the site stores, or what it measures, are answered in full by the ",
                label: "privacy policy",
                to: "/privacy-policy",
                after: ". If something there is unclear or does not match what you are seeing, write and say so.",

@@ -42,8 +42,7 @@
 </template>
 
 <script lang="ts" setup>
-/// Required for AdSense: Google will not approve a site that carries ads
-/// without a policy disclosing the advertising cookies. Deliberately not
+/// The site's privacy disclosures live here. Deliberately not
 /// built on `ToolShell` — that wraps its slot in an FAQ and an "other
 /// tools" grid, neither of which belongs on a policy — and deliberately
 /// absent from `utils/tools.ts`, which drives the nav and is for tools.
