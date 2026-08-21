@@ -3,6 +3,12 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.16.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.15.0...v1.16.0) (2026-08-21)
+
+### ✨ Features
+
+* **android:** add the upload key fingerprint to the asset links ([7c62565](https://github.com/moulibheemaneti/metrics-adda/commit/7c62565478add309ed5d36357eb2dc6cc605a9cc))
+
 ## [1.15.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.14.1...v1.15.0) (2026-08-21)
 
 ### ✨ Features
