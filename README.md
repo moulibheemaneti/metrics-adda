@@ -1,6 +1,18 @@
+<div align="center">
+
+<img src="public/logo.png" alt="" width="96" height="96">
+
 # Metrics Adda
 
-> Fast, free unit converters and everyday text tools — no sign-up, nothing to install.
+**Fast, free unit converters and everyday text tools — no sign-up, nothing to install.**
+
+Every conversion, count and generation runs in your browser. Nothing you type is sent anywhere.
+
+[**metricsadda.com**](https://www.metricsadda.com) · [Tools](#tools) · [Getting started](#getting-started) · [Contributing](.github/CONTRIBUTING.md) · [Changelog](CHANGELOG.md)
+
+[![CI](https://img.shields.io/github/actions/workflow/status/moulibheemaneti/metrics-adda/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/moulibheemaneti/metrics-adda/actions/workflows/ci.yml) [![Release](https://img.shields.io/github/v/release/moulibheemaneti/metrics-adda?style=flat-square&label=release)](https://github.com/moulibheemaneti/metrics-adda/releases/latest) [![License](https://img.shields.io/github/license/moulibheemaneti/metrics-adda?style=flat-square)](LICENSE) [![Nuxt 4](https://img.shields.io/badge/Nuxt-4-00DC82?style=flat-square&logo=nuxt&logoColor=white)](https://nuxt.com) [![Bun](https://img.shields.io/badge/Bun-1.3-000000?style=flat-square&logo=bun&logoColor=white)](https://bun.sh) [![PWA](https://img.shields.io/badge/PWA-installable-5A0FC8?style=flat-square)](#pwa)
+
+</div>
 
 ---
 
