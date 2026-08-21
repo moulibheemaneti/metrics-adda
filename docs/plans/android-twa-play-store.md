@@ -296,8 +296,9 @@ where it is proven.
   separately from the app, so they can break *after* release, silently, for
   every installed user, with no Android release involved. `bun run pwa:verify`
   asserts the file survives every build for exactly this reason.
-- **`packageId` is permanent.** `com.metricsadda.twa` cannot change after
-  publication without starting a new listing with no upgrade path.
+- **`packageId` is permanent.** `com.moulibheemaneti.metricsadda` cannot
+  change after publication without starting a new listing with no upgrade
+  path.
 - **Minimum functionality policy.** Lower risk for a TWA than a WebView
   wrapper, but not zero. The defence is that this is a genuinely useful
   offline tool set rather than a bookmark.
