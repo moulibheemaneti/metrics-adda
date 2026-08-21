@@ -4,7 +4,9 @@
       "target": {
          "namespace": "android_app",
          "package_name": "com.moulibheemaneti.metricsadda",
-         "sha256_cert_fingerprints": []
+         "sha256_cert_fingerprints": [
+            "DF:90:B0:E1:9C:9B:6D:E9:7E:64:07:59:FB:A0:6B:F0:59:96:36:81:8C:8F:78:35:E7:00:D7:F9:E6:98:36:C6"
+         ]
       }
    }
 ]
