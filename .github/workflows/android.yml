@@ -37,7 +37,7 @@ env:
    # Pinned rather than floating. Bubblewrap generates the Gradle project from
    # its own template, so an unpinned CLI can change compileSdk, dependencies
    # or the manifest shape between two builds of identical source.
-   BUBBLEWRAP_VERSION: 1.10.0
+   BUBBLEWRAP_VERSION: 1.25.0
 
 jobs:
    build:
