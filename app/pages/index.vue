@@ -23,6 +23,15 @@
             </li>
          </ul>
       </section>
+
+      <section class="stack stack--tight">
+         <h2 class="section-heading">
+            {{ COPY.home.askHeading }}
+         </h2>
+         <p class="ask__body">
+            {{ COPY.home.askLink.before }}<NuxtLink class="ask__link" :to="COPY.home.askLink.to">{{ COPY.home.askLink.label }}</NuxtLink>{{ COPY.home.askLink.after }}
+         </p>
+      </section>
    </main>
 </template>
 
@@ -59,3 +68,21 @@ useSchemaOrg([
    }),
 ])
 </script>
+
+<style scoped lang="scss">
+/// Same treatment as the prose blocks on `about` and `contact`: held to the
+/// reading measure, and the inline link underlined as well as accented,
+/// because colour alone is not enough to mark a link up in running text.
+.ask {
+   &__body {
+      max-inline-size: var(--measure);
+      color: var(--ink-soft);
+      line-height: 1.7;
+   }
+
+   &__link {
+      color: var(--accent);
+      text-decoration: underline;
+   }
+}
+</style>
