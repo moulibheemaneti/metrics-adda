@@ -3,6 +3,17 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.18.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.17.0...v1.18.0) (2026-08-25)
+
+### ✨ Features
+
+* **home:** link the contact page from the tool grid ([47681c1](https://github.com/moulibheemaneti/metrics-adda/commit/47681c1bbcc40e958a89f44a3ffa4b6ddfe639f8))
+
+### 📚 Documentation
+
+* **privacy:** park the advertising disclosures while the site runs ad-free ([d488cbb](https://github.com/moulibheemaneti/metrics-adda/commit/d488cbbb752c522ebdb1c7b6f8783620ff7bbce6))
+* **readme:** add a hero with badges and quick links ([54d00f0](https://github.com/moulibheemaneti/metrics-adda/commit/54d00f0f940e30759ba2cf8af3201bf8f72672b9))
+
 ## [1.17.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.16.0...v1.17.0) (2026-08-21)
 
 ### ✨ Features
