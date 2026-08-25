@@ -860,6 +860,18 @@ export const COPY = {
       heading: "Everyday tools that are instant and exact",
       tagline: "Converters for weight, height, temperature, speed, volume, area, time and data, plus a word counter, a case converter, a typing speed test, a BMI calculator, and generators for passwords, UUIDs and placeholder text. Nothing to install, and nothing you type ever leaves your browser.",
       toolsHeading: "All tools",
+      /// A closing prompt under the grid. It earns its place twice over: it
+      /// tells a reader who did not find their tool what to do next, and it
+      /// is the only in-content link the contact page has. The footer link
+      /// is site-wide boilerplate, which crawlers weigh far below a link
+      /// inside the body of the most-linked page on the site.
+      askHeading: "Missing a tool?",
+      askLink: {
+         before: "The list grows from what people ask for. If you converted something today by opening a search engine instead of this site, ",
+         label: "write in",
+         to: "/contact",
+         after: " — the address is read by the person who builds it.",
+      },
    },
    /// The privacy policy. Kept here with the rest of the copy rather than
    /// in the page component so the wording is reviewable in one place.
