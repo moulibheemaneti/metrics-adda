@@ -3,6 +3,12 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.19.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.18.0...v1.19.0) (2026-08-26)
+
+### ✨ Features
+
+* **seo:** serve an llms.txt generated from the tool registry ([abf42c2](https://github.com/moulibheemaneti/metrics-adda/commit/abf42c262864e6c31d5634c035d72290bb12810a))
+
 ## [1.18.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.17.0...v1.18.0) (2026-08-25)
 
 ### ✨ Features
