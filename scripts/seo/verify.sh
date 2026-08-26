@@ -3,8 +3,8 @@
 # SEO verification smoke test for Metrics Adda (Nuxt SEO suite).
 #
 # Boots the production build locally and asserts every SEO surface renders:
-# robots.txt, sitemap + hreflang, meta/OG/Twitter tags, canonical, in-head
-# hreflang, JSON-LD, and the dynamic OG image.
+# robots.txt, sitemap + hreflang, llms.txt, meta/OG/Twitter tags, canonical,
+# in-head hreflang, JSON-LD, and the dynamic OG image.
 #
 # Usage:
 #   scripts/seo/verify.sh                 # build if needed, boot server, check
@@ -92,6 +92,7 @@ ROBOTS="$(curl -s "$BASE/robots.txt")"
 # Single-locale site, so @nuxtjs/sitemap serves one flat sitemap here rather
 # than an index fanning out to per-language files.
 SITEMAP="$(curl -s "$BASE/sitemap.xml")"
+LLMS="$(curl -s "$BASE/llms.txt")"
 
 # ── robots ───────────────────────────────────────────────────────────────────
 section "robots.txt"
@@ -103,6 +104,29 @@ assert_contains "site is indexable"        "$ROBOTS" "User-agent: \*"
 section "sitemap"
 assert_contains "sitemap served"     "$SITEMAP" "<urlset"
 assert_contains "sitemap has entries" "$SITEMAP" "<loc>https?://"
+
+# ── llms.txt ─────────────────────────────────────────────────────────────────
+# The llmstxt.org convention: one Markdown file at a fixed path telling a
+# model what the site offers. Generated from the tool registry, so the check
+# that matters is that a tool actually appears — a route that 200s with an
+# empty body would otherwise look fine.
+section "llms.txt"
+assert_contains "starts with an H1"      "$LLMS" "^# .+"
+assert_contains "carries a summary"      "$LLMS" "^> .+"
+assert_contains "links tools absolutely" "$LLMS" "^- \[[^]]+\]\(https?://[^)]+\): .+"
+
+LLMS_TYPE="$(curl -s -o /dev/null -w "%{content_type}" "$BASE/llms.txt")"
+if [[ "$LLMS_TYPE" == text/plain* ]]; then
+   pass "served as text/plain"
+else
+   fail "served as text/plain" "content-type=$LLMS_TYPE"
+fi
+
+# Every tool page must be listed, for the same reason every one is asserted
+# below: the file is generated, and a silent gap in it is invisible.
+for tool_route in $TOOL_ROUTES; do
+   assert_contains "lists ${tool_route}" "$LLMS" "\(https?://[^)]*${tool_route}\)"
+done
 
 # ── per-route checks ─────────────────────────────────────────────────────────
 for route in $ROUTES; do

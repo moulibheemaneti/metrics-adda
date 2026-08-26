@@ -111,7 +111,11 @@ export default defineNuxtConfig({
       // 22. A hardcoded list would silently drift from the tool registry.
       prerender: {
          crawlLinks: true,
-         routes: ["/"],
+         // `/llms.txt` is listed explicitly because nothing links to it:
+         // the convention is a fixed path a client asks for directly, so
+         // the crawler would never reach it from "/" and the route would
+         // 404 on a fully static deploy.
+         routes: ["/", "/llms.txt"],
       },
 
       // Force the Bun preset ONLY for local/self-hosted builds
@@ -258,7 +262,7 @@ export default defineNuxtConfig({
          // is not a navigation, so this rule would never fire on it. Leaving
          // it out would make this list an incomplete inventory of the paths
          // that are not app routes, which is the only thing it is for.
-         navigateFallbackDenylist: [/^\/_/, /^\/__/, /^\/\.well-known\//, /^\/(robots\.txt|sitemap.*\.xml|ads\.txt)$/],
+         navigateFallbackDenylist: [/^\/_/, /^\/__/, /^\/\.well-known\//, /^\/(robots\.txt|sitemap.*\.xml|ads\.txt|llms\.txt)$/],
       },
 
       // The SW is a production concern and rebuilding it on every HMR pass
