@@ -35,8 +35,16 @@ export default defineNuxtConfig({
          ],
          meta: [
             { name: "viewport", content: "width=device-width, initial-scale=1" },
-            // iOS has no manifest support for `display: standalone`; these two
+            // iOS has no manifest support for `display: standalone`; these
             // are what give an installed icon a chromeless window there.
+            //
+            // Both spellings are emitted on purpose. `mobile-web-app-capable`
+            // is the standardised name and the only one Chromium reads — it
+            // logs a deprecation warning when it finds the `apple-` prefix
+            // alone. Older iOS Safari only reads the prefixed one, so
+            // dropping it would cost the chromeless window on exactly the
+            // platform this pair exists for.
+            { name: "mobile-web-app-capable", content: "yes" },
             { name: "apple-mobile-web-app-capable", content: "yes" },
             { name: "apple-mobile-web-app-title", content: "Metrics Adda" },
             // Mobile browser chrome follows the OS setting. This tracks the
