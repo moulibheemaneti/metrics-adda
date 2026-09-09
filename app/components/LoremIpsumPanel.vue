@@ -66,7 +66,12 @@
          </div>
 
          <p class="lorem__meta">
-            {{ COPY.lorem.wordCount }}: {{ formatCount(words) }}
+            <span>{{ COPY.lorem.wordCount }}: {{ formatCount(stats.words) }}</span>
+            <span>{{ COPY.lorem.characterCount }}: {{ formatCount(stats.characters) }}</span>
+            <span>
+               {{ COPY.lorem.characterCountNoSpaces }}:
+               {{ formatCount(stats.charactersNoSpaces) }}
+            </span>
          </p>
       </div>
    </div>
@@ -109,9 +114,12 @@ const text = computed(() =>
    ),
 )
 
-// `analyseText` rather than a local split, so "word" means the same thing
-// here as it does in the word counter — one definition, in one module.
-const words = computed(() => analyseText(text.value).words)
+// `analyseText` rather than local splits, so "word" and "character" mean
+// the same thing here as they do in the word counter — one definition, in
+// one module. The character figures earn their place now the panel can
+// generate to a character budget: that unit treats the count as a ceiling,
+// and this readout is where you see the length it actually reached.
+const stats = computed(() => analyseText(text.value))
 
 const regenerate = (): void => {
    // Any 32-bit integer will do — the seed selects a passage, it does not
@@ -129,6 +137,11 @@ const regenerate = (): void => {
       flex-wrap: wrap;
       gap: var(--space-2xs) var(--space-sm);
       align-items: center;
+
+      // The reset zeroes margin and padding but not `border`, so a bare
+      // fieldset still draws the browser's default groove around the row.
+      // Every other radio group here does the same — see `.bmi__system`.
+      border: 0;
    }
 
    &__unit {
@@ -152,7 +165,15 @@ const regenerate = (): void => {
       line-height: 1.7;
    }
 
+   // Three figures on one line, separated by space rather than by a middot
+   // or a rule. A generated separator can only be attached to an item, not
+   // to the gap between two on the same line, so on a narrow screen it
+   // wraps down and starts the next line with a stray dot. The colons
+   // already mark where each figure begins.
    &__meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3xs) var(--space-sm);
       color: var(--muted);
       font-size: px-to-rem(13);
    }

@@ -30,6 +30,18 @@ describe("LOREM_WORDS", () => {
          expect(LOREM_WORDS, `${word} is missing from the bank`).toContain(word)
       }
    })
+
+   /// The character budget fills its last gap with a word of exactly the
+   /// remaining length. A hole in this range would leave requests of certain
+   /// sizes several characters short for no visible reason, so the coverage
+   /// is asserted here rather than assumed.
+   it("covers every word length from 2 to 14", () => {
+      const lengths = new Set(LOREM_WORDS.map((word) => word.length))
+
+      for (let length = 2; length <= 14; length += 1) {
+         expect(lengths.has(length), `no ${length}-letter word in the bank`).toBe(true)
+      }
+   })
 })
 
 /// Seeding is the property the whole module is built around: the panel
@@ -100,6 +112,81 @@ describe("generateLorem counts", () => {
       const text = generateLorem({ unit: "paragraphs", count: max + 50, startWithLorem: false }, 3)
 
       expect(paragraphs(text)).toHaveLength(max)
+   })
+})
+
+/// Characters are the one unit the generator cannot always hit exactly:
+/// words go in whole, so the request is a ceiling. The guarantee it does
+/// make is that it never overshoots and lands within three characters,
+/// which is what these assertions pin down — an off-by-one in the budget
+/// arithmetic breaks one or the other.
+
+describe("generateLorem by character", () => {
+   const budgets = [1, 2, 3, 4, 8, 15, 57, 100, 250, 1000]
+
+   it("never exceeds the requested budget", () => {
+      for (const count of [...budgets, 30]) {
+         for (const startWithLorem of [true, false]) {
+            const text = generateLorem({ unit: "characters", count, startWithLorem }, count)
+
+            expect(text.length, `${count} characters overshot`).toBeLessThanOrEqual(count)
+         }
+      }
+   })
+
+   /// Three, not two: one character can be left that no bank word fills,
+   /// and dropping a dangling clause comma can cost one more. `count: 30`
+   /// with the canonical opening hits both at once.
+   it("lands within three characters of the budget", () => {
+      for (const count of [...budgets, 30]) {
+         for (const startWithLorem of [true, false]) {
+            const text = generateLorem({ unit: "characters", count, startWithLorem }, count)
+
+            expect(text.length, `${count} characters fell short`).toBeGreaterThanOrEqual(count - 3)
+         }
+      }
+   })
+
+   it("stays on one line and ends on a full stop", () => {
+      const text = generateLorem({ unit: "characters", count: 400, startWithLorem: false }, 8)
+
+      expect(text).not.toContain("\n")
+      expect(text.endsWith(".")).toBe(true)
+      expect(text).toMatch(/^[A-Z]/u)
+   })
+
+   it("opens with the classic phrase when there is room for it", () => {
+      const text = generateLorem({ unit: "characters", count: 200, startWithLorem: true }, 4)
+
+      expect(text.startsWith("Lorem ipsum dolor sit amet, consectetur adipiscing elit")).toBe(true)
+   })
+
+   /// A budget that runs out part way through the canonical phrase used to
+   /// leave the clause comma against the full stop — "sit amet,.".
+   it("never leaves a comma against the full stop", () => {
+      for (let count = 1; count <= 120; count += 1) {
+         const text = generateLorem({ unit: "characters", count, startWithLorem: true }, count)
+
+         expect(text, `${count} characters ends on a stray comma`).not.toMatch(/,\.$/u)
+      }
+   })
+
+   it("uses only bank words, punctuation aside", () => {
+      const text = generateLorem({ unit: "characters", count: 500, startWithLorem: true }, 21)
+      const bank = new Set(LOREM_WORDS)
+
+      for (const word of words(text)) {
+         const bare = word.replace(/[.,]/gu, "").toLowerCase()
+
+         expect(bank.has(bare), `${bare} is not in the bank`).toBe(true)
+      }
+   })
+
+   it("clamps a budget past the maximum", () => {
+      const { max } = LOREM_LIMITS.characters
+      const text = generateLorem({ unit: "characters", count: max + 500, startWithLorem: false }, 3)
+
+      expect(text.length).toBeLessThanOrEqual(max)
    })
 })
 
