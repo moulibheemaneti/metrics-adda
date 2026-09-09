@@ -3,6 +3,17 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.20.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.19.0...v1.20.0) (2026-09-09)
+
+### ✨ Features
+
+* **lorem:** generate by character count and report character totals ([0a10cc0](https://github.com/moulibheemaneti/metrics-adda/commit/0a10cc0771d6a86c5d67b039baebcda4a5650f96))
+
+### 🐛 Bug Fixes
+
+* **lorem:** drop the default border from the unit fieldset ([f9b3ef8](https://github.com/moulibheemaneti/metrics-adda/commit/f9b3ef8440b965ab217392c4827a0ed91c99d307))
+* **pwa:** emit the standard mobile-web-app-capable meta ([a996c25](https://github.com/moulibheemaneti/metrics-adda/commit/a996c2557a56f1c87b9cbdab9343cc20ca6c8285))
+
 ## [1.19.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.18.0...v1.19.0) (2026-08-26)
 
 ### ✨ Features
