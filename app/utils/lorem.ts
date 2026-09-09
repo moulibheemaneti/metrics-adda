@@ -24,7 +24,7 @@
 /// --------------------------------------------------
 
 /** What `count` counts. */
-export const LOREM_UNITS = ["paragraphs", "sentences", "words"] as const
+export const LOREM_UNITS = ["paragraphs", "sentences", "words", "characters"] as const
 
 export type LoremUnit = typeof LOREM_UNITS[number]
 
@@ -40,6 +40,11 @@ export const LOREM_LIMITS: Record<LoremUnit, { min: number, max: number, initial
    paragraphs: { min: 1, max: 25, initial: 3 },
    sentences: { min: 1, max: 50, initial: 5 },
    words: { min: 1, max: 500, initial: 50 },
+   // Sits between the word and paragraph ceilings on the same reasoning:
+   // 500 words is roughly 3,500 characters, 25 paragraphs rather more, and
+   // a field being mocked up with a character budget is not bigger than
+   // either.
+   characters: { min: 1, max: 5000, initial: 250 },
 }
 
 export const DEFAULT_LOREM_UNIT: LoremUnit = "paragraphs"
@@ -212,6 +217,73 @@ function buildParagraph(random: () => number, opening: readonly string[] = []): 
 }
 
 /**
+ * Assemble a passage that fills a character budget.
+ *
+ * Words go in whole. Cutting mid-word is the only way to hit an arbitrary
+ * count exactly, and a mockup that ends on "consectet." reads as a bug
+ * rather than as placeholder text — so the budget is a ceiling.
+ *
+ * In practice the gap is nearly always nothing. When a drawn word overshoots
+ * what is left, a bank word of exactly the remaining length takes its place,
+ * and the bank covers every length from 2 to 14 with no holes (asserted in
+ * the tests, because a future edit to `LOREM_WORDS` could open one). What is
+ * left over is then at most one character, which no word can fill, plus one
+ * more if the clause comma has to be dropped — so the passage is the exact
+ * count about three quarters of the time and never more than three short.
+ */
+function buildCharacters(random: () => number, count: number, opening: readonly string[]): string {
+   const words: string[] = []
+
+   /** Length of `words.join(" ")` so far. The closing stop is held back. */
+   let length = 0
+
+   /** Append `word` if it and the full stop both still fit. */
+   const push = (word: string): boolean => {
+      const next = length + (words.length === 0 ? 0 : 1) + word.length
+
+      if (next + 1 > count) return false
+
+      words.push(word)
+      length = next
+
+      return true
+   }
+
+   // The canonical phrase goes in first, and a budget that runs out part way
+   // through simply stops there rather than reordering it.
+   for (let index = 0; index < opening.length; index += 1) {
+      const word = opening[index] ?? ""
+
+      if (!push(index === LOREM_OPENING_COMMA ? `${word},` : word)) break
+   }
+
+   for (;;) {
+      if (push(randomWord(random))) continue
+
+      // A draw that does not fit means the word was too long for what is
+      // left, which is not the same as the budget being spent. Take a word
+      // of exactly the remaining length instead, and only give up when the
+      // bank has nothing that size.
+      const room = count - length - (words.length === 0 ? 0 : 1) - 1
+      const filler = LOREM_WORDS.find((candidate) => candidate.length === room)
+
+      if (filler === undefined || !push(filler)) break
+   }
+
+   // Below three characters there is no room for even the shortest word and
+   // its full stop, and the honest answer to "one character of lorem ipsum"
+   // is its first character.
+   if (words.length === 0) return "Lorem".slice(0, count)
+
+   const [first = "", ...rest] = words
+   const body = [first.charAt(0).toUpperCase() + first.slice(1), ...rest].join(" ")
+
+   // A budget that ran out on "amet," would leave the clause comma sitting
+   // against the full stop. One character under beats "amet,.".
+   return `${body.replace(/,$/u, "")}.`
+}
+
+/**
  * Generate placeholder text.
  *
  * `seed` is the whole of the randomness: the same options and seed always
@@ -223,6 +295,10 @@ export function generateLorem(options: LoremOptions, seed: number): string {
    const random = mulberry32(seed)
    const count = clampCount(options.unit, options.count)
    const opening = options.startWithLorem ? LOREM_OPENING : []
+
+   if (options.unit === "characters") {
+      return buildCharacters(random, count, opening)
+   }
 
    if (options.unit === "words") {
       const words = [...opening.slice(0, count)]

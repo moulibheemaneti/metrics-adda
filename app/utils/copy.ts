@@ -239,7 +239,7 @@ export const SEO: Record<PageKey, SeoCopy> = {
    loremIpsumGenerator: {
       title: "Lorem Ipsum Generator: Placeholder Text",
       description:
-         "Generate lorem ipsum placeholder text by the paragraph, sentence or word. Start with the classic opening line or skip it, then copy it in one click.",
+         "Generate lorem ipsum placeholder text by paragraph, sentence, word or character. Start with the classic opening line or skip it, then copy in one click.",
    },
    uuidGenerator: {
       title: "UUID Generator: Random v4 UUIDs",
@@ -346,9 +346,9 @@ const TOOL_COPY: Record<ToolKey, ToolCopy> = {
    },
    loremIpsumGenerator: {
       name: "Lorem Ipsum Generator",
-      tagline: "Placeholder text by paragraph, sentence or word",
+      tagline: "Placeholder text by paragraph, sentence, word or character",
       heading: "Lorem ipsum generator",
-      lede: "Generate placeholder text for a layout or a mockup. Pick paragraphs, sentences or words, choose how many, and copy the result in one click.",
+      lede: "Generate placeholder text for a layout or a mockup. Pick paragraphs, sentences, words or characters, choose how many, and copy the result in one click.",
    },
    uuidGenerator: {
       name: "UUID Generator",
@@ -732,6 +732,10 @@ const FAQ_COPY: Record<ToolKey, FaqEntry[]> = {
       {
          question: "Is the text the same every time?",
          answer: "No. Each press of Generate produces a different passage. The first one you see on loading the page is fixed, so the text is there before any script runs.",
+      },
+      {
+         question: "Why is the character count a little under what I asked for?",
+         answer: "Words are never cut in half, so the number you set is a ceiling rather than an exact target. Most requests land exactly on it; the rest stop one to three characters short, because no whole word fitted in what was left. The count under the box is always the real length.",
       },
    ],
    uuidGenerator: [
@@ -1450,12 +1454,17 @@ export const COPY = {
          paragraphs: "Paragraphs",
          sentences: "Sentences",
          words: "Words",
+         characters: "Characters",
       } satisfies Record<LoremUnit, string>,
       countLabel: "How many",
       startWithLorem: "Start with “Lorem ipsum dolor sit amet…”",
       generate: "Generate new text",
       outputLabel: "Placeholder text",
       wordCount: "Words",
+      characterCount: "Characters",
+      /// Split from the label for the same reason as the counter's tile —
+      /// see `stats.noSpaces`.
+      characterCountNoSpaces: "Characters (no spaces)",
    },
    uuid: {
       outputLabel: "Generated UUIDs",
