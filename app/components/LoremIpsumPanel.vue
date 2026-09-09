@@ -129,6 +129,11 @@ const regenerate = (): void => {
       flex-wrap: wrap;
       gap: var(--space-2xs) var(--space-sm);
       align-items: center;
+
+      // The reset zeroes margin and padding but not `border`, so a bare
+      // fieldset still draws the browser's default groove around the row.
+      // Every other radio group here does the same — see `.bmi__system`.
+      border: 0;
    }
 
    &__unit {
