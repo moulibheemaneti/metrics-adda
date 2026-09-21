@@ -36,6 +36,16 @@
                <ToolCard :tool="related" />
             </li>
          </ul>
+         <!-- The hub link, on every tool page rather than only on the home
+              page. Eighteen inbound links is what gets a new category page
+              crawled and understood as the parent of the tools around it;
+              one link from the home page is not. -->
+         <p v-if="hub" class="tool-shell__hub">
+            <NuxtLink class="tool-shell__hub-link" :to="hub.to">
+               {{ hub.label }}
+               <span aria-hidden="true">→</span>
+            </NuxtLink>
+         </p>
       </section>
    </main>
 </template>
@@ -58,4 +68,44 @@ const props = defineProps<{
 const copy = computed(() => COPY.tools[props.toolKey])
 const faq = computed(() => COPY.faq[props.toolKey])
 const others = computed(() => relatedTools(props.slug))
+
+/// This tool's own category hub, when its group has one.
+///
+/// Read off the registry by slug rather than taken as a prop: the group a
+/// tool belongs to is already recorded once, and asking each of eighteen
+/// pages to repeat it is eighteen chances to repeat it wrongly.
+const hub = computed(() => {
+   const group = TOOLS.find((tool) => tool.slug === props.slug)?.group
+
+   if (group === undefined || !isHubGroup(group)) return null
+
+   return {
+      to: hubPath(group),
+      label: COPY.common.seeAll
+         .replace("{count}", String(toolsByGroup(group).length))
+         .replace("{plural}", COPY.groups[group].plural),
+   }
+})
 </script>
+
+<style scoped lang="scss">
+@use "../assets/scss/abstracts" as *;
+
+.tool-shell {
+   &__hub-link {
+      color: var(--accent);
+      font-size: px-to-rem(15);
+      font-weight: var(--weight-label);
+
+      &:hover {
+         text-decoration: underline;
+      }
+
+      &:focus-visible {
+         outline: 2px solid var(--accent);
+         outline-offset: 2px;
+         border-radius: var(--radius-sm);
+      }
+   }
+}
+</style>

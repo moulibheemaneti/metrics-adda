@@ -153,6 +153,84 @@ export function toolsByGroup(group: ToolGroup): ToolEntry[] {
 }
 
 /**
+ * The groups that currently hold at least one tool, in registry order.
+ *
+ * The header nav, the phone sheet, the home page's grouped sections and —
+ * when they land — the category hub pages all need the same answer to
+ * "which categories does this site have", and a declared group holding
+ * nothing is not one of them. All six are occupied today; the filter is
+ * what lets a group be declared ahead of its first tool, or emptied by
+ * moving its last one, without the nav growing a dead dropdown and the
+ * home page a heading with nothing under it.
+ *
+ * Deriving it here rather than repeating the filter at each call site is
+ * what keeps those places agreeing as groups fill and empty.
+ */
+export function occupiedGroups(): ToolGroup[] {
+   return TOOL_GROUPS.filter((group) => toolsByGroup(group).length > 0)
+}
+
+/**
+ * The DOM id of a group's section on the home page.
+ *
+ * Shared because two places need the same string and neither owns it: the
+ * section sets it, and the chip row under the hero links to it. Derived in
+ * both from here, so an anchor cannot go stale against the section it
+ * points at — the failure mode otherwise is a link that silently does
+ * nothing, which nothing catches but clicking it.
+ */
+export function groupSectionId(group: ToolGroup): string {
+   return `tools-${group}`
+}
+
+/**
+ * The hub route for each group that has one.
+ *
+ * Not the group id cast to a path. Three of these happen to match and one
+ * does not: `/text` reads as a page about text rather than a page of text
+ * tools, and "text tools" is the phrase people actually search for. The
+ * nav's own label has the same split for the opposite reason — it is short
+ * because the header row's width is bounded by it.
+ *
+ * `Partial` is load-bearing. A group holding one tool gets no hub: the
+ * page would be a heading, a line of prose and a single card pointing at
+ * the tool it duplicates, which is thin content competing with its own
+ * target on a domain that cannot spare the crawl budget to prove it
+ * publishes filler. `health` and `security` are absent for that reason and
+ * become eligible when their second tool lands — at which point adding
+ * them here is the whole change, because the pages, the sitemap, the SEO
+ * smoke test and the home page's links all derive from this.
+ */
+export const GROUP_ROUTES = {
+   converters: "converters",
+   calculators: "calculators",
+   text: "text-tools",
+   generators: "generators",
+} as const satisfies Partial<Record<ToolGroup, string>>
+
+/** A group with a hub page. */
+export type HubGroup = keyof typeof GROUP_ROUTES
+
+export function isHubGroup(group: ToolGroup): group is HubGroup {
+   return group in GROUP_ROUTES
+}
+
+export function hubPath(group: HubGroup): string {
+   return `/${GROUP_ROUTES[group]}`
+}
+
+/**
+ * Occupied groups that have a hub page, in registry order.
+ *
+ * Both conditions matter and they are not the same one: `GROUP_ROUTES`
+ * says a group is worth a page, `occupiedGroups` says it currently has
+ * anything to put on one.
+ */
+export function hubGroups(): HubGroup[] {
+   return occupiedGroups().filter(isHubGroup)
+}
+
+/**
  * Every tool except the one given — the cross-links at the foot of each
  * tool page. Keeping them exhaustive is deliberate at this size: it gives
  * every page an inbound link from every other, which is what a new domain

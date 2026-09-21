@@ -2,7 +2,18 @@ import { describe, expect, it } from "vitest"
 // Relative, not aliased: `~` is a Nuxt convenience that exists only inside
 // the Nuxt/Vite environment, and these tests run in plain Node.
 import { COPY, SEO } from "../../app/utils/copy"
-import { relatedTools, TOOL_GROUPS, TOOLS, toolsByGroup } from "../../app/utils/tools"
+import {
+   GROUP_ROUTES,
+   groupSectionId,
+   hubGroups,
+   hubPath,
+   isHubGroup,
+   occupiedGroups,
+   relatedTools,
+   TOOL_GROUPS,
+   TOOLS,
+   toolsByGroup,
+} from "../../app/utils/tools"
 import { DIMENSIONS } from "../../app/utils/units"
 
 describe("TOOLS", () => {
@@ -67,9 +78,7 @@ describe("registry and copy agree", () => {
          expect(COPY.nav.groups[group].trim()).not.toBe("")
       }
 
-      const occupied = TOOL_GROUPS.filter((group) => toolsByGroup(group).length > 0)
-
-      expect(occupied.length, "the header nav has outgrown one row").toBeLessThanOrEqual(
+      expect(occupiedGroups().length, "the header nav has outgrown one row").toBeLessThanOrEqual(
          TOP_LEVEL_BUDGET,
       )
    })
@@ -82,6 +91,29 @@ describe("registry and copy agree", () => {
 
       expect(sizes).toContain(1)
       expect(sizes.some((size) => size > 1)).toBe(true)
+   })
+
+   /// The home page renders one section per occupied group, each with a
+   /// heading and a line of prose from `COPY.groups`. A group added to the
+   /// registry without that block renders a section with two empty
+   /// paragraphs in it — visible only by loading the page, which is what
+   /// this catches instead.
+   it("gives every group a heading and a lede", () => {
+      for (const group of TOOL_GROUPS) {
+         const copy = COPY.groups[group]
+
+         expect(copy, `${group} has no group copy`).toBeDefined()
+         expect(copy.heading.trim(), `${group} has an empty heading`).not.toBe("")
+         expect(copy.lede.trim(), `${group} has an empty lede`).not.toBe("")
+      }
+   })
+
+   /// The mirror of the orphaned-copy-block check above. Copy for a group
+   /// the registry dropped is copy nothing renders.
+   it("leaves no group copy orphaned by the registry", () => {
+      for (const group of Object.keys(COPY.groups)) {
+         expect(TOOL_GROUPS).toContain(group)
+      }
    })
 
    it("gives every tool search metadata", () => {
@@ -156,6 +188,102 @@ describe("toolsByGroup", () => {
    it("puts every tool in a known group", () => {
       for (const tool of TOOLS) {
          expect(TOOL_GROUPS).toContain(tool.group)
+      }
+   })
+})
+
+describe("occupiedGroups", () => {
+   it("returns groups in registry order", () => {
+      const occupied = occupiedGroups()
+
+      expect(occupied).toEqual(TOOL_GROUPS.filter((group) => occupied.includes(group)))
+   })
+
+   it("omits any group holding no tools", () => {
+      for (const group of occupiedGroups()) {
+         expect(toolsByGroup(group).length, `${group} is listed but empty`).toBeGreaterThan(0)
+      }
+   })
+
+   /// The home page renders a section per occupied group and nothing else,
+   /// so anything this drops is a tool with no route to it from the home
+   /// page at all.
+   it("accounts for every tool between them", () => {
+      const listed = occupiedGroups().flatMap((group) => toolsByGroup(group))
+
+      expect(listed).toHaveLength(TOOLS.length)
+   })
+})
+
+/// Hub pages are pages but not tools, so the registry guards above do not
+/// reach them. These are the equivalent, added deliberately rather than by
+/// relaxing an assertion until the new routes slipped through it.
+
+describe("hub pages", () => {
+   it("names a real group in every hub route", () => {
+      for (const group of Object.keys(GROUP_ROUTES)) {
+         expect(TOOL_GROUPS).toContain(group)
+      }
+   })
+
+   it("uses lowercase kebab-case route segments", () => {
+      for (const route of Object.values(GROUP_ROUTES)) {
+         expect(route).toMatch(/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/)
+      }
+   })
+
+   it("never collides a hub route with a tool route", () => {
+      const toolPaths = new Set(TOOLS.map((tool) => tool.path))
+
+      for (const group of hubGroups()) {
+         expect(toolPaths.has(hubPath(group)), `${group} shadows a tool route`).toBe(false)
+      }
+   })
+
+   /// The reason `GROUP_ROUTES` is `Partial`: a hub over a single card is
+   /// a page duplicating the one tool it links to. If this fails, either a
+   /// group shrank or a hub was added too early.
+   it("gives a hub only to a group holding two or more tools", () => {
+      for (const group of hubGroups()) {
+         expect(toolsByGroup(group).length, `${group} is too small for a hub`)
+            .toBeGreaterThanOrEqual(2)
+      }
+   })
+
+   it("gives every hub group search metadata and copy", () => {
+      for (const group of hubGroups()) {
+         expect(SEO[`${group}Hub`], `${group} hub has no SEO entry`).toBeDefined()
+         expect(COPY.groups[group].plural.trim(), `${group} has no plural`).not.toBe("")
+      }
+   })
+
+   /// Every group gets a plural, not only the four with hubs: a group
+   /// becomes a hub by being added to `GROUP_ROUTES` alone, and finding
+   /// out then that its link text is empty is finding out too late.
+   it("gives every group a plural for its link text", () => {
+      for (const group of TOOL_GROUPS) {
+         expect(COPY.groups[group].plural.trim(), `${group} has no plural`).not.toBe("")
+      }
+   })
+
+   it("marks exactly the routed groups as hub groups", () => {
+      for (const group of TOOL_GROUPS) {
+         expect(isHubGroup(group)).toBe(group in GROUP_ROUTES)
+      }
+   })
+})
+
+describe("groupSectionId", () => {
+   /// The chip row's `href` and the section's `id` are built from this on
+   /// opposite sides of the page, so a change here has to stay a valid
+   /// fragment or the anchors quietly stop working.
+   it("produces a unique, valid fragment per group", () => {
+      const ids = TOOL_GROUPS.map(groupSectionId)
+
+      expect(new Set(ids).size).toBe(ids.length)
+
+      for (const id of ids) {
+         expect(id).toMatch(/^[a-z][a-z0-9-]*$/)
       }
    })
 })

@@ -30,7 +30,7 @@ import type { CaseId } from "./textCase"
 // Type-only, and `tools.ts` imports `ToolKey` back from here. The cycle is
 // erased at compile time, which is what keeps each module's names defined
 // where they belong rather than in a third file that exists only to break it.
-import type { ToolGroup } from "./tools"
+import type { HubGroup, ToolGroup } from "./tools"
 import type { DimensionId } from "./units"
 
 /** One key per tool. Drives the registry, the copy blocks and the SEO map. */
@@ -54,8 +54,20 @@ export type ToolKey
      | "uuidGenerator"
      | "passwordGenerator"
 
+/**
+ * A hub page's key, derived from the group rather than written out.
+ *
+ * There are four of these and they are known at authoring time, so they
+ * are ordinary entries in the closed `SEO` map rather than something a
+ * generator produces. That is what keeps them inside the 60/155 budgets
+ * `test/unit/seo.test.ts` enforces — a generated title bypasses that test
+ * entirely and ships clipped. Pair and value routes are the case that
+ * genuinely needs a generator; four hand-written entries are not.
+ */
+export type GroupPageKey = `${HubGroup}Hub`
+
 /** Pages that carry their own search metadata. */
-export type PageKey = ToolKey | "home" | "privacy" | "about" | "contact"
+export type PageKey = ToolKey | GroupPageKey | "home" | "privacy" | "about" | "contact"
 
 export interface SeoCopy {
    /** Rendered as <title>. Budget: SEO_TITLE_MAX. */
@@ -73,6 +85,32 @@ export interface ToolCopy {
    heading: string
    /** The paragraph under the heading. */
    lede: string
+}
+
+/**
+ * A tool category, as a reader meets it rather than as the nav labels it.
+ *
+ * Deliberately separate from `COPY.nav.groups`. Those labels are short
+ * because the header row's width is bounded by them — "Text" is a column
+ * header, not a phrase anyone types into a search box. These are the
+ * category itself, written once so the home page's section and a future
+ * hub page's <h1> cannot drift apart about what a category is called.
+ */
+export interface GroupCopy {
+   /** The <h2> over the group's cards, and a hub page's <h1>. */
+   heading: string
+   /** One line under that heading, on both. */
+   lede: string
+   /**
+    * The category as a plural noun, for the link into its hub page.
+    *
+    * A separate field because the link reads "See all 8 converters", not
+    * "See all 8 Unit converters" — and because "see all" on its own is
+    * poor link text twice over: a screen reader listing the page's links
+    * gets six identical ones, and the anchor text pointing at a hub is
+    * part of what tells Google what that hub is about.
+    */
+   plural: string
 }
 
 export interface UnitCopy {
@@ -154,6 +192,30 @@ export const SEO: Record<PageKey, SeoCopy> = {
       title: "Contact",
       description:
          "Get in touch with Metrics Adda about a wrong conversion, a tool you would like to see, or anything to do with privacy on the site.",
+   },
+   /// The four category hubs. Each has to rank for the plural, browse-shaped
+   /// query its tools cannot — "unit converter" rather than "kg to lb" — so
+   /// the title leads with the category and the count, and deliberately does
+   /// not repeat a member tool's own title.
+   convertersHub: {
+      title: "Unit Converters — 8 Free Tools, No Sign-Up",
+      description:
+         "Convert weight, height, temperature, speed, volume, area, time and data storage. Every converter runs in your browser — nothing you type is uploaded.",
+   },
+   calculatorsHub: {
+      title: "Free Online Calculators: Percentage & Age",
+      description:
+         "Work out a percentage four different ways, or an age in years, months and days. Both run in your browser, need no sign-up and store nothing.",
+   },
+   textHub: {
+      title: "Free Text Tools: Count, Convert & Encode",
+      description:
+         "Count words and characters, switch between ten letter cases, encode and decode base64, and time your typing. Whatever you paste stays in the tab.",
+   },
+   generatorsHub: {
+      title: "Free Generators: Lorem Ipsum & UUID",
+      description:
+         "Generate placeholder text by paragraph, sentence, word or character, and version 4 UUIDs in batches. Both run entirely in your browser.",
    },
    weightConverter: {
       title: "Weight Converter: kg, lb, oz, g & stone",
@@ -793,6 +855,52 @@ export const COPY = {
          security: "Security",
       } satisfies Record<ToolGroup, string>,
    },
+   /// One block per group, rendered as a labelled section on the home page.
+   ///
+   /// The home page used to be a single grid of every tool, which scanned
+   /// as a wall at eighteen of them: the reader had to read all eighteen
+   /// names to find out the site has converters. A heading per category
+   /// answers that in one glance, and gives the page the category wording
+   /// — "unit converters", "text tools" — that its <h1> and lede cannot
+   /// carry without turning into a list.
+   ///
+   /// Each lede says what the group actually holds rather than praising
+   /// it. That is the part a hub page would need verbatim, and the reason
+   /// this is its own block rather than a dozen more strings under `home`:
+   /// the hub pages are not the home page, and this copy belongs to
+   /// neither of them exclusively.
+   groups: {
+      converters: {
+         heading: "Unit converters",
+         lede: "Eight dimensions, from weight and temperature to area and data storage. Type a value once and every unit in the list reads back beside it.",
+         plural: "converters",
+      },
+      calculators: {
+         heading: "Calculators",
+         lede: "Percentages worked four ways, and an age counted in years, months and days. Neither asks you to remember which way round the formula goes.",
+         plural: "calculators",
+      },
+      text: {
+         heading: "Text tools",
+         lede: "Count it, re-case it, encode it, or time yourself typing it. Whatever you paste is processed in this tab and never uploaded.",
+         plural: "text tools",
+      },
+      generators: {
+         heading: "Generators",
+         lede: "Placeholder copy measured in paragraphs, sentences, words or characters, and version 4 UUIDs drawn from the browser's own randomness.",
+         plural: "generators",
+      },
+      health: {
+         heading: "Health",
+         lede: "Body mass index against WHO, WHO Asian or Indian consensus cut-offs, with an advanced mode for the measurements BMI alone cannot see.",
+         plural: "health tools",
+      },
+      security: {
+         heading: "Security",
+         lede: "Passwords built from the browser's cryptographic randomness and scored in bits of entropy, so the strength claim is a number rather than a colour.",
+         plural: "security tools",
+      },
+   } satisfies Record<ToolGroup, GroupCopy>,
    theme: {
       legend: "Colour theme",
       system: "System",
@@ -835,6 +943,17 @@ export const COPY = {
       cancel: "Cancel",
       relatedHeading: "Other tools",
       faqHeading: "Common questions",
+      /// Link text into a category hub. Used from three places now — a
+      /// trimmed section on the home page, and the cross-links at the foot
+      /// of every tool page — which is why it sits here rather than under
+      /// `home`. `{count}` is the group's real size and `{plural}` its
+      /// `COPY.groups` noun, so neither can drift from the registry.
+      seeAll: "See all {count} {plural}",
+      /// The chip row at the foot of a hub page. Without it a hub is a
+      /// leaf — every link on it points down at its own tools, and the
+      /// only way across to another category is back through the header.
+      otherCategories: "Other categories",
+      allTools: "All tools",
    },
    /// The error page. Kept deliberately free of the requested path: Nuxt's
    /// built-in page interpolates it into the <title>, which both looks
@@ -863,12 +982,21 @@ export const COPY = {
       headingAccent: "instant and exact",
       heading: "Everyday tools that are instant and exact",
       tagline: "Converters for weight, height, temperature, speed, volume, area, time and data, plus a word counter, a case converter, a typing speed test, a BMI calculator, and generators for passwords, UUIDs and placeholder text. Nothing to install, and nothing you type ever leaves your browser.",
-      toolsHeading: "All tools",
+      // No "All tools" heading any more: the grid under it became one
+      // section per category, and each of those carries its own heading
+      // from `COPY.groups`. A wrapper heading over six headings would add
+      // a level to the outline without adding an answer to it.
       /// A closing prompt under the grid. It earns its place twice over: it
       /// tells a reader who did not find their tool what to do next, and it
       /// is the only in-content link the contact page has. The footer link
       /// is site-wide boilerplate, which crawlers weigh far below a link
       /// inside the body of the most-linked page on the site.
+      /// The chip row under the hero. Anchor links, not tabs: every card
+      /// stays in the page and in its HTML, and the row is what makes the
+      /// page's length stop mattering — you pick a category instead of
+      /// travelling to it. A crawler reads six more internal links; a
+      /// reader reads the whole catalogue in one row.
+      categoriesLabel: "Tool categories",
       askHeading: "Missing a tool?",
       askLink: {
          before: "The list grows from what people ask for. If you converted something today by opening a search engine instead of this site, ",
