@@ -1,5 +1,10 @@
 # Category hub pages
 
+**Shipped.** Four hubs at `/converters`, `/calculators`, `/text-tools` and
+`/generators`, plus the chip row and the trimmed home sections. What the plan
+got wrong is recorded under [What changed in the
+building](#what-changed-in-the-building) rather than edited out.
+
 ## Context
 
 The home page was one grid of every tool. At eighteen cards that scanned as a
@@ -203,38 +208,96 @@ Either way `COPY.groups` is read once.
 
 ---
 
+## What changed in the building
+
+Five departures from the plan above, and one trap it did not see.
+
+- **`HubShell.vue` was not worth writing.** Each hub page came to twelve
+  lines — a `ToolGroupSection`, a sibling chip row, and its SEO calls — and a
+  shell around that would have been thinner than its own props. The plan said
+  to inline it if that happened, and it happened.
+- **The heading's hub link needed no prop.** `ToolGroupSection` derives it:
+  linked when the group has a hub *and* the heading is an `h2`. As an `h1` the
+  section is the hub page, and a heading linking to the page it sits on is a
+  dead control that reads as a live one.
+- **The chip row was not in this plan at all.** It came out of a separate
+  question — whether the home page should use tabs — and answers the same
+  concern: it makes the page's length stop mattering without hiding a single
+  card. `CategoryChips.vue` serves both it and the hub pages' sibling links.
+- **Sibling links turned out to be load-bearing, not a nicety.** A hub with
+  only downward links is a leaf, and the page looked it: eight cards and
+  then nothing. The chip row at the foot fixes the crawl shape and the
+  emptiness in one block.
+- **Trimming had to refuse to hide a single card.** A bare `slice(0, 3)` turns
+  "show three" into "hide one" on a four-tool group — a whole row of link and
+  whitespace spent to save one card, and a reader sent to another page for
+  something that would have fitted. `ToolGroupSection` shows everything when
+  the overflow would be one. In practice only `converters` trims today, which
+  is the rule working rather than failing.
+- **The trap: `vue/multi-word-component-names`.** Three of the four routes are
+  single words, and the rule rejects them. `eslint.config.mjs` already carried
+  an `ignores` list for exactly this — `about` and `contact` are routes rather
+  than component names — so the fix was extending that list, not renaming
+  `/converters` to something a lint rule preferred.
+
+**The central bet paid off.** `prerender.crawlLinks` reached all four hubs
+from the home page's links: `.output/public/converters/index.html` and its
+three siblings exist, `sitemap.xml` went from 22 URLs to 26, and
+`nuxt.config.ts` was not touched. No `sitemap.urls` array, no `server/`
+directory, no decision about the client-only promise.
+
+**What the trimming actually saved** is worth recording because it is less
+than it sounds: the home page went from 2726px to 2593px at 1280px wide (5%)
+and 4104px to 3702px on a 390px phone (10%). The page is long because it has
+six headings and six ledes, not because any one group is huge — `converters`
+is the only group big enough to trim at all. The chip row, not the trim, is
+what makes the length bearable.
+
 ## Files touched
 
 | File | Change |
 | --- | --- |
-| `app/utils/tools.ts` | `GROUP_ROUTES`, `hubGroups()`, `hubPath(group)` |
-| `app/utils/copy.ts` | `GroupPageKey`, four `SEO` entries, widen `PageKey` |
-| `app/components/ToolGroupSection.vue` | `heading` and `to` props |
-| `app/components/HubShell.vue` | New, if it earns its place |
-| `app/pages/converters.vue` etc. | New, four files |
-| `app/pages/index.vue` | Pass `to` on the sections that have a hub |
-| `app/components/ToolShell.vue` | Hub link in the related-tools block |
-| `scripts/seo/verify.sh` | Add hub routes to `ROUTES`, derived from `hubGroups()` the way `TOOL_ROUTES` is derived from `TOOLS` |
-| `test/unit/tools.test.ts` | Every hub group has a route, an SEO entry, and two or more tools |
+| `app/utils/tools.ts` | `GROUP_ROUTES`, `HubGroup`, `isHubGroup`, `hubPath`, `hubGroups`, `groupSectionId` |
+| `app/utils/copy.ts` | `GroupPageKey`, widened `PageKey`, four hub `SEO` entries, `GroupCopy.plural`, `common.seeAll` / `otherCategories` / `allTools`, `home.categoriesLabel` |
+| `app/components/ToolGroupSection.vue` | `heading` and `limit` props, hub-linked heading, overflow link, `scroll-margin` for the anchors |
+| `app/components/CategoryChips.vue` | New. The chip row, in both its anchor and hub forms |
+| `app/components/ToolShell.vue` | Hub link under the cross-links, on all eighteen tool pages |
+| `app/pages/converters.vue`, `calculators.vue`, `text-tools.vue`, `generators.vue` | New |
+| `app/pages/index.vue` | Chip row, and `SECTION_LIMIT` passed to each section |
+| `eslint.config.mjs` | Three route-named pages added to the `multi-word-component-names` ignores |
+| `scripts/seo/verify.sh` | `HUB_ROUTES`, derived from `hubGroups()` |
+| `test/unit/tools.test.ts` | Hub registry guards, and `groupSectionId`'s fragment shape |
 
 ## Verification
 
-- `bun run test` — the SERP budgets cover the new `SEO` entries automatically;
-  the registry guards need the hub assertions added deliberately rather than
-  relaxed around.
-- `bun --bun nuxt prepare` before `bun run typecheck`. `GROUP_ROUTES` and
-  `hubGroups` are new auto-imported exports and `vue-tsc` resolves auto-imports
-  against `.nuxt`'s generated types, so typecheck fails until they are
-  regenerated — and commitguard runs typecheck pre-commit, so this bites at
-  commit time rather than at edit time.
-- `bun run build`, then confirm `.output/public/converters/index.html` exists.
-  **That file's existence is the real test of this plan** — if `crawlLinks` did
-  not reach the hub, the page is not prerendered, is not in the sitemap, and
-  none of this works. Check `.output/public/sitemap.xml` for the four routes in
-  the same pass.
-- `bun run seo:verify` with the hub routes in `ROUTES`.
-- Open `/` and check the two hub-less groups still render plain-text headings
-  rather than dead links.
+All run against the production build, not the dev server.
+
+- `bun run test` — 615 passing. The SERP budgets picked up the four hub
+  entries without being touched, which is the closed `SEO` map paying off.
+- `bun run lint`, and `bun --bun nuxt prepare` before `bun run typecheck`.
+  The prepare step is not optional: `GROUP_ROUTES`, `hubGroups` and
+  `groupSectionId` are new auto-imported exports, `vue-tsc` resolves
+  auto-imports against `.nuxt`'s generated types, and commitguard runs
+  typecheck pre-commit — so skipping it fails at commit time.
+- `bun run build`, then all four of `.output/public/<hub>/index.html` present
+  and `sitemap.xml` at 26 `<loc>` entries, up from 22. **This is the check
+  that matters** — if `crawlLinks` had not reached a hub, the page would not
+  be prerendered, would not be in the sitemap, and none of this would work.
+- `bun run seo:verify` — 287 checks, 0 failures, hubs included: title,
+  description, canonical, OG tags, JSON-LD, sitemap membership and a
+  rendered OG image each.
+- Anchor jumps measured in the browser at 390px, 700px and 1280px. The
+  heading lands 16px clear of the sticky header at each, including the
+  700px case where the nav takes a second row and the bar is 88px rather
+  than 57px.
+- Home page chips checked against the rendered section ids: six chips, six
+  sections, every fragment resolving. Each hub's sibling row excludes
+  itself and offers the other three plus `/`.
+
+**One gotcha worth knowing for next time:** a stale `.output` will happily
+serve the previous build's HTML while the log says "Build complete". If a
+change is not in the rendered output, check that the build actually ran
+before debugging the change.
 
 ## Open questions
 

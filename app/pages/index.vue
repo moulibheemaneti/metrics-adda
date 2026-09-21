@@ -13,11 +13,23 @@
          </p>
       </section>
 
+      <!-- Anchor links, not tabs. A tab bar would show one category at a
+           time, which is the same thing a hub page does except without a
+           URL: no page to rank, no sitemap entry, and ten of eighteen
+           tool links gone from the most-linked page on the site. This row
+           costs six links and hides nothing. -->
+      <CategoryChips />
+
       <!-- One section per category rather than one grid of everything.
            Eighteen cards in an undifferentiated grid made the reader read
            every name to learn what kinds of tool the site has; six
            headings answer that before they read any of them. -->
-      <ToolGroupSection v-for="group in groups" :key="group" :group="group" />
+      <ToolGroupSection
+         v-for="group in groups"
+         :key="group"
+         :group="group"
+         :limit="SECTION_LIMIT"
+      />
 
       <section class="stack stack--tight">
          <h2 class="section-heading">
@@ -39,6 +51,20 @@ const eyebrow = COPY.home.eyebrow.replace("{count}", String(TOOLS.length))
 // Shared with both navigations through `occupiedGroups`, so a group that
 // empties disappears from the page and the header together.
 const groups = occupiedGroups()
+
+/// Cards per section before the rest move behind the hub link.
+///
+/// Three is one full row at the widest layout — `card-grid`'s 320px track
+/// settles into three columns at the page's maximum width — so every
+/// section costs the same height regardless of how big its group is, and
+/// the page stops growing as the registry does.
+///
+/// It bites on `converters` alone today, and that is the point rather
+/// than a shortfall: it is the only group big enough for the trim to save
+/// more than the link costs, and `ToolGroupSection` declines to hide a
+/// single card for exactly that reason. The others start trimming when
+/// they grow, with no change here.
+const SECTION_LIMIT = 3
 
 useAppSeo({
    title: SEO.home.title,
