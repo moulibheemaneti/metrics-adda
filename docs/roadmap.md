@@ -19,7 +19,9 @@ anything needing a server are deliberately later — see
 
 **Where things stand:** 18 tools. Tier 1 is done; Tier 2 has shipped seven of
 its panels, with three queued and two deferred. Programmatic SEO has not
-started.
+started, but the home page is now grouped by category rather than one flat
+grid of everything — which is the groundwork step 2 builds on, not step 2
+itself. See [`plans/category-hub-pages.md`](plans/category-hub-pages.md).
 
 ---
 
@@ -304,13 +306,22 @@ Each step depends on the one above it.
    `UnitConverter.vue`. Prerequisite for everything below, and useful on its
    own: it makes a conversion shareable. Use `router.replace`, not `push`, so
    typing a value doesn't fill the back stack.
-2. **Category hub pages** — `/converters`, `/text-tools`, `/security-tools`.
-   Still the cheapest new pages on this list: `toolsByGroup()` in
-   `app/utils/tools.ts` already returns exactly what a hub page renders, and
-   `ToolNav.vue` and `SiteMenu.vue` prove the grouping holds up in the UI. The
-   win here is crawlable pages and a middle layer of internal linking between
-   the home page and the tools — which matters more now that `/converters`
-   alone would hold eight.
+2. **Category hub pages** — `/converters`, `/text-tools`, and one or two
+   more. Still the cheapest new pages on this list, and cheaper than this
+   entry assumed: **planned in full in
+   [`plans/category-hub-pages.md`](plans/category-hub-pages.md)**, which
+   supersedes the sketch here on three points.
+
+   - The section component and the per-category copy already exist, built
+     for the grouped home page. What is left is routes and linking.
+   - **The sitemap needs no configuration.** `prerender.crawlLinks` starts
+     at `/` and the sitemap is built from what was prerendered, so linking
+     the hubs from the home page is the internal-linking win, the prerender
+     trigger and the sitemap entry in one change. The `server/` directory
+     question below is a pair-and-value-routes question, not this one.
+   - **Not `/security-tools`.** That group holds one tool, and so does
+     `health`; a hub page over a single card is thin content competing with
+     the tool page it links to. Four hubs, not six.
 3. **Pair routes** — `/weight-converter/kg-to-lb`, one dynamic page per
    dimension. Titles and descriptions generated, not hand-authored.
 4. **Value routes** — `/weight-converter/70-kg-to-lb`. Highest volume of all,

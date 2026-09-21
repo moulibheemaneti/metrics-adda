@@ -13,16 +13,11 @@
          </p>
       </section>
 
-      <section class="stack stack--tight">
-         <h2 class="section-heading">
-            {{ COPY.home.toolsHeading }}
-         </h2>
-         <ul class="card-grid">
-            <li v-for="tool in TOOLS" :key="tool.slug">
-               <ToolCard :tool="tool" />
-            </li>
-         </ul>
-      </section>
+      <!-- One section per category rather than one grid of everything.
+           Eighteen cards in an undifferentiated grid made the reader read
+           every name to learn what kinds of tool the site has; six
+           headings answer that before they read any of them. -->
+      <ToolGroupSection v-for="group in groups" :key="group" :group="group" />
 
       <section class="stack stack--tight">
          <h2 class="section-heading">
@@ -36,9 +31,14 @@
 </template>
 
 <script lang="ts" setup>
-// The eyebrow states how many tools the grid below holds, so it reads the
-// count off the registry rather than repeating it in the copy.
+// The eyebrow states how many tools the sections below hold, so it reads
+// the count off the registry rather than repeating it in the copy.
 const eyebrow = COPY.home.eyebrow.replace("{count}", String(TOOLS.length))
+
+// Ids only — `ToolGroupSection` looks up the tools and the copy itself.
+// Shared with both navigations through `occupiedGroups`, so a group that
+// empties disappears from the page and the header together.
+const groups = occupiedGroups()
 
 useAppSeo({
    title: SEO.home.title,
@@ -59,7 +59,11 @@ useSchemaOrg([
    defineWebSite({ name: COPY.site.name }),
    defineWebPage(),
    // Lists every tool as an entry, which is what tells a crawler these
-   // five pages are a set rather than five unrelated URLs.
+   // pages are a set rather than eighteen unrelated URLs. Flat on purpose
+   // even though the page now renders them grouped: one list per group
+   // would be several ItemList nodes on one page, and the grouping earns
+   // its structured-data markup on the hub pages, where each category is
+   // its own URL with a single list on it.
    defineItemList({
       itemListElement: TOOLS.map((tool) => ({
          name: COPY.tools[tool.key].name,

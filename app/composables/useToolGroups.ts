@@ -28,7 +28,11 @@ export interface ToolNavGroup {
 
 export function useToolGroups() {
    return computed<ToolNavGroup[]>(() =>
-      TOOL_GROUPS
+      // `occupiedGroups` rather than a local filter over TOOL_GROUPS: the
+      // home page's sections ask the same question, and one answer in the
+      // registry is what stops the nav and the page disagreeing about
+      // which categories the site has.
+      occupiedGroups()
          .map((id) => {
             const tools = toolsByGroup(id)
 
@@ -38,8 +42,7 @@ export function useToolGroups() {
                tools,
                only: tools.length === 1 ? tools[0] : undefined,
             }
-         })
-         .filter((group) => group.tools.length > 0))
+         }))
 }
 
 /**

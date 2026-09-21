@@ -153,6 +153,24 @@ export function toolsByGroup(group: ToolGroup): ToolEntry[] {
 }
 
 /**
+ * The groups that currently hold at least one tool, in registry order.
+ *
+ * The header nav, the phone sheet, the home page's grouped sections and —
+ * when they land — the category hub pages all need the same answer to
+ * "which categories does this site have", and a declared group holding
+ * nothing is not one of them. All six are occupied today; the filter is
+ * what lets a group be declared ahead of its first tool, or emptied by
+ * moving its last one, without the nav growing a dead dropdown and the
+ * home page a heading with nothing under it.
+ *
+ * Deriving it here rather than repeating the filter at each call site is
+ * what keeps those places agreeing as groups fill and empty.
+ */
+export function occupiedGroups(): ToolGroup[] {
+   return TOOL_GROUPS.filter((group) => toolsByGroup(group).length > 0)
+}
+
+/**
  * Every tool except the one given — the cross-links at the foot of each
  * tool page. Keeping them exhaustive is deliberate at this size: it gives
  * every page an inbound link from every other, which is what a new domain

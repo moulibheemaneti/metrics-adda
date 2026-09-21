@@ -75,6 +75,22 @@ export interface ToolCopy {
    lede: string
 }
 
+/**
+ * A tool category, as a reader meets it rather than as the nav labels it.
+ *
+ * Deliberately separate from `COPY.nav.groups`. Those labels are short
+ * because the header row's width is bounded by them — "Text" is a column
+ * header, not a phrase anyone types into a search box. These are the
+ * category itself, written once so the home page's section and a future
+ * hub page's <h1> cannot drift apart about what a category is called.
+ */
+export interface GroupCopy {
+   /** The <h2> over the group's cards, and a hub page's <h1>. */
+   heading: string
+   /** One line under that heading, on both. */
+   lede: string
+}
+
 export interface UnitCopy {
    name: string
    symbol: string
@@ -793,6 +809,46 @@ export const COPY = {
          security: "Security",
       } satisfies Record<ToolGroup, string>,
    },
+   /// One block per group, rendered as a labelled section on the home page.
+   ///
+   /// The home page used to be a single grid of every tool, which scanned
+   /// as a wall at eighteen of them: the reader had to read all eighteen
+   /// names to find out the site has converters. A heading per category
+   /// answers that in one glance, and gives the page the category wording
+   /// — "unit converters", "text tools" — that its <h1> and lede cannot
+   /// carry without turning into a list.
+   ///
+   /// Each lede says what the group actually holds rather than praising
+   /// it. That is the part a hub page would need verbatim, and the reason
+   /// this is its own block rather than a dozen more strings under `home`:
+   /// the hub pages are not the home page, and this copy belongs to
+   /// neither of them exclusively.
+   groups: {
+      converters: {
+         heading: "Unit converters",
+         lede: "Eight dimensions, from weight and temperature to area and data storage. Type a value once and every unit in the list reads back beside it.",
+      },
+      calculators: {
+         heading: "Calculators",
+         lede: "Percentages worked four ways, and an age counted in years, months and days. Neither asks you to remember which way round the formula goes.",
+      },
+      text: {
+         heading: "Text tools",
+         lede: "Count it, re-case it, encode it, or time yourself typing it. Whatever you paste is processed in this tab and never uploaded.",
+      },
+      generators: {
+         heading: "Generators",
+         lede: "Placeholder copy measured in paragraphs, sentences, words or characters, and version 4 UUIDs drawn from the browser's own randomness.",
+      },
+      health: {
+         heading: "Health",
+         lede: "Body mass index against WHO, WHO Asian or Indian consensus cut-offs, with an advanced mode for the measurements BMI alone cannot see.",
+      },
+      security: {
+         heading: "Security",
+         lede: "Passwords built from the browser's cryptographic randomness and scored in bits of entropy, so the strength claim is a number rather than a colour.",
+      },
+   } satisfies Record<ToolGroup, GroupCopy>,
    theme: {
       legend: "Colour theme",
       system: "System",
@@ -863,7 +919,10 @@ export const COPY = {
       headingAccent: "instant and exact",
       heading: "Everyday tools that are instant and exact",
       tagline: "Converters for weight, height, temperature, speed, volume, area, time and data, plus a word counter, a case converter, a typing speed test, a BMI calculator, and generators for passwords, UUIDs and placeholder text. Nothing to install, and nothing you type ever leaves your browser.",
-      toolsHeading: "All tools",
+      // No "All tools" heading any more: the grid under it became one
+      // section per category, and each of those carries its own heading
+      // from `COPY.groups`. A wrapper heading over six headings would add
+      // a level to the outline without adding an answer to it.
       /// A closing prompt under the grid. It earns its place twice over: it
       /// tells a reader who did not find their tool what to do next, and it
       /// is the only in-content link the contact page has. The footer link

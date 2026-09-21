@@ -138,6 +138,22 @@
    grid-template-columns: repeat(auto-fit, minmax(min(100%, #{px-to-rem(320)}), 1fr));
    gap: var(--space-sm);
    list-style: none;
+
+   /// `auto-fill` for the home page's grouped sections, where a grid can
+   /// hold a single card.
+   ///
+   /// The difference only shows when there are fewer items than columns.
+   /// `auto-fit` collapses the tracks nothing landed in, so one card in a
+   /// three-column row becomes one card three columns wide — which reads
+   /// as a banner rather than as the smallest group on the page.
+   /// `auto-fill` keeps the empty tracks, so the card stays card-sized and
+   /// the groups line up with each other down the page.
+   ///
+   /// The default stays `auto-fit` because the blocks using it — the
+   /// related-tools list at the foot of every tool page — are always full.
+   &--fill {
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, #{px-to-rem(320)}), 1fr));
+   }
 }
 
 /// Question-and-answer list under each tool.

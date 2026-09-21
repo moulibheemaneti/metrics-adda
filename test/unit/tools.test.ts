@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 // Relative, not aliased: `~` is a Nuxt convenience that exists only inside
 // the Nuxt/Vite environment, and these tests run in plain Node.
 import { COPY, SEO } from "../../app/utils/copy"
-import { relatedTools, TOOL_GROUPS, TOOLS, toolsByGroup } from "../../app/utils/tools"
+import { occupiedGroups, relatedTools, TOOL_GROUPS, TOOLS, toolsByGroup } from "../../app/utils/tools"
 import { DIMENSIONS } from "../../app/utils/units"
 
 describe("TOOLS", () => {
@@ -67,9 +67,7 @@ describe("registry and copy agree", () => {
          expect(COPY.nav.groups[group].trim()).not.toBe("")
       }
 
-      const occupied = TOOL_GROUPS.filter((group) => toolsByGroup(group).length > 0)
-
-      expect(occupied.length, "the header nav has outgrown one row").toBeLessThanOrEqual(
+      expect(occupiedGroups().length, "the header nav has outgrown one row").toBeLessThanOrEqual(
          TOP_LEVEL_BUDGET,
       )
    })
@@ -82,6 +80,29 @@ describe("registry and copy agree", () => {
 
       expect(sizes).toContain(1)
       expect(sizes.some((size) => size > 1)).toBe(true)
+   })
+
+   /// The home page renders one section per occupied group, each with a
+   /// heading and a line of prose from `COPY.groups`. A group added to the
+   /// registry without that block renders a section with two empty
+   /// paragraphs in it — visible only by loading the page, which is what
+   /// this catches instead.
+   it("gives every group a heading and a lede", () => {
+      for (const group of TOOL_GROUPS) {
+         const copy = COPY.groups[group]
+
+         expect(copy, `${group} has no group copy`).toBeDefined()
+         expect(copy.heading.trim(), `${group} has an empty heading`).not.toBe("")
+         expect(copy.lede.trim(), `${group} has an empty lede`).not.toBe("")
+      }
+   })
+
+   /// The mirror of the orphaned-copy-block check above. Copy for a group
+   /// the registry dropped is copy nothing renders.
+   it("leaves no group copy orphaned by the registry", () => {
+      for (const group of Object.keys(COPY.groups)) {
+         expect(TOOL_GROUPS).toContain(group)
+      }
    })
 
    it("gives every tool search metadata", () => {
@@ -157,6 +178,29 @@ describe("toolsByGroup", () => {
       for (const tool of TOOLS) {
          expect(TOOL_GROUPS).toContain(tool.group)
       }
+   })
+})
+
+describe("occupiedGroups", () => {
+   it("returns groups in registry order", () => {
+      const occupied = occupiedGroups()
+
+      expect(occupied).toEqual(TOOL_GROUPS.filter((group) => occupied.includes(group)))
+   })
+
+   it("omits any group holding no tools", () => {
+      for (const group of occupiedGroups()) {
+         expect(toolsByGroup(group).length, `${group} is listed but empty`).toBeGreaterThan(0)
+      }
+   })
+
+   /// The home page renders a section per occupied group and nothing else,
+   /// so anything this drops is a tool with no route to it from the home
+   /// page at all.
+   it("accounts for every tool between them", () => {
+      const listed = occupiedGroups().flatMap((group) => toolsByGroup(group))
+
+      expect(listed).toHaveLength(TOOLS.length)
    })
 })
 
