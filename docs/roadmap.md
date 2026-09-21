@@ -17,9 +17,9 @@ work; this is the list they get picked from.
 anything needing a server are deliberately later — see
 [Out of scope](#out-of-scope).
 
-**Where things stand:** 18 tools across 22 pages, plus four category hubs —
-26 URLs in the sitemap. Tier 1 is done; Tier 2 has shipped seven of its
-panels, with three queued and two deferred. Programmatic SEO has started:
+**Where things stand:** 20 tools across 24 pages, plus four category hubs —
+28 URLs in the sitemap. Tier 1 is done; Tier 2 has shipped nine of its
+panels, with one queued and two deferred. Programmatic SEO has started:
 **step 2 has shipped**, step 1 has not, and they turned out not to depend on
 each other. See [`plans/category-hub-pages.md`](plans/category-hub-pages.md).
 
@@ -97,6 +97,8 @@ small batches for the same reasons. Two conclusions still bind on future work.
 | `/percentage-calculator` | Four modes over one pair of fields; added `"calculators"` |
 | `/age-calculator` | Calendar arithmetic with no `Date` in it; second `"calculators"` tool |
 | `/base64-encoder` | Both directions, UTF-8 throughout; filed under `"text"` |
+| `/url-encoder` | Percent-encoding both ways, with the value-or-whole-URL choice made visible |
+| `/hash-generator` | Four SHA digests at once and a checksum check; filed under `"generators"` |
 
 The generators added a `"generators"` group, and the percentage calculator a
 `"calculators"` one — which takes the header's top level to six, the cap
@@ -109,31 +111,23 @@ decision rather than a side effect of this one.
 
 ### Still to build
 
-Ordered by search demand, not by build cost. The order used to be
-percentage → age → the encoders, which was picked by how little each one
-needed: pure arithmetic first, then the trivial ones, with `/json-formatter`
-and `/hash-generator` trailing because they are more panel than the rest.
-That reads as a priority list and was never one. The encoders being cheap to
-build is not a reason to ship them ahead of the tools people actually search
-for.
+One left, and it is blocked on a decision rather than on the work.
 
 1. **`/json-formatter`** — **parked on the nav decision below, not on the
    work.** Format, minify, validate, with the error position. Highest intent
    of the developer cluster and the one people bookmark. `JSON.parse`
    carries validity; the work is reporting the error position and the editor
    affordances, not the parsing.
-2. **`/url-encoder`** — percent-encoding both ways. The `"text"` group took
-   `/base64-encoder`, and this one fits beside it on the same argument.
-3. **`/hash-generator`** — SHA-1/256/384/512 via `crypto.subtle.digest`.
-   `app/utils/password.ts` already establishes how WebCrypto is used here.
-   The one item here that `"text"` cannot honestly hold.
 
-The encoders were listed to ship together and did not. Writing one tool's
-copy — a lede, four FAQ answers with real facts in them, and a title and
-description inside the SERP budgets — is the part of a tool that takes the
-time, and doing two in a sitting is the shape this file already warned
-against under [What batching taught](#what-batching-taught). The code for
-the second one is genuinely trivial; the copy is not.
+The other two shipped together, which this file had twice argued against.
+The warning was about copy and it held: the two modules and two panels were
+the smaller half of the change, and the ledes, the nine FAQ answers and the
+titles and descriptions inside the SERP budgets were the larger one. What
+made the pair work anyway was that they are the same tool twice — both are
+"convert this string, both directions, and report two different failures
+separately" — so the second panel's design questions had all been answered
+by the first. Two tools that happen to be next to each other on a list is
+still the shape to avoid; two that share a structure is not.
 
 ### Deferred, and why
 
@@ -167,9 +161,20 @@ the second one is genuinely trivial; the copy is not.
   so "Password Generator" is 161px and "BMI Calculator" 120px — 281px of
   that 650 between them. Whatever is decided about a `"developer"` group,
   the cheaper fix is that rule.
-- **So the developer cluster is still a group decision, with three ways
-  out.** File them under existing groups — `"text"` holds `/base64-encoder`
-  honestly enough and would hold `/url-encoder`, but not a hash generator.
+- **Two of the three were filed under existing groups; the third is still
+  the decision.** `/url-encoder` went into `"text"` beside `/base64-encoder`
+  on the argument this section already made. `/hash-generator` went into
+  `"generators"` — which was not one of the three ways out listed here. The
+  text weighed only `"text"`, concluded it could not honestly hold a hash
+  generator, and stopped there; it was right about `"text"` and wrong that
+  the remaining options were a new group or a consolidation. A SHA digest is
+  produced from input much as a UUID is produced from nothing, the tool's
+  own name is "Hash Generator", and that is the shelf someone looks on. No
+  new group, so the six-group cap and the 960px measurement below are
+  untouched, and `/json-formatter` is now the only tool the decision blocks.
+  The three ways out, for when it is taken: file it under an existing group —
+  `"text"` cannot hold a JSON formatter any more honestly than it could hold
+  a hash generator, so this one would need a real argument.
   Raise the budget deliberately, accepting the 960px scroll. Or consolidate:
   moving `bmiCalculator` into `"calculators"` empties `"health"`, which both
   frees the slot and removes a 120px item, so it is the only option that
@@ -280,6 +285,69 @@ flat row had at 13 tools — the six-group cap above is the only limit in play.
   loud.** A 29 February birthday falls on the 28th here in the three years
   out of four with no 29th; some jurisdictions use 1 March. Neither is
   wrong, so the answer is not to choose better but to say which was chosen.
+
+### What the URL encoder and hash generator taught
+
+- **`crypto.subtle` is secure-context only; `crypto.getRandomValues` is
+  not.** `app/utils/password.ts` reaches for the CSPRNG with no ceremony and
+  was cited here as the precedent for "how WebCrypto is used in this repo".
+  It is the wrong precedent: the random source is available everywhere, and
+  `crypto.subtle` is simply absent over plain http — including the
+  `http://192.168.x.x` address a phone uses to reach a dev server on the
+  same network, which is exactly how this site gets tested on a phone. So
+  `subtleCrypto()` returns null rather than the module throwing, and the
+  panel has a message for it. Two halves of one API with different
+  availability rules is the shape to check for.
+- **SSR has a fourth answer, and it is to await it.** Lorem ipsum seeds a
+  generator so server and client agree; UUIDs are deferred to `onMounted` so
+  no two visitors share one; the age calculator ships a fixed example and
+  replaces it after mount. A digest is none of those — perfectly
+  deterministic, so a cached page stays correct forever, and *asynchronous*,
+  which no `computed` can hold. Nuxt wraps pages in `<Suspense>`, so a
+  top-level `await` in `setup` resolves before the HTML is written and the
+  prerendered page carries all four real digests. The deciding question is
+  no longer "would a repeated value be a bug" alone; it is also "can this be
+  computed synchronously at all".
+- **An async watcher needs a sequence guard, and nothing will tell you.**
+  Four digests of a short string settle within one tick, so the naive
+  `watch(text, async …)` looks correct in every test written by hand and in
+  all ordinary use. Paste a megabyte, then immediately paste something
+  short, and the slow result lands last and overwrites the value the input
+  now shows. A monotonic request number costs three lines. Same family as
+  the `String.fromCharCode(...bytes)` overflow the base64 encoder hit — a
+  bug that only exists above a size no small fixture reaches.
+- **An option that would be *wrong* is worse than one that is merely
+  inert.** The base64 panel established that controls doing nothing in the
+  current mode come off screen, because an inert control reads as a broken
+  one. Percent-encoding raises the stronger case: writing a space as `+` is
+  correct for a form value and wrong inside a path, where `+` is a literal
+  plus and the result names a different resource. So the checkbox is absent
+  outside component scope rather than ignored there, and `encodeUrl` does
+  not honour the flag even if a caller passes it.
+- **The same two-fault split, and again it had to be made before the
+  call.** Base64 separates "not base64" from "valid base64 that is not
+  text". Percent-encoding has the identical pair — a `%` not followed by two
+  hex digits, versus well-formed escapes spelling bytes that are not UTF-8 —
+  and `decodeURIComponent` throws one indistinguishable `URIError` for both.
+  So the malformed case is detected by scanning the input beforehand rather
+  than caught afterwards, which is also what lets the message name the
+  thing the reader can actually see in their own input.
+- **Reuse ran the other way for once.** `utils/base64.ts` gained
+  `encodeBase64Bytes` so the hash panel could write a digest in base64, and
+  `encodeBase64` now calls it. That keeps the chunked binary-string step —
+  the part with the call-stack trap in it — as one implementation rather
+  than two. A digest never spelled anything, so encoding it as text first
+  would have corrupted it: the same bytes-are-not-characters mistake that
+  module exists to prevent, arriving from the opposite direction.
+- **The kebab-case guard's comment predicted the wrong file.** It was
+  widened for `base64-encoder` with a note that `sha256` would want digits
+  in a slug too. Neither slug needed it — `hash-generator` and `url-encoder`
+  are both plain — but the algorithm ids did, and for the other reason
+  entirely: `"SHA-256"` as an object key carries a hyphen, and
+  `@stylistic/quote-props` is `consistent`, so one such key forces every key
+  in that copy block to be quoted. Ids are `sha256` with a four-line map to
+  the names WebCrypto actually takes. That is the volume converter's
+  `"us-gal"` lesson landing in a different file.
 
 ---
 

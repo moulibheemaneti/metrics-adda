@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest"
+import { flushPromises } from "@vue/test-utils"
 import { mountSuspended } from "@nuxt/test-utils/runtime"
 import AgeCalculatorPanel from "../../app/components/AgeCalculatorPanel.vue"
 import Base64EncoderPanel from "../../app/components/Base64EncoderPanel.vue"
 import BmiCalculatorPanel from "../../app/components/BmiCalculatorPanel.vue"
+import HashGeneratorPanel from "../../app/components/HashGeneratorPanel.vue"
 import HeightConverter from "../../app/components/HeightConverter.vue"
 import PasswordGeneratorPanel from "../../app/components/PasswordGeneratorPanel.vue"
 import PercentageCalculatorPanel from "../../app/components/PercentageCalculatorPanel.vue"
@@ -10,6 +12,7 @@ import SiteMenu from "../../app/components/SiteMenu.vue"
 import TextStatsPanel from "../../app/components/TextStatsPanel.vue"
 import ToolNav from "../../app/components/ToolNav.vue"
 import UnitConverter from "../../app/components/UnitConverter.vue"
+import UrlEncoderPanel from "../../app/components/UrlEncoderPanel.vue"
 
 /// Mounted in the real Nuxt environment so auto-imports resolve exactly as
 /// they do at runtime. These cover the wiring between the pure functions
@@ -439,6 +442,186 @@ describe("Base64EncoderPanel", () => {
       await type(panel, "")
 
       expect(panel.find(".base64__note").text()).toBe(COPY.base64.empty)
+   })
+})
+
+describe("UrlEncoderPanel", () => {
+   /// Radios in DOM order: the two directions, then the two scopes —
+   /// which are only on screen while encoding.
+   const DECODE = 1
+   const FULL_URL = 3
+
+   type Panel = Awaited<ReturnType<typeof mountSuspended<typeof UrlEncoderPanel>>>
+
+   const output = (panel: Panel): string =>
+      panel.findAll<HTMLTextAreaElement>("textarea")[1]?.element.value ?? ""
+
+   const type = async(panel: Panel, text: string): Promise<void> => {
+      await panel.findAll("textarea")[0]?.setValue(text)
+   }
+
+   it("encodes a worked example before any interaction", async() => {
+      const panel = await mountSuspended(UrlEncoderPanel)
+
+      expect(output(panel)).toBe("caf%C3%A9%20%26%20chai")
+   })
+
+   /// The distinction the tool exists for: the same input escaped as a
+   /// value is unfollowable, escaped as a URL it still works.
+   it("keeps a URL's structure in full scope", async() => {
+      const panel = await mountSuspended(UrlEncoderPanel)
+
+      await type(panel, "https://example.com/a b?q=1&r=2")
+      expect(output(panel)).toBe("https%3A%2F%2Fexample.com%2Fa%20b%3Fq%3D1%26r%3D2")
+
+      await panel.findAll("input[type=\"radio\"]")[FULL_URL]?.setValue()
+      expect(output(panel)).toBe("https://example.com/a%20b?q=1&r=2")
+   })
+
+   /// Scope is a question about what to escape, and decoding escapes
+   /// nothing — so the control comes off screen rather than sitting inert.
+   it("hides the scope question while decoding", async() => {
+      const panel = await mountSuspended(UrlEncoderPanel)
+
+      expect(panel.findAll("input[type=\"radio\"]")).toHaveLength(4)
+
+      await panel.findAll("input[type=\"radio\"]")[DECODE]?.setValue()
+
+      expect(panel.findAll("input[type=\"radio\"]")).toHaveLength(2)
+   })
+
+   /// Not tidiness: a space in a path has to be %20, so the option would
+   /// be actively wrong in full scope rather than merely doing nothing.
+   it("offers the plus option only for a single value", async() => {
+      const panel = await mountSuspended(UrlEncoderPanel)
+
+      expect(panel.findAll("input[type=\"checkbox\"]")).toHaveLength(1)
+
+      await panel.findAll("input[type=\"radio\"]")[FULL_URL]?.setValue()
+
+      expect(panel.findAll("input[type=\"checkbox\"]")).toHaveLength(0)
+   })
+
+   it("tells the two decode failures apart", async() => {
+      const panel = await mountSuspended(UrlEncoderPanel)
+
+      await panel.findAll("input[type=\"radio\"]")[DECODE]?.setValue()
+
+      // A % that is not the start of a complete escape.
+      await type(panel, "50% off")
+      expect(panel.find(".url-encoder__fault").text()).toBe(COPY.url.faults.malformed)
+
+      // Well-formed escapes spelling bytes that are not UTF-8.
+      await type(panel, "%FF")
+      expect(panel.find(".url-encoder__fault").text()).toBe(COPY.url.faults.notText)
+   })
+
+   it("turns around when the result is reused as the input", async() => {
+      const panel = await mountSuspended(UrlEncoderPanel)
+
+      await type(panel, "a b&c")
+      await panel.findAll("button").find((button) =>
+         button.text().includes(COPY.url.useResult))?.trigger("click")
+
+      expect(panel.findAll<HTMLTextAreaElement>("textarea")[0]?.element.value)
+         .toBe("a%20b%26c")
+      expect(output(panel)).toBe("a b&c")
+   })
+
+   it("prompts rather than encoding nothing", async() => {
+      const panel = await mountSuspended(UrlEncoderPanel)
+
+      await type(panel, "")
+
+      expect(panel.find(".url-encoder__note").text()).toBe(COPY.url.empty)
+   })
+})
+
+describe("HashGeneratorPanel", () => {
+   /// The published SHA-256 vector for "abc", and the two digests of the
+   /// panel's own seeded sample.
+   const ABC_SHA256 = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+   const SAMPLE_SHA1 = "2f995f45eda0ef70f9ce95abf3aa169d025c6768"
+   const SAMPLE_SHA256 = "6d9de438a6535c64b2bca6c6b40280eb0a13f08866143ce164e69ec4f22be875"
+   const SAMPLE_SHA256_BASE64 = "bZ3kOKZTXGSyvKbGtAKA6woT8IhmFDzhZOaexPIr6HU="
+
+   type Panel = Awaited<ReturnType<typeof mountSuspended<typeof HashGeneratorPanel>>>
+
+   const digests = (panel: Panel): string[] =>
+      panel.findAll(".hash-list__value").map((node) => node.text())
+
+   /// Hashing is asynchronous, so a change to the input settles a tick
+   /// after the DOM event rather than with it.
+   const type = async(panel: Panel, text: string): Promise<void> => {
+      await panel.find("textarea").setValue(text)
+      await flushPromises()
+   }
+
+   /// The whole reason the panel awaits its first digest during setup: a
+   /// crawler has to receive four real values, not four empty rows.
+   it("renders all four digests before any interaction", async() => {
+      const panel = await mountSuspended(HashGeneratorPanel)
+
+      expect(digests(panel)).toHaveLength(4)
+      expect(digests(panel)[0]).toBe(SAMPLE_SHA1)
+      expect(digests(panel)[1]).toBe(SAMPLE_SHA256)
+   })
+
+   it("rehashes when the text changes", async() => {
+      const panel = await mountSuspended(HashGeneratorPanel)
+
+      await type(panel, "abc")
+
+      expect(digests(panel)[1]).toBe(ABC_SHA256)
+   })
+
+   /// Reformatting is not recomputing — the same rule the UUID panel
+   /// follows. The bytes are unchanged; only their spelling is.
+   it("rewrites the digests as base64 without rehashing", async() => {
+      const panel = await mountSuspended(HashGeneratorPanel)
+
+      // Radios in DOM order: hex, then base64.
+      await panel.findAll("input[type=\"radio\"]")[1]?.setValue()
+
+      expect(digests(panel)[1]).toBe(SAMPLE_SHA256_BASE64)
+   })
+
+   /// Naming the algorithm is the point. A checksum published beside a
+   /// download does not always say which one it is.
+   it("names the algorithm a pasted checksum matches", async() => {
+      const panel = await mountSuspended(HashGeneratorPanel)
+
+      await panel.find(".hash__expected").setValue(SAMPLE_SHA256.toUpperCase())
+
+      expect(panel.find(".hash__verdict").text())
+         .toBe(COPY.hash.matched.replace("{algorithm}", "SHA-256"))
+      expect(panel.findAll(".hash-list__item--match")).toHaveLength(1)
+   })
+
+   it("reports a checksum of something else as no match", async() => {
+      const panel = await mountSuspended(HashGeneratorPanel)
+
+      await panel.find(".hash__expected").setValue(ABC_SHA256)
+
+      expect(panel.find(".hash__verdict").text()).toBe(COPY.hash.unmatched)
+      expect(panel.findAll(".hash-list__item--match")).toHaveLength(0)
+   })
+
+   /// An empty field is not a failed comparison, and saying "no match"
+   /// under a box nobody has filled in is an error message for nothing.
+   it("stays quiet until a checksum is pasted", async() => {
+      const panel = await mountSuspended(HashGeneratorPanel)
+
+      expect(panel.find(".hash__verdict").exists()).toBe(false)
+   })
+
+   it("prompts rather than hashing nothing", async() => {
+      const panel = await mountSuspended(HashGeneratorPanel)
+
+      await type(panel, "")
+
+      expect(panel.find(".hash__note").text()).toBe(COPY.hash.empty)
+      expect(digests(panel)).toHaveLength(0)
    })
 })
 

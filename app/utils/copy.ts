@@ -24,6 +24,7 @@ import type {
    WhrCategory,
    WhtrCategory,
 } from "./body"
+import type { HashAlgorithm, HashFormat } from "./hash"
 import type { LoremUnit } from "./lorem"
 import type { PercentageMode, PercentageReadout } from "./percentage"
 import type { CaseId } from "./textCase"
@@ -32,6 +33,7 @@ import type { CaseId } from "./textCase"
 // where they belong rather than in a third file that exists only to break it.
 import type { HubGroup, ToolGroup } from "./tools"
 import type { DimensionId } from "./units"
+import type { UrlFault, UrlScope } from "./url"
 
 /** One key per tool. Drives the registry, the copy blocks and the SEO map. */
 export type ToolKey
@@ -48,10 +50,12 @@ export type ToolKey
      | "wordCounter"
      | "caseConverter"
      | "base64Encoder"
+     | "urlEncoder"
      | "bmiCalculator"
      | "typingTest"
      | "loremIpsumGenerator"
      | "uuidGenerator"
+     | "hashGenerator"
      | "passwordGenerator"
 
 /**
@@ -210,12 +214,12 @@ export const SEO: Record<PageKey, SeoCopy> = {
    textHub: {
       title: "Free Text Tools: Count, Convert & Encode",
       description:
-         "Count words and characters, switch between ten letter cases, encode and decode base64, and time your typing. Whatever you paste stays in the tab.",
+         "Count words and characters, switch between ten letter cases, encode and decode base64 and URLs, and time your typing. Whatever you paste stays in the tab.",
    },
    generatorsHub: {
-      title: "Free Generators: Lorem Ipsum & UUID",
+      title: "Free Generators: Lorem Ipsum, UUID & Hash",
       description:
-         "Generate placeholder text by paragraph, sentence, word or character, and version 4 UUIDs in batches. Both run entirely in your browser.",
+         "Generate placeholder text by paragraph, sentence or word, version 4 UUIDs in batches, and SHA-256 hashes of any text. All run in your browser.",
    },
    weightConverter: {
       title: "Weight Converter: kg, lb, oz, g & stone",
@@ -282,6 +286,11 @@ export const SEO: Record<PageKey, SeoCopy> = {
       description:
          "Encode text to base64 or decode it back, with full Unicode support and the URL-safe alphabet. Runs in your browser — nothing you paste is uploaded.",
    },
+   urlEncoder: {
+      title: "URL Encoder and Decoder: Percent-Encoding",
+      description:
+         "Percent-encode text for a URL or decode it back to plain text. Encode a whole URL or a single query value, with full Unicode support. Nothing is uploaded.",
+   },
    typingTest: {
       title: "Typing Speed Test: Words Per Minute",
       description:
@@ -307,6 +316,11 @@ export const SEO: Record<PageKey, SeoCopy> = {
       title: "UUID Generator: Random v4 UUIDs",
       description:
          "Generate random version 4 UUIDs, up to 100 at a time. Choose uppercase, hyphens or braces, and copy the lot. Generated in your browser, never on a server.",
+   },
+   hashGenerator: {
+      title: "Hash Generator: SHA-256, SHA-1, SHA-384 & SHA-512",
+      description:
+         "Generate SHA-256, SHA-1, SHA-384 and SHA-512 hashes of any text, in hex or base64, and check one against a published checksum. Runs in your browser.",
    },
    passwordGenerator: {
       title: "Strong Random Password Generator",
@@ -400,6 +414,12 @@ const TOOL_COPY: Record<ToolKey, ToolCopy> = {
       heading: "BMI calculator",
       lede: "Enter your height and weight in metric or imperial units. You get your BMI, the category it falls in, and the weight range that would put you in the healthy band. Switch to advanced for body fat, lean mass and the calories your body burns.",
    },
+   urlEncoder: {
+      name: "URL Encoder",
+      tagline: "Percent-encode and decode, safely either way",
+      heading: "URL encoder and decoder",
+      lede: "Paste text to percent-encode it, or an encoded string to read it back. Choose whether you are encoding one value or a whole URL — the difference decides whether the slashes and question marks survive, and it is the thing most tools get wrong for you.",
+   },
    typingTest: {
       name: "Typing Speed Test",
       tagline: "Words per minute, accuracy and your best",
@@ -417,6 +437,12 @@ const TOOL_COPY: Record<ToolKey, ToolCopy> = {
       tagline: "Random version 4 UUIDs, up to 100 at once",
       heading: "UUID generator",
       lede: "Generate random version 4 UUIDs. Choose how many you need and how they are formatted. They are produced by your browser's cryptographic random number generator and never sent anywhere.",
+   },
+   hashGenerator: {
+      name: "Hash Generator",
+      tagline: "SHA-256, SHA-1, SHA-384 and SHA-512 at once",
+      heading: "Hash generator",
+      lede: "Paste text and read all four SHA digests of it at once, in hex or base64. Paste a published checksum underneath and the page will tell you which algorithm it matches. Everything is computed by your browser and sent nowhere.",
    },
    passwordGenerator: {
       name: "Password Generator",
@@ -752,6 +778,24 @@ const FAQ_COPY: Record<ToolKey, FaqEntry[]> = {
          answer: "Plus and slash both have meaning inside a URL, so RFC 4648 defines an alternative using minus and underscore instead. JWTs use it, usually with the trailing equals padding removed.",
       },
    ],
+   urlEncoder: [
+      {
+         question: "What is URL encoding?",
+         answer: "Also called percent-encoding. A URL may only carry a limited set of ASCII characters, so everything else is written as a percent sign followed by the hex of each UTF-8 byte it takes. A space becomes %20 and \u00e9 becomes %C3%A9.",
+      },
+      {
+         question: "Should I encode the whole URL or just one value?",
+         answer: "One value, nearly always. Encoding a value escapes the slashes, ampersands and question marks inside it, which is what stops an & in someone's search term starting a new parameter. Encoding a whole URL leaves those alone so the link still works \u2014 right when the URL itself contains a space, wrong for anything going inside a query string.",
+      },
+      {
+         question: "Why is a space sometimes + and sometimes %20?",
+         answer: "Because HTML forms use a different convention from the rest of a URL. In application/x-www-form-urlencoded, which is what a submitted form produces, a space is written + and a literal plus is %2B. Anywhere else in a URL a + is simply a plus. The checkbox switches between the two.",
+      },
+      {
+         question: "Why do ! ' ( ) and * come back unescaped?",
+         answer: "Because the browser's own encodeURIComponent, which this page uses, predates RFC 3986 and leaves those five alone. They are safe in practice inside a query string. A few protocols \u2014 OAuth 1.0 signatures in particular \u2014 require them escaped, and those need a stricter encoder than any browser ships.",
+      },
+   ],
    bmiCalculator: [
       {
          question: "How is BMI calculated?",
@@ -812,6 +856,28 @@ const FAQ_COPY: Record<ToolKey, FaqEntry[]> = {
       {
          question: "Are these generated on a server?",
          answer: "No. They come from your browser's cryptographic random number generator, the same source used for encryption keys, and are never transmitted. That is also why the box is empty until the page finishes loading.",
+      },
+   ],
+   hashGenerator: [
+      {
+         question: "What is a hash used for?",
+         answer: "It reduces any input to a fixed-length fingerprint. The same text always gives the same digest, and changing one character changes all of it, which is what makes a hash the standard way to check a download arrived intact, spot a duplicate file, or index content without storing it.",
+      },
+      {
+         question: "Can I get the original text back from a hash?",
+         answer: "No. Hashing is one-way and throws information away \u2014 SHA-256 maps an input of any length onto 32 bytes. What is sold as a hash decrypter is a lookup table of digests somebody computed earlier, which is exactly why a short or common input gains nothing from being hashed.",
+      },
+      {
+         question: "Why is there no MD5?",
+         answer: "Because browsers do not offer one. WebCrypto implements SHA-1 and the SHA-2 family and deliberately omits MD5, for which collisions have been trivial since 2004. Putting it back would mean shipping a hand-written implementation of a digest nobody should be choosing today.",
+      },
+      {
+         question: "Is SHA-1 still safe to use?",
+         answer: "Not for anything an attacker can influence. A chosen-prefix collision was demonstrated in 2017 and is affordable now, so SHA-1 must not be used for signatures or certificates. It remains fine as a plain integrity check, and it is what Git object ids and many older systems use \u2014 which is why it is here.",
+      },
+      {
+         question: "Can I use this to hash a password?",
+         answer: "You can, but do not store the result. A plain SHA digest is far too fast: a single GPU works through billions of guesses a second, so a stolen table of them falls quickly. Password storage needs a deliberately slow algorithm with a per-user salt \u2014 bcrypt, scrypt or Argon2 \u2014 not a general-purpose hash.",
       },
    ],
    passwordGenerator: [
@@ -882,12 +948,12 @@ export const COPY = {
       },
       text: {
          heading: "Text tools",
-         lede: "Count it, re-case it, encode it, or time yourself typing it. Whatever you paste is processed in this tab and never uploaded.",
+         lede: "Count it, re-case it, encode it for a URL or as base64, or time yourself typing it. Whatever you paste is processed in this tab and never uploaded.",
          plural: "text tools",
       },
       generators: {
          heading: "Generators",
-         lede: "Placeholder copy measured in paragraphs, sentences, words or characters, and version 4 UUIDs drawn from the browser's own randomness.",
+         lede: "Placeholder copy measured in paragraphs, sentences, words or characters, version 4 UUIDs drawn from the browser's own randomness, and SHA digests of whatever you paste.",
          plural: "generators",
       },
       health: {
@@ -1221,6 +1287,90 @@ export const COPY = {
          notBase64: "That is not base64 — it has characters outside the alphabet, or it has been cut short.",
          notText: "That is valid base64, but the bytes inside it are not UTF-8 text. It is probably a file rather than a message.",
       } satisfies Record<Base64Fault, string>,
+   },
+   url: {
+      directionLabel: "Direction",
+      directions: {
+         encode: "Encode for a URL",
+         decode: "Decode from a URL",
+      },
+      /// Named for what each field holds in the current direction, the
+      /// same rule the base64 panel follows.
+      inputLabels: {
+         encode: "Text",
+         decode: "Encoded text",
+      },
+      outputLabels: {
+         encode: "Encoded",
+         decode: "Text",
+      },
+      /// The scope legend is a question rather than a noun because the
+      /// answer is not obvious from the two labels alone, and picking the
+      /// wrong one is the single most common way percent-encoding goes
+      /// wrong. Each option carries its consequence rather than its name.
+      scopeLegend: "What are you encoding?",
+      scopes: {
+         component: "One value",
+         full: "A whole URL",
+      } satisfies Record<UrlScope, string>,
+      scopeHints: {
+         component: "A query value, a path segment or a fragment. Slashes, ampersands and question marks inside it are escaped too.",
+         full: "A complete link. The : / ? # and & that give a URL its shape are left intact, so the result is still followable.",
+      } satisfies Record<UrlScope, string>,
+      /// Only shown in component scope. A space in a path must be %20 \u2014
+      /// writing it as + there points at a different resource \u2014 so the
+      /// option would be actively wrong rather than merely inert.
+      spaceAsPlus: "Write a space as + (form encoding)",
+      plusAsSpace: "Read + as a space (form encoding)",
+      /// Decoding has no scope to pick: it always reads every escape. Said
+      /// out loud because the alternative, decodeURI, leaves the reserved
+      /// ones in place, and a tool that hands back a string still carrying
+      /// %2F looks like it failed halfway.
+      decodeNote: "Decoding reads every escape, however the string was written.",
+      sample: "caf\u00e9 & chai",
+      useResult: "Use the result as the input",
+      empty: "Paste something to convert it.",
+      /// Two failures with two different fixes. One is visible in the
+      /// input and one is not, which is exactly why they cannot share a
+      /// message.
+      faults: {
+         malformed: "That is not valid percent-encoding \u2014 there is a % that is not followed by two hex digits. Look for a stray % or a string that has been cut short.",
+         notText: "Every escape here is well formed, but the bytes they spell are not UTF-8 text. It was probably encoded in a different character set, or part of it is missing.",
+      } satisfies Record<UrlFault, string>,
+   },
+   hash: {
+      inputLabel: "Text",
+      sample: "Metrics Adda",
+      formatLegend: "Output format",
+      formats: {
+         hex: "Hex",
+         base64: "Base64",
+      } satisfies Record<HashFormat, string>,
+      names: {
+         sha1: "SHA-1",
+         sha256: "SHA-256",
+         sha384: "SHA-384",
+         sha512: "SHA-512",
+      } satisfies Record<HashAlgorithm, string>,
+      /// "{bits}-bit" beside the name, because four rows of hex are
+      /// otherwise distinguished only by their length.
+      bits: "{bits}-bit",
+      /// Attached to SHA-1 alone. Listing it without saying this would be
+      /// the tool quietly recommending it.
+      weak: "Not for security",
+      compareLabel: "Check against a known hash",
+      compareHint: "Paste a published checksum. Hex or base64, any case \u2014 you do not have to know which algorithm produced it.",
+      comparePlaceholder: "Paste a checksum to compare",
+      /// Names the algorithm rather than saying "match". A checksum beside
+      /// a download does not always say what it is, and that is precisely
+      /// when someone needs telling.
+      matched: "Matches {algorithm}.",
+      unmatched: "No match \u2014 this is not one of the four digests above.",
+      empty: "Type or paste something to hash it.",
+      /// crypto.subtle is withheld outside a secure context, which on the
+      /// live site never happens and on a phone pointed at a dev server
+      /// over http happens every time.
+      unavailable: "Hashing needs a secure connection. This page is being served over plain http, where the browser withholds the cryptography it uses. Open it over https and it will work.",
    },
    age: {
       birthLabel: "Date of birth",

@@ -58,25 +58,46 @@ function toBinaryString(bytes: Uint8Array): string {
 }
 
 /**
+ * Encode raw bytes as base64.
+ *
+ * Separate from `encodeBase64` because not everything with bytes to write
+ * started as text: a hash digest is 20 to 64 bytes that never spelled
+ * anything, and running it through a text encoder first would corrupt it.
+ * `utils/hash.ts` is the caller, and it is here rather than there so the
+ * chunking above — the part with the call-stack trap in it — has one
+ * implementation rather than two.
+ *
+ * Padding is separable because the URL-safe alphabet is usually written
+ * without it, and `=` is itself awkward in a URL — but it is a free choice
+ * in both alphabets, so it is its own flag rather than something implied
+ * by the alphabet.
+ */
+export function encodeBase64Bytes(
+   bytes: Uint8Array,
+   alphabet: Base64Alphabet = "standard",
+   padded = true,
+): string {
+   const encoded = btoa(toBinaryString(bytes))
+   const mapped = alphabet === "urlSafe"
+      ? encoded.replace(/\+/gu, "-").replace(/\//gu, "_")
+      : encoded
+
+   return padded ? mapped : mapped.replace(/=+$/u, "")
+}
+
+/**
  * Encode text as base64.
  *
  * The text is taken as UTF-8, which is what makes this work for anything
- * that is not plain ASCII. Padding is separable because the URL-safe
- * alphabet is usually written without it, and `=` is itself awkward in a
- * URL — but it is a free choice in both alphabets, so it is its own flag
- * rather than something implied by the alphabet.
+ * that is not plain ASCII — the whole reason this module exists rather
+ * than a bare `btoa` call.
  */
 export function encodeBase64(
    text: string,
    alphabet: Base64Alphabet = "standard",
    padded = true,
 ): string {
-   const encoded = btoa(toBinaryString(new TextEncoder().encode(text)))
-   const mapped = alphabet === "urlSafe"
-      ? encoded.replace(/\+/gu, "-").replace(/\//gu, "_")
-      : encoded
-
-   return padded ? mapped : mapped.replace(/=+$/u, "")
+   return encodeBase64Bytes(new TextEncoder().encode(text), alphabet, padded)
 }
 
 /**

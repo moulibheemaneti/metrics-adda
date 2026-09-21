@@ -36,10 +36,12 @@ and structured data.
 | `/word-counter` | Words, characters, sentences, paragraphs, reading time |
 | `/case-converter` | UPPER, lower, Title, Sentence, camelCase, snake_case + 4 more |
 | `/base64-encoder` | Encode and decode base64, UTF-8 and URL-safe alphabet |
+| `/url-encoder` | Percent-encode a value or a whole URL, and decode either back |
 | `/typing-speed-test` | Timed WPM test with accuracy and a personal best |
 | `/bmi-calculator` | Body mass index, its category, and the healthy weight range |
 | `/lorem-ipsum-generator` | Placeholder text by the paragraph, sentence or word |
 | `/uuid-generator` | Random v4 UUIDs, up to 100 at a time, in four formats |
+| `/hash-generator` | SHA-1, SHA-256, SHA-384 and SHA-512, with a checksum check |
 | `/password-generator` | Strong random passwords with an entropy readout |
 
 Adding a tool means three things: an entry in `app/utils/tools.ts`, a copy block
@@ -185,7 +187,7 @@ is cached there is no second thing to make work.
 Two pieces make it true, and both live in `nuxt.config.ts`:
 
 - **Every route is prerendered.** `nitro.prerender` crawls from `/`, which
-  reaches all 22 pages because every tool cross-links every other one. A
+  reaches all 28 pages because every tool cross-links every other one. A
   service worker can only precache files that exist at build time, so without
   this an offline visit to a page you had not already opened would miss.
 - **The worker precaches the shell** — markup, JS, CSS, both webfonts, the
