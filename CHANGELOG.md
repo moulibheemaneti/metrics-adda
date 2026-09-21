@@ -3,6 +3,13 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.21.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.20.0...v1.21.0) (2026-09-21)
+
+### ✨ Features
+
+* **home:** group the tool grid by category ([a9f2b08](https://github.com/moulibheemaneti/metrics-adda/commit/a9f2b08cdcb7d63f71a5190b395ac19f1937ae6c))
+* **seo:** add category hub pages, a chip row and trimmed sections ([9da8819](https://github.com/moulibheemaneti/metrics-adda/commit/9da88197b7a3bab66ea0966e0924379d3db8dba9))
+
 ## [1.20.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.19.0...v1.20.0) (2026-09-09)
 
 ### ✨ Features
