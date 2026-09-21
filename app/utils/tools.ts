@@ -117,6 +117,12 @@ export const TOOLS: ToolEntry[] = [
       group: "text",
    },
    {
+      slug: "url-encoder",
+      path: "/url-encoder",
+      key: "urlEncoder",
+      group: "text",
+   },
+   {
       slug: "typing-speed-test",
       path: "/typing-speed-test",
       key: "typingTest",
@@ -138,6 +144,12 @@ export const TOOLS: ToolEntry[] = [
       slug: "uuid-generator",
       path: "/uuid-generator",
       key: "uuidGenerator",
+      group: "generators",
+   },
+   {
+      slug: "hash-generator",
+      path: "/hash-generator",
+      key: "hashGenerator",
       group: "generators",
    },
    {
