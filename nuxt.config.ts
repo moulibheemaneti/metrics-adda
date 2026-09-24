@@ -116,7 +116,7 @@ export default defineNuxtConfig({
       // `crawlLinks` rather than a hardcoded list: every tool page links to
       // every other one (`relatedTools()` in app/utils/tools.ts) and the
       // footer carries the four static pages, so starting at "/" reaches all
-      // 22. A hardcoded list would silently drift from the tool registry.
+      // 27. A hardcoded list would silently drift from the tool registry.
       prerender: {
          crawlLinks: true,
          // `/llms.txt` is listed explicitly because nothing links to it:
