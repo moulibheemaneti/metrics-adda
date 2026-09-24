@@ -70,8 +70,14 @@ describe("registry and copy agree", () => {
    /// of tools. That is the whole point of the change — the previous flat
    /// row came to 1940px of links and overflowed at every viewport width,
    /// including 1920px. This is the assertion that keeps the bound real.
+   ///
+   /// Seven, raised from six on purpose rather than to let a route through:
+   /// the decibel meter fits none of the existing groups, and `"audio"`
+   /// was chosen over folding BMI into `"calculators"` to make room, which
+   /// would have moved a shipped tool's nav label. The cost is recorded in
+   /// docs/roadmap.md — the eighth group has to displace one, not add one.
    it("labels every group, and keeps the top level short", () => {
-      const TOP_LEVEL_BUDGET = 6
+      const TOP_LEVEL_BUDGET = 7
 
       for (const group of TOOL_GROUPS) {
          expect(COPY.nav.groups[group], `${group} has no nav label`).toBeDefined()

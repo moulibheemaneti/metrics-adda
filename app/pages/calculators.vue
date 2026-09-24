@@ -41,7 +41,7 @@ defineOgImage("Home", {
 useSchemaOrg([
    defineWebPage(),
    // One list, on the page whose entire content is that list — which is
-   // what the home page cannot say, because it holds six of them.
+   // what the home page cannot say, because it holds seven of them.
    defineItemList({
       itemListElement: toolsByGroup("calculators").map((tool) => ({
          name: COPY.tools[tool.key].name,

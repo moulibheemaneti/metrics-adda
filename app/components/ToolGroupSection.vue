@@ -38,7 +38,7 @@
 /// One tool category, as a heading, a line of prose and its cards.
 ///
 /// Rendered twice over: as a section of the home page, where the heading
-/// is an <h2> among six, and as the whole of that category's hub page,
+/// is an <h2> among seven, and as the whole of that category's hub page,
 /// where the same heading is the <h1>. Keeping both in one component is
 /// what stops a hub page from becoming a second copy of this markup to
 /// keep in step — and `COPY.groups` means they cannot disagree about what
@@ -68,7 +68,7 @@ const sectionId = computed(() => groupSectionId(props.group))
 const headingId = computed(() => `${sectionId.value}-heading`)
 
 /// A hub page's heading is the page's title and takes the size every
-/// other page's <h1> has; on the home page it is one of six section
+/// other page's <h1> has; on the home page it is one of seven section
 /// headings. Same element either way, so the level and the size are set
 /// by the same prop rather than left to the caller to keep in step.
 const headingClass = computed(() =>

@@ -23,7 +23,7 @@ import type { ToolKey } from "./copy"
  * three by hand and would have silently under-counted the moment a fourth
  * arrived.
  */
-export const TOOL_GROUPS = ["converters", "calculators", "text", "generators", "security", "health"] as const
+export const TOOL_GROUPS = ["converters", "calculators", "text", "generators", "security", "health", "audio"] as const
 
 export type ToolGroup = typeof TOOL_GROUPS[number]
 
@@ -146,6 +146,12 @@ export const TOOLS: ToolEntry[] = [
       key: "passwordGenerator",
       group: "security",
    },
+   {
+      slug: "decibel-meter",
+      path: "/decibel-meter",
+      key: "decibelMeter",
+      group: "audio",
+   },
 ]
 
 export function toolsByGroup(group: ToolGroup): ToolEntry[] {
@@ -158,7 +164,7 @@ export function toolsByGroup(group: ToolGroup): ToolEntry[] {
  * The header nav, the phone sheet, the home page's grouped sections and —
  * when they land — the category hub pages all need the same answer to
  * "which categories does this site have", and a declared group holding
- * nothing is not one of them. All six are occupied today; the filter is
+ * nothing is not one of them. All seven are occupied today; the filter is
  * what lets a group be declared ahead of its first tool, or emptied by
  * moving its last one, without the nav growing a dead dropdown and the
  * home page a heading with nothing under it.

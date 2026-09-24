@@ -24,6 +24,7 @@ import type {
    WhrCategory,
    WhtrCategory,
 } from "./body"
+import type { MeterFault, SoundReferenceId } from "./decibel"
 import type { LoremUnit } from "./lorem"
 import type { PercentageMode, PercentageReadout } from "./percentage"
 import type { CaseId } from "./textCase"
@@ -53,6 +54,7 @@ export type ToolKey
      | "loremIpsumGenerator"
      | "uuidGenerator"
      | "passwordGenerator"
+     | "decibelMeter"
 
 /**
  * A hub page's key, derived from the group rather than written out.
@@ -313,6 +315,11 @@ export const SEO: Record<PageKey, SeoCopy> = {
       description:
          "Generate strong random passwords with letters, digits and symbols. Set the length, see the entropy, and copy in one click. Generated in your browser.",
    },
+   decibelMeter: {
+      title: "Decibel Meter: Measure Sound Level in dB Online",
+      description:
+         "Measure noise in decibels with your microphone, live. See the current, average and loudest level, and the last minute as a graph. Nothing is recorded.",
+   },
 }
 
 const TOOL_COPY: Record<ToolKey, ToolCopy> = {
@@ -423,6 +430,12 @@ const TOOL_COPY: Record<ToolKey, ToolCopy> = {
       tagline: "Strong random passwords, generated locally",
       heading: "Password generator",
       lede: "Generate a strong random password. Everything happens in your browser — nothing is sent to a server or stored anywhere.",
+   },
+   decibelMeter: {
+      name: "Decibel Meter",
+      tagline: "Live sound level from your microphone, in dB",
+      heading: "Decibel meter",
+      lede: "Measure how loud it is where you are, live, in decibels. Press Start, allow the microphone, and read the level now, the quietest, average and loudest moments, and the last minute as a graph. The sound is measured in this tab and never recorded.",
    },
 }
 
@@ -828,6 +841,28 @@ const FAQ_COPY: Record<ToolKey, FaqEntry[]> = {
          answer: "Entropy in bits measures how much guessing a brute-force attack faces. Each extra bit doubles that work. Aim for 60 bits or more, and 120+ for anything critical.",
       },
    ],
+   decibelMeter: [
+      {
+         question: "How accurate is a decibel meter on a phone or laptop?",
+         answer: "Close, but not exact. Phone and laptop microphones are not calibrated and differ from one another by several decibels, so treat a reading as an estimate. If you have a sound level meter you trust, measure the same steady sound with both and set the calibration to the difference — it is remembered on this device.",
+      },
+      {
+         question: "What does dB(A), or A-weighting, mean?",
+         answer: "Hearing is far less sensitive to deep and very high pitches than to the middle, so sound level meters weigh frequencies the way the ear does. This one uses A-weighting, the standard for noise: a 100 Hz hum counts about 19 dB quieter than a 1 kHz tone of the same pressure.",
+      },
+      {
+         question: "How loud is too loud?",
+         answer: "NIOSH recommends no more than 85 dB(A) averaged over an eight-hour day, and every 3 dB above that halves the safe time: 88 dB for four hours, 94 dB for one, 100 dB for fifteen minutes. Compare the average against those, not the loudest moment — one door slam is not an exposure.",
+      },
+      {
+         question: "Why is the average so close to the loudest reading?",
+         answer: "Because it averages sound energy, as sound level meters do, rather than the numbers on screen. Decibels are logarithmic, so loud moments dominate: ten seconds at 90 dB and fifty seconds at 50 dB average to 82 dB, not 57.",
+      },
+      {
+         question: "Is the sound recorded or uploaded?",
+         answer: "No. The microphone opens only when you press Start, and the sound is measured as it arrives, inside this tab — nothing is recorded, stored or sent anywhere. The microphone is released as soon as you press Stop or leave the page.",
+      },
+   ],
 }
 
 export const COPY = {
@@ -853,6 +888,7 @@ export const COPY = {
          generators: "Generators",
          health: "Health",
          security: "Security",
+         audio: "Audio",
       } satisfies Record<ToolGroup, string>,
    },
    /// One block per group, rendered as a labelled section on the home page.
@@ -899,6 +935,11 @@ export const COPY = {
          heading: "Security",
          lede: "Passwords built from the browser's cryptographic randomness and scored in bits of entropy, so the strength claim is a number rather than a colour.",
          plural: "security tools",
+      },
+      audio: {
+         heading: "Audio",
+         lede: "A live decibel meter for the sound around you. It listens only while you ask it to, and nothing it hears is recorded or leaves the tab.",
+         plural: "audio tools",
       },
    } satisfies Record<ToolGroup, GroupCopy>,
    theme: {
@@ -981,7 +1022,7 @@ export const COPY = {
       headingLead: "Everyday tools that are",
       headingAccent: "instant and exact",
       heading: "Everyday tools that are instant and exact",
-      tagline: "Converters for weight, height, temperature, speed, volume, area, time and data, plus a word counter, a case converter, a typing speed test, a BMI calculator, and generators for passwords, UUIDs and placeholder text. Nothing to install, and nothing you type ever leaves your browser.",
+      tagline: "Converters for weight, height, temperature, speed, volume, area, time and data, plus a word counter, a case converter, a typing speed test, a BMI calculator, a decibel meter, and generators for passwords, UUIDs and placeholder text. Nothing to install, and nothing you type ever leaves your browser.",
       // No "All tools" heading any more: the grid under it became one
       // section per category, and each of those carries its own heading
       // from `COPY.groups`. A wrapper heading over six headings would add
@@ -1016,13 +1057,14 @@ export const COPY = {
    privacy: {
       heading: "Privacy policy",
       lede: "Metrics Adda is a set of small browser tools. The short version: what you type into them stays on your device, and the only data anyone collects here is anonymous traffic measurement.",
-      updated: "Last updated 21 August 2026",
+      updated: "Last updated 24 September 2026",
       sections: [
          {
             heading: "What the tools do with your input",
             body: [
                "Nothing leaves your browser. Every converter, the word counter, the typing speed test and the password generator run entirely in client-side JavaScript. The values you type are never sent to a server, never written to a database, and never logged — the pages keep working with the network disconnected.",
-               "What you type is never stored between visits. Three preferences are, all of them in your browser's own local storage: your light or dark theme choice, so the site does not flash the wrong colours on your next visit; the reading and speaking speeds you set on the word counter; and your best score on the typing speed test. None of them leaves your device, and clearing your site data removes them.",
+               "The decibel meter is the one tool that uses your microphone, and it asks first: nothing is heard until you press Start and allow access. The sound is measured as it arrives, inside the tab, and then discarded — it is never recorded, stored or sent anywhere, and the microphone is released when you press Stop or leave the page.",
+               "What you type is never stored between visits. Four preferences are, all of them in your browser's own local storage: your light or dark theme choice, so the site does not flash the wrong colours on your next visit; the reading and speaking speeds you set on the word counter; your best score on the typing speed test; and the calibration you set on the decibel meter. None of them leaves your device, and clearing your site data removes them.",
             ],
          },
          // PARKED with `<AdSlot />` — restore both together.
@@ -1621,6 +1663,90 @@ export const COPY = {
       strong: "Strong",
       excellent: "Excellent",
       noSets: "Select at least one character set.",
+   },
+   /// The decibel meter. As with the typing test, no figures live in these
+   /// strings — the template interpolates the levels and the constants
+   /// behind them, so a threshold cannot drift from the code that applies it.
+   decibel: {
+      start: "Start measuring",
+      stop: "Stop",
+      reset: "Reset",
+      starting: "Waiting for the microphone…",
+      listening: "Listening",
+      stopped: "Stopped",
+      /// Under the button, on every visit. The two things worth knowing
+      /// before pressing it: how far to trust the number, and where the
+      /// sound goes.
+      note: "Readings are estimates: phone and laptop microphones are not calibrated. The sound is measured in this tab and never recorded or sent anywhere.",
+      unit: "dB",
+      levelLabel: "Sound level",
+      idle: "Press Start and allow the microphone to see the level.",
+      minLabel: "Quietest",
+      averageLabel: "Average",
+      maxLabel: "Loudest",
+      historyLabel: "Last {seconds} seconds",
+      ago: "{seconds} s ago",
+      now: "now",
+      calibrationLabel: "Calibration",
+      calibrationHint: "Microphones differ. If a sound level meter you trust reads 3 dB higher than this one for the same steady sound, set +3. Saved on this device only.",
+      /// The live line under the reading. Whole sentences per sound rather
+      /// than "About as loud as" glued to a table label: the two want
+      /// different articles and capitals, and the template has no
+      /// business deciding either.
+      comparisons: {
+         watch: "About as loud as a ticking watch",
+         whisper: "About as loud as a soft whisper",
+         fridge: "About as loud as a humming fridge",
+         conversation: "About as loud as normal conversation",
+         washer: "About as loud as a washing machine",
+         traffic: "About as loud as city traffic heard from a car",
+         motorcycle: "About as loud as a motorcycle",
+         horn: "About as loud as a car horn 5 metres away",
+         concert: "About as loud as a rock concert",
+         siren: "About as loud as a siren close by",
+         fireworks: "About as loud as fireworks close by",
+      } satisfies Record<SoundReferenceId, string>,
+      referencesHeading: "How loud is that?",
+      referencesLede: "Typical levels of everyday sounds, rounded. The real figure depends on the source and how far away you are from it.",
+      soundColumn: "Sound",
+      levelColumn: "Typical level",
+      references: {
+         watch: "A ticking watch",
+         whisper: "A soft whisper",
+         fridge: "A refrigerator humming",
+         conversation: "Normal conversation",
+         washer: "A washing machine or dishwasher",
+         traffic: "City traffic, heard from inside a car",
+         motorcycle: "A motorcycle",
+         horn: "A car horn 5 metres away",
+         concert: "A rock concert",
+         siren: "A siren, standing close by",
+         fireworks: "Fireworks, close by",
+      } satisfies Record<SoundReferenceId, string>,
+      /// Read against the average, never a single moment — exposure is
+      /// sound over time, and one clap is not a hearing risk. `{level}` is
+      /// the threshold that was crossed.
+      risky: "The average so far is over {level} dB. Long or repeated exposure at this level can damage hearing.",
+      harmful: "The average so far is over {level} dB. NIOSH recommends no more than 15 minutes a day at this level.",
+      clipped: "Some sounds were louder than your microphone can capture, so the loudest readings are capped and may read low.",
+      silent: "The microphone is sending silence. Check that it is not muted, and that your system settings let this browser use it.",
+      faults: {
+         unsupported: "This browser cannot measure sound. Try a recent version of Chrome, Edge, Firefox or Safari.",
+         insecure: "The microphone is only available on a secure (https) connection.",
+         denied: "Microphone access was blocked. Allow it for this site — usually from the icon at the left of the address bar — then press Start again.",
+         missing: "No microphone was found. Connect one, then press Start again.",
+         busy: "The microphone could not be opened. Another app may be using it: close that app, then press Start again.",
+         disconnected: "The microphone was disconnected, so the measurement stopped.",
+         failed: "The meter could not start. Reload the page and try again.",
+      } satisfies Record<MeterFault, string>,
+      /// Spoken-only strings. "dB" is read out letter by letter, so
+      /// anything that exists purely to be announced spells the unit out —
+      /// the same reason the typing test says "words per minute".
+      startedAnnouncement: "Measuring. The sound level is shown below.",
+      stoppedAnnouncement: "Stopped.",
+      decibelsSpoken: "decibels",
+      averageSpoken: "average",
+      loudestSpoken: "loudest",
    },
    tools: TOOL_COPY,
    units: UNIT_COPY,
