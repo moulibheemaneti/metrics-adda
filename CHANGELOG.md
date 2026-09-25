@@ -3,6 +3,18 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.22.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.21.0...v1.22.0) (2026-09-25)
+
+### ✨ Features
+
+* **decibel-meter:** add a live frequency spectrum ([5cd0ab5](https://github.com/moulibheemaneti/metrics-adda/commit/5cd0ab5fe601e5fd076e9c9ea35ad8582ff5194e))
+* **decibel-meter:** measure live sound level from the microphone ([80d8fdd](https://github.com/moulibheemaneti/metrics-adda/commit/80d8fdd5dc4fc5e750fa95171278a89d5c855a3b))
+
+### 📚 Documentation
+
+* **decibel-meter:** record the plan, the nav cost and page counts ([e1dce1e](https://github.com/moulibheemaneti/metrics-adda/commit/e1dce1e3223cbf33a52261f48e92a52446f78259))
+* **decibel-meter:** record the spectrum and how it was checked ([b910816](https://github.com/moulibheemaneti/metrics-adda/commit/b910816b168c559dc2a35c4d57a5b1ef98d8539b))
+
 ## [1.21.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.20.0...v1.21.0) (2026-09-21)
 
 ### ✨ Features
