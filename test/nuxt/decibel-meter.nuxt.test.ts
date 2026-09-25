@@ -30,14 +30,41 @@ class FakeTrack {
    }
 }
 
+/**
+ * An analyser that always hears one tone in the 1 kHz band: at 48 kHz and
+ * 8192 points, bin 171 is 1,002 Hz.
+ */
+class FakeAnalyser {
+   static made: FakeAnalyser[] = []
+
+   fftSize = 2048
+   smoothingTimeConstant = 0.8
+   readonly connect = vi.fn()
+   readonly disconnect = vi.fn()
+   readonly getFloatFrequencyData = vi.fn((bins: Float32Array) => {
+      bins.fill(Number.NEGATIVE_INFINITY)
+      bins[171] = -30
+   })
+
+   constructor() {
+      FakeAnalyser.made.push(this)
+   }
+
+   get frequencyBinCount(): number {
+      return this.fftSize / 2
+   }
+}
+
 class FakeAudioContext {
    static made: FakeAudioContext[] = []
 
+   readonly sampleRate = 48000
    readonly destination = {}
    readonly audioWorklet = { addModule: vi.fn(async() => {}) }
    readonly resume = vi.fn(async() => {})
    readonly close = vi.fn(async() => {})
    readonly createMediaStreamSource = vi.fn(() => ({ connect: vi.fn() }))
+   readonly createAnalyser = vi.fn(() => new FakeAnalyser())
 
    constructor() {
       FakeAudioContext.made.push(this)
@@ -72,6 +99,7 @@ beforeEach(() => {
    getUserMedia = vi.fn(async() => ({ getTracks: () => [track], getAudioTracks: () => [track] }))
    FakeAudioContext.made = []
    FakeWorkletNode.made = []
+   FakeAnalyser.made = []
 
    vi.stubGlobal("isSecureContext", true)
    vi.stubGlobal("AudioContext", FakeAudioContext)
@@ -318,6 +346,79 @@ describe("DecibelMeterPanel — measuring", () => {
       expect(panel.text()).toContain(COPY.decibel.silent)
       expect(value(panel)).toBe("—")
       expect(tiles(panel)).toEqual(["—", "—", "—"])
+   })
+})
+
+/** Let a few animation frames go by, and the DOM catch up with them. */
+async function frames(panel: VueWrapper): Promise<void> {
+   await new Promise((resolve) => setTimeout(resolve, 120))
+   await panel.vm.$nextTick()
+}
+
+describe("DecibelMeterPanel — the spectrum", () => {
+   it("draws ten empty bands before Start, with no loudest band named", async() => {
+      const panel = await mountSuspended(DecibelMeterPanel)
+
+      expect(panel.findAll(".decibel__band")).toHaveLength(10)
+      expect(panel.find(".decibel__loudest").exists()).toBe(false)
+
+      for (const bar of panel.findAll(".decibel__band-bar")) {
+         expect(bar.attributes("style")).toContain("block-size: 0%")
+      }
+   })
+
+   it("runs the analyser without smoothing of its own, at the planned FFT size", async() => {
+      const panel = await mountSuspended(DecibelMeterPanel)
+
+      await startRun(panel)
+
+      expect(FakeAnalyser.made[0]?.fftSize).toBe(8192)
+      expect(FakeAnalyser.made[0]?.smoothingTimeConstant).toBe(0)
+   })
+
+   it("names the loudest band and raises its bar above the rest", async() => {
+      const panel = await mountSuspended(DecibelMeterPanel)
+
+      await startRun(panel)
+      await frames(panel)
+
+      expect(panel.find(".decibel__loudest").text()).toBe(COPY.decibel.loudestBand.replace("{band}", "1 kHz"))
+      expect(panel.find(".decibel__band--loudest").exists()).toBe(true)
+
+      const heights = panel.findAll(".decibel__band-bar")
+         .map((bar) => Number(/block-size: ([\d.]+)%/u.exec(bar.attributes("style") ?? "")?.[1] ?? 0))
+
+      expect(heights.indexOf(Math.max(...heights))).toBe(5)
+      expect(heights.filter((height) => height > 0)).toHaveLength(1)
+   })
+
+   it("reads the bands out in words for a screen reader", async() => {
+      const panel = await mountSuspended(DecibelMeterPanel)
+
+      await startRun(panel)
+      await frames(panel)
+
+      const spoken = panel.findAll(".visually-hidden li").map((item) => item.text().replace(/\s+/gu, " "))
+
+      expect(spoken).toHaveLength(10)
+      expect(spoken[5]).toMatch(new RegExp(`^1 ${COPY.decibel.kilohertzSpoken}: \\d+ ${COPY.decibel.decibelsSpoken}$`, "u"))
+      expect(spoken[0]).toBe(`31.5 ${COPY.decibel.hertzSpoken}: —`)
+   })
+
+   it("stops asking the analyser once the run stops", async() => {
+      const panel = await mountSuspended(DecibelMeterPanel)
+
+      await startRun(panel)
+      await frames(panel)
+      await primary(panel).trigger("click")
+
+      const analyser = FakeAnalyser.made[0]
+      const calls = analyser?.getFloatFrequencyData.mock.calls.length ?? 0
+
+      await frames(panel)
+
+      expect(calls).toBeGreaterThan(0)
+      expect(analyser?.getFloatFrequencyData.mock.calls.length).toBe(calls)
    })
 })
 

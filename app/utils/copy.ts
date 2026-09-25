@@ -318,7 +318,7 @@ export const SEO: Record<PageKey, SeoCopy> = {
    decibelMeter: {
       title: "Decibel Meter: Measure Sound Level in dB Online",
       description:
-         "Measure noise in decibels with your microphone, live. See the current, average and loudest level, and the last minute as a graph. Nothing is recorded.",
+         "Measure noise in decibels with your microphone, live: the level now, average and loudest, a one-minute graph and a frequency spectrum. Nothing is recorded.",
    },
 }
 
@@ -435,7 +435,7 @@ const TOOL_COPY: Record<ToolKey, ToolCopy> = {
       name: "Decibel Meter",
       tagline: "Live sound level from your microphone, in dB",
       heading: "Decibel meter",
-      lede: "Measure how loud it is where you are, live, in decibels. Press Start, allow the microphone, and read the level now, the quietest, average and loudest moments, and the last minute as a graph. The sound is measured in this tab and never recorded.",
+      lede: "Measure how loud it is where you are, live, in decibels. Press Start, allow the microphone, and read the level now, the quietest, average and loudest moments, the last minute as a graph, and the pitches the sound is made of. It is measured in this tab and never recorded.",
    },
 }
 
@@ -853,6 +853,10 @@ const FAQ_COPY: Record<ToolKey, FaqEntry[]> = {
       {
          question: "How loud is too loud?",
          answer: "NIOSH recommends no more than 85 dB(A) averaged over an eight-hour day, and every 3 dB above that halves the safe time: 88 dB for four hours, 94 dB for one, 100 dB for fifteen minutes. Compare the average against those, not the loudest moment — one door slam is not an exposure.",
+      },
+      {
+         question: "What does the frequency spectrum show?",
+         answer: "The reading split by pitch into ten octave bands, from deep bass at 31.5 Hz to treble at 16 kHz — the same split as a ten-band graphic equaliser. The bars are A-weighted like the reading, so their energy adds up to it: two bars at 50 dB make 53, not 100.",
       },
       {
          question: "Why is the average so close to the loudest reading?",
@@ -1687,6 +1691,11 @@ export const COPY = {
       historyLabel: "Last {seconds} seconds",
       ago: "{seconds} s ago",
       now: "now",
+      spectrumLabel: "Frequency spectrum",
+      /// `{band}` is a band as text — "125 Hz", "1 kHz".
+      loudestBand: "Loudest band: {band}",
+      hertz: "Hz",
+      kilohertz: "kHz",
       calibrationLabel: "Calibration",
       calibrationHint: "Microphones differ. If a sound level meter you trust reads 3 dB higher than this one for the same steady sound, set +3. Saved on this device only.",
       /// The live line under the reading. Whole sentences per sound rather
@@ -1747,6 +1756,8 @@ export const COPY = {
       decibelsSpoken: "decibels",
       averageSpoken: "average",
       loudestSpoken: "loudest",
+      hertzSpoken: "hertz",
+      kilohertzSpoken: "kilohertz",
    },
    tools: TOOL_COPY,
    units: UNIT_COPY,

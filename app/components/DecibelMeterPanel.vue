@@ -36,7 +36,7 @@
          <div class="decibel__readout">
             <p class="decibel__reading">
                <span class="visually-hidden">{{ COPY.decibel.levelLabel }}:</span>
-               <span class="decibel__value">{{ shownDb ?? "—" }}</span>
+               <span class="decibel__value">{{ shownDb === null ? "—" : formatLevel(shownDb) }}</span>
                <span class="decibel__unit">{{ COPY.decibel.unit }}</span>
             </p>
             <p class="decibel__comparison">
@@ -70,7 +70,7 @@
          <ul class="decibel__stats">
             <li v-for="item in stats" :key="item.key" class="stat decibel__stat">
                <span class="stat__value">
-                  {{ item.value ?? "—" }}
+                  {{ item.value === null ? "—" : formatLevel(item.value) }}
                   <span v-if="item.value !== null" class="decibel__stat-unit">{{ COPY.decibel.unit }}</span>
                </span>
                <span class="stat__label">{{ item.label }}</span>
@@ -87,84 +87,161 @@
             {{ COPY.decibel.silent }}
          </p>
 
-         <!-- Hidden from assistive technology whole. The graph is a picture of
-              the last minute for the eye; the three figures above are the
-              same minute in words, and they are what a screen reader gets. -->
-         <figure class="decibel__history" aria-hidden="true">
-            <figcaption class="decibel__history-label">
-               {{ historyLabel }}
-            </figcaption>
+         <!-- Side by side on a wide screen, one above the other on a phone.
+              Both are the same height, so their axes line up across the gap. -->
+         <div class="decibel__charts">
+            <!-- Hidden from assistive technology whole. The graph is a picture
+                 of the last minute for the eye; the three figures above are
+                 the same minute in words, and they are what a screen reader
+                 gets. -->
+            <figure class="decibel__figure" aria-hidden="true">
+               <figcaption class="decibel__figure-head">
+                  <span class="decibel__figure-label">{{ historyLabel }}</span>
+               </figcaption>
 
-            <div class="decibel__chart">
-               <ol class="decibel__axis">
-                  <li
-                     v-for="tick in TICKS"
-                     :key="tick"
-                     class="decibel__axis-tick"
-                     :style="{ insetBlockStart: `${(chartY(tick) / CHART_HEIGHT) * 100}%` }"
-                  >
-                     {{ tick }}
-                  </li>
-               </ol>
-
-               <div
-                  class="decibel__plot"
-                  @pointerdown="point"
-                  @pointermove="point"
-                  @pointerleave="unpoint"
-                  @pointercancel="unpoint"
-               >
-                  <svg
-                     class="decibel__svg"
-                     :viewBox="`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`"
-                     preserveAspectRatio="none"
-                     focusable="false"
-                  >
-                     <line
+               <div class="decibel__chart">
+                  <ol class="decibel__axis">
+                     <li
                         v-for="tick in TICKS"
                         :key="tick"
-                        class="decibel__grid"
-                        x1="0"
-                        :x2="CHART_WIDTH"
-                        :y1="chartY(tick)"
-                        :y2="chartY(tick)"
-                     />
-                     <path class="decibel__area" :d="areaPath" />
-                     <path class="decibel__line" :d="linePath" />
-                     <line
-                        v-if="cursor"
-                        class="decibel__cursor"
-                        :x1="cursor.x * CHART_WIDTH"
-                        :x2="cursor.x * CHART_WIDTH"
-                        y1="0"
-                        :y2="CHART_HEIGHT"
-                     />
-                  </svg>
-
-                  <!-- The dot and the label are HTML over the drawing rather
-                       than inside it: the drawing stretches to fit, and a
-                       circle drawn in it would stretch into an ellipse. -->
-                  <template v-if="cursor">
-                     <span
-                        class="decibel__dot"
-                        :style="{ insetInlineStart: `${cursor.x * 100}%`, insetBlockStart: `${cursor.y * 100}%` }"
-                     />
-                     <span
-                        class="decibel__tooltip"
-                        :style="{ insetInlineStart: `${cursor.x * 100}%`, transform: `translateX(-${cursor.x * 100}%)` }"
+                        class="decibel__axis-tick"
+                        :style="{ insetBlockStart: `${(chartY(tick) / CHART_HEIGHT) * 100}%` }"
                      >
-                        <strong class="decibel__tooltip-value">{{ cursor.value }}</strong>
-                        <span class="decibel__tooltip-time">{{ cursor.when }}</span>
+                        {{ tick }}
+                     </li>
+                  </ol>
+
+                  <div
+                     class="decibel__plot"
+                     @pointerdown="point"
+                     @pointermove="point"
+                     @pointerleave="unpoint"
+                     @pointercancel="unpoint"
+                  >
+                     <svg
+                        class="decibel__svg"
+                        :viewBox="`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`"
+                        preserveAspectRatio="none"
+                        focusable="false"
+                     >
+                        <line
+                           v-for="tick in TICKS"
+                           :key="tick"
+                           class="decibel__grid"
+                           x1="0"
+                           :x2="CHART_WIDTH"
+                           :y1="chartY(tick)"
+                           :y2="chartY(tick)"
+                        />
+                        <path class="decibel__area" :d="areaPath" />
+                        <path class="decibel__line" :d="linePath" />
+                        <line
+                           v-if="cursor"
+                           class="decibel__cursor"
+                           :x1="cursor.x * CHART_WIDTH"
+                           :x2="cursor.x * CHART_WIDTH"
+                           y1="0"
+                           :y2="CHART_HEIGHT"
+                        />
+                     </svg>
+
+                     <!-- The dot and the label are HTML over the drawing
+                          rather than inside it: the drawing stretches to fit,
+                          and a circle drawn in it would stretch into an
+                          ellipse. -->
+                     <template v-if="cursor">
+                        <span
+                           class="decibel__dot"
+                           :style="{ insetInlineStart: `${cursor.x * 100}%`, insetBlockStart: `${cursor.y * 100}%` }"
+                        />
+                        <span
+                           class="decibel__tooltip"
+                           :style="{ insetInlineStart: `${cursor.x * 100}%`, transform: `translateX(-${cursor.x * 100}%)` }"
+                        >
+                           <strong class="decibel__tooltip-value">{{ cursor.value }}</strong>
+                           <span class="decibel__tooltip-detail">{{ cursor.when }}</span>
+                        </span>
+                     </template>
+                  </div>
+
+                  <p class="decibel__times">
+                     <span>{{ oldestLabel }}</span>
+                     <span>{{ COPY.decibel.now }}</span>
+                  </p>
+               </div>
+            </figure>
+
+            <figure class="decibel__figure">
+               <figcaption class="decibel__figure-head">
+                  <span class="decibel__figure-label">{{ COPY.decibel.spectrumLabel }}</span>
+                  <span v-if="loudestLabel" class="decibel__loudest">{{ loudestLabel }}</span>
+               </figcaption>
+
+               <!-- The bars are for the eye. The list after them is the same
+                    ten levels in words, which is what a screen reader gets. -->
+               <div class="decibel__chart" aria-hidden="true">
+                  <ol class="decibel__axis">
+                     <li
+                        v-for="tick in SPECTRUM_TICKS"
+                        :key="tick"
+                        class="decibel__axis-tick"
+                        :style="{ insetBlockStart: spectrumTop(tick) }"
+                     >
+                        {{ tick }}
+                     </li>
+                  </ol>
+
+                  <div
+                     class="decibel__plot decibel__bands"
+                     @pointerdown="pointBand"
+                     @pointermove="pointBand"
+                     @pointerleave="unpointBand"
+                     @pointercancel="unpointBand"
+                  >
+                     <span
+                        v-for="tick in SPECTRUM_TICKS"
+                        :key="tick"
+                        class="decibel__gridline"
+                        :style="{ insetBlockStart: spectrumTop(tick) }"
+                     />
+                     <span
+                        v-for="(band, index) in bands"
+                        :key="band.nominal"
+                        class="decibel__band"
+                        :class="{
+                           'decibel__band--loudest': index === loudestIndex,
+                           'decibel__band--active': index === bandPointer,
+                        }"
+                     >
+                        <span class="decibel__band-bar" :style="{ blockSize: `${band.height * 100}%` }" />
                      </span>
-                  </template>
+
+                     <span
+                        v-if="bandTip"
+                        class="decibel__tooltip"
+                        :style="{ insetInlineStart: `${bandTip.x * 100}%`, transform: `translateX(-${bandTip.x * 100}%)` }"
+                     >
+                        <strong class="decibel__tooltip-value">{{ bandTip.value }}</strong>
+                        <span class="decibel__tooltip-detail">{{ bandTip.band }}</span>
+                     </span>
+                  </div>
+
+                  <span class="decibel__corner">{{ COPY.decibel.hertz }}</span>
+                  <ol class="decibel__band-labels">
+                     <li v-for="band in bands" :key="band.nominal">
+                        {{ band.axis }}
+                     </li>
+                  </ol>
                </div>
 
-               <p class="decibel__times">
-                  <span>{{ oldestLabel }}</span>
-                  <span>{{ COPY.decibel.now }}</span>
-               </p>
-            </div>
-         </figure>
+               <ul class="visually-hidden">
+                  <li v-for="band in bands" :key="band.nominal">
+                     {{ band.spoken }}:
+                     {{ band.level === null ? "—" : `${formatLevel(band.level)} ${COPY.decibel.decibelsSpoken}` }}
+                  </li>
+               </ul>
+            </figure>
+         </div>
 
          <div class="field">
             <label class="field__label" :for="`${uid}-calibration`">
@@ -249,7 +326,7 @@ import type { LoudnessZone, SoundReferenceId } from "~/utils/decibel"
 
 const uid = useId()
 
-const { status, fault, latest, history, session, silent, start, stop, reset } = useDecibelMeter()
+const { status, fault, latest, history, session, silent, spectrum, start, stop, reset } = useDecibelMeter()
 const { calibration, sync, setCalibration } = useDecibelCalibration()
 
 /** The scale's labels, every 20 dB. */
@@ -290,6 +367,16 @@ function toggle(): void {
 
 /** A dBFS level as the decibels on screen. */
 const toDb = (dbfs: number): number => toSoundLevel(dbfs, calibration.value)
+
+/**
+ * Whole decibels, with a true minus. A band in a quiet room can dip below
+ * zero, and a hyphen there reads as a dash rather than a sign.
+ */
+function formatLevel(level: number): string {
+   const rounded = Math.round(level)
+
+   return rounded < 0 ? `−${-rounded}` : String(rounded)
+}
 
 /** A level's place along the bar, as a CSS length. Nothing reads as empty. */
 const percent = (level: number | null): string => `${level === null ? 0 : scalePosition(level) * 100}%`
@@ -443,8 +530,94 @@ const cursor = computed(() => {
    return {
       x: chartX(nearest.time) / CHART_WIDTH,
       y: chartY(level) / CHART_HEIGHT,
-      value: nearest.level <= SILENCE_DBFS ? "—" : `${Math.round(level)} ${COPY.decibel.unit}`,
+      value: nearest.level <= SILENCE_DBFS ? "—" : `${formatLevel(level)} ${COPY.decibel.unit}`,
       when: ago === 0 ? COPY.decibel.now : COPY.decibel.ago.replace("{seconds}", String(ago)),
+   }
+})
+
+/// --- The spectrum ---------------------------------------------------------
+
+const SPECTRUM_TICKS = Array.from(
+   { length: (SPECTRUM_MAX - SPECTRUM_MIN) / TICK_STEP + 1 },
+   (_, index) => SPECTRUM_MIN + index * TICK_STEP,
+)
+
+/** A level's distance down from the top of the spectrum, as a CSS length. */
+const spectrumTop = (level: number): string =>
+   `${(1 - scalePosition(level, SPECTRUM_MIN, SPECTRUM_MAX)) * 100}%`
+
+/** Each band named three ways: "1k" on the axis, "1 kHz" in text, "1 kilohertz" aloud. */
+const BANDS = OCTAVE_BANDS.map((nominal) => {
+   if (nominal < 1000) {
+      return {
+         nominal,
+         axis: String(nominal),
+         text: `${nominal} ${COPY.decibel.hertz}`,
+         spoken: `${nominal} ${COPY.decibel.hertzSpoken}`,
+      }
+   }
+
+   const kilo = nominal / 1000
+
+   return {
+      nominal,
+      axis: `${kilo}k`,
+      text: `${kilo} ${COPY.decibel.kilohertz}`,
+      spoken: `${kilo} ${COPY.decibel.kilohertzSpoken}`,
+   }
+})
+
+const bands = computed(() => BANDS.map((band, index) => {
+   const dbfs = spectrum.value?.[index] ?? null
+   // A silent band has no level to draw, rather than a level at the floor.
+   const level = dbfs === null || dbfs <= SILENCE_DBFS ? null : toDb(dbfs)
+
+   return {
+      ...band,
+      level,
+      height: level === null ? 0 : scalePosition(level, SPECTRUM_MIN, SPECTRUM_MAX),
+   }
+}))
+
+/** The loudest band, held until another beats it clearly — see `loudestBand`. */
+const loudestIndex = ref<number | null>(null)
+
+watch(spectrum, (levels) => {
+   loudestIndex.value = levels === null ? null : loudestBand(levels, loudestIndex.value)
+})
+
+const loudestLabel = computed(() => {
+   const band = loudestIndex.value === null ? undefined : BANDS[loudestIndex.value]
+
+   return band ? COPY.decibel.loudestBand.replace("{band}", band.text) : null
+})
+
+/** The band under the pointer, or null when it is off the bars. */
+const bandPointer = ref<number | null>(null)
+
+function pointBand(event: PointerEvent): void {
+   const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect()
+   const across = (event.clientX - bounds.left) / bounds.width
+
+   bandPointer.value = bounds.width > 0
+      ? Math.min(BANDS.length - 1, Math.max(0, Math.floor(across * BANDS.length)))
+      : null
+}
+
+function unpointBand(): void {
+   bandPointer.value = null
+}
+
+const bandTip = computed(() => {
+   const index = bandPointer.value
+   const band = index === null ? undefined : bands.value[index]
+
+   if (index === null || !band || spectrum.value === null) return null
+
+   return {
+      x: (index + 0.5) / BANDS.length,
+      value: band.level === null ? "—" : `${formatLevel(band.level)} ${COPY.decibel.unit}`,
+      band: band.text,
    }
 })
 
@@ -489,8 +662,8 @@ watch(status, (next, previous) => {
    // read aloud, and a voice makes "58 dB" into "fifty-eight d b".
    announcement.value = [
       COPY.decibel.stoppedAnnouncement,
-      `${Math.round(toDb(average))} ${COPY.decibel.decibelsSpoken} ${COPY.decibel.averageSpoken},`,
-      `${Math.round(toDb(session.value.max))} ${COPY.decibel.decibelsSpoken} ${COPY.decibel.loudestSpoken}.`,
+      `${formatLevel(toDb(average))} ${COPY.decibel.decibelsSpoken} ${COPY.decibel.averageSpoken},`,
+      `${formatLevel(toDb(session.value.max))} ${COPY.decibel.decibelsSpoken} ${COPY.decibel.loudestSpoken}.`,
    ].join(" ")
 })
 
@@ -683,16 +856,42 @@ onMounted(sync)
       color: var(--danger);
    }
 
-   &__history {
+   // The history over three fifths and the spectrum over two once there is
+   // room: the history is sixty seconds wide and wants the width, while ten
+   // bars read perfectly well in less.
+   &__charts {
+      display: grid;
+      gap: var(--space-md);
+
+      @media (width >= 60rem) {
+         grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+      }
+   }
+
+   &__figure {
       display: flex;
       flex-direction: column;
       gap: var(--space-2xs);
    }
 
-   &__history-label {
+   &__figure-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: var(--space-3xs) var(--space-xs);
+   }
+
+   &__figure-label {
       color: var(--muted);
       font-size: px-to-rem(13);
       font-weight: var(--weight-label);
+   }
+
+   &__loudest {
+      color: var(--ink-soft);
+      font-size: px-to-rem(13);
+      font-variant-numeric: tabular-nums;
    }
 
    &__chart {
@@ -802,8 +1001,75 @@ onMounted(sync)
       font-weight: var(--weight-label);
    }
 
-   &__tooltip-time {
+   &__tooltip-detail {
       color: var(--muted);
+   }
+
+   // Ten equal columns with a 2px gap between them — the gap is what keeps
+   // two neighbouring bars at the same height reading as two.
+   &__bands {
+      display: grid;
+      grid-template-columns: repeat(10, minmax(0, 1fr));
+      gap: 2px;
+   }
+
+   // Drawn under the bars: each band is positioned, so it paints later.
+   &__gridline {
+      position: absolute;
+      inset-inline: 0;
+      border-block-start: 1px solid var(--line);
+   }
+
+   &__band {
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+   }
+
+   // Square where it meets the floor, rounded at the end that carries the
+   // level. Capped in width so a wide screen gets air between thin bars
+   // rather than a row of slabs.
+   &__band-bar {
+      inline-size: 100%;
+      max-inline-size: px-to-rem(24);
+      border-radius: 4px 4px 0 0;
+      background-color: var(--accent);
+      // Seventy per cent still clears 3:1 against the card in both themes;
+      // the loudest band and the one under the pointer go to full strength.
+      opacity: 0.7;
+      transition:
+         block-size 60ms linear,
+         opacity var(--duration) var(--ease);
+   }
+
+   &__band--loudest &__band-bar,
+   &__band--active &__band-bar {
+      opacity: 1;
+   }
+
+   &__corner {
+      color: var(--muted);
+      font-size: px-to-rem(11);
+      text-align: end;
+   }
+
+   &__band-labels {
+      display: grid;
+      grid-template-columns: repeat(10, minmax(0, 1fr));
+      gap: 2px;
+      color: var(--muted);
+      font-size: px-to-rem(11);
+      font-variant-numeric: tabular-nums;
+      text-align: center;
+      white-space: nowrap;
+      list-style: none;
+
+      // A column is barely 20px on a 320px phone, where "31.5" at 11px runs
+      // into its neighbour. A point smaller keeps each label inside its bar.
+      @media (width < 24rem) {
+         font-size: px-to-rem(10);
+      }
    }
 
    &__times {

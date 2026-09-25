@@ -16,7 +16,7 @@
 /// Auto-imported by Nuxt.
 /// --------------------------------------------------
 
-import type { MeterFault, MeterReading, MeterSession } from "~/utils/decibel"
+import type { MeterFault, MeterReading, MeterSession, SpectrumLayout } from "~/utils/decibel"
 // Vite bundles the worklet as a file of its own and hands back its URL;
 // `audioWorklet.addModule` needs a URL, not a module.
 import workletUrl from "~/worklets/decibel-meter.ts?worker&url"
@@ -107,9 +107,13 @@ export function useDecibelMeter() {
       && latest.value.time - silentSince.value >= SILENCE_NOTICE_SECONDS,
    )
 
+   /** Each octave band's level in dBFS, or null before the first frame. */
+   const spectrum = shallowRef<(number | null)[] | null>(null)
+
    let context: AudioContext | null = null
    let stream: MediaStream | null = null
    let node: AudioWorkletNode | null = null
+   let frame: number | null = null
 
    /**
     * Bumped by every start and every stop. A start is several awaits long —
@@ -122,6 +126,8 @@ export function useDecibelMeter() {
 
    /** Let go of the device and the graph. Safe to call at any point. */
    function release(): void {
+      if (frame !== null) cancelAnimationFrame(frame)
+
       if (node) {
          node.port.onmessage = null
          node.disconnect()
@@ -132,9 +138,38 @@ export function useDecibelMeter() {
       stream?.getTracks().forEach((track) => track.stop())
       context?.close().catch(() => {})
 
+      frame = null
       node = null
       stream = null
       context = null
+   }
+
+   /**
+    * Redraw the spectrum from the analyser, on animation frames.
+    *
+    * Frames rather than a timer, so a hidden tab — where nobody is looking
+    * at the bars — does no FFT work at all. They are thinned to one every
+    * `SPECTRUM_INTERVAL`, which is as fast as a bar can usefully move.
+    */
+   function listen(analyser: AnalyserNode, layout: SpectrumLayout): void {
+      const bins = new Float32Array(analyser.frequencyBinCount)
+      let smoothed: (number | null)[] | null = null
+      let drawnAt: number | null = null
+
+      const draw = (now: number): void => {
+         const elapsed = drawnAt === null ? Number.POSITIVE_INFINITY : (now - drawnAt) / 1000
+
+         if (elapsed >= SPECTRUM_INTERVAL) {
+            analyser.getFloatFrequencyData(bins)
+            smoothed = smoothBands(smoothed, bandMeanSquares(bins, layout), elapsed)
+            spectrum.value = smoothed.map((meanSquare) => meanSquare === null ? null : meanSquareToDbfs(meanSquare))
+            drawnAt = now
+         }
+
+         frame = requestAnimationFrame(draw)
+      }
+
+      frame = requestAnimationFrame(draw)
    }
 
    function receive(reading: MeterReading): void {
@@ -227,7 +262,19 @@ export function useDecibelMeter() {
             if (current === generation) receive(event.data)
          }
 
-         created.createMediaStreamSource(opened).connect(worklet)
+         // In line ahead of the worklet rather than beside it: an analyser
+         // passes its input through untouched, and sitting in the chain that
+         // reaches the destination is what keeps every browser pulling audio
+         // into it. Its own smoothing is off because it averages magnitudes,
+         // which reads noise about a decibel low; `smoothBands` averages
+         // energy instead.
+         const analyser = created.createAnalyser()
+
+         analyser.fftSize = SPECTRUM_FFT_SIZE
+         analyser.smoothingTimeConstant = 0
+
+         created.createMediaStreamSource(opened).connect(analyser)
+         analyser.connect(worklet)
          worklet.connect(created.destination)
          node = worklet
 
@@ -242,7 +289,10 @@ export function useDecibelMeter() {
          history.value = []
          session.value = emptySession()
          silentSince.value = null
+         spectrum.value = null
          status.value = "running"
+
+         listen(analyser, spectrumLayout(created.sampleRate, analyser.fftSize))
       }
       catch(error) {
          if (current === generation) fail(faultFrom(error))
@@ -265,6 +315,7 @@ export function useDecibelMeter() {
       latest.value = null
       history.value = []
       silentSince.value = null
+      spectrum.value = null
       status.value = "idle"
    }
 
@@ -277,6 +328,7 @@ export function useDecibelMeter() {
       history,
       session,
       silent,
+      spectrum,
       start,
       stop,
       reset,

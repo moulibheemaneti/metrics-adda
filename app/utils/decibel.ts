@@ -519,9 +519,9 @@ export function toSoundLevel(dbfs: number, calibration: number): number {
 export const SCALE_MIN = 20
 export const SCALE_MAX = 120
 
-/** Where a level sits on the scale, from 0 at the bottom to 1 at the top. */
-export function scalePosition(level: number): number {
-   return Math.min(1, Math.max(0, (level - SCALE_MIN) / (SCALE_MAX - SCALE_MIN)))
+/** Where a level sits on a scale, from 0 at the bottom to 1 at the top. */
+export function scalePosition(level: number, min = SCALE_MIN, max = SCALE_MAX): number {
+   return Math.min(1, Math.max(0, (level - min) / (max - min)))
 }
 
 /**
@@ -624,4 +624,162 @@ export function loudnessZone(level: number): LoudnessZone {
    if (level >= HEARING_RISK_LEVEL) return "risky"
 
    return "safe"
+}
+
+/// --- The spectrum ----------------------------------------------------------
+///
+/// The frequency spectrum comes from the browser's own AnalyserNode rather
+/// than from the worklet. It is a picture of which pitches are loud, not a
+/// measurement anything is averaged from, so the analyser's habit of
+/// handing over only its latest window costs nothing here — and its FFT is
+/// native code, where one written in the worklet would be a few hundred
+/// lines of JavaScript running on the audio thread.
+
+/**
+ * The ten octave bands of a ten-band graphic equaliser, by the nominal
+ * centres IEC 61260 labels them with, in hertz. Each is twice the pitch of
+ * the one before.
+ */
+export const OCTAVE_BANDS = [31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000] as const
+
+/**
+ * The analyser's FFT length. At 48 kHz that is a 171 ms window and a
+ * bin every 5.9 Hz, which puts four bins in the lowest band — enough to
+ * resolve it — while still moving about as quickly as the Fast weighting.
+ */
+export const SPECTRUM_FFT_SIZE = 8192
+
+/** How often the spectrum is redrawn, in seconds. */
+export const SPECTRUM_INTERVAL = 0.05
+
+/**
+ * The spectrum's own scale, in dB. Lower than the meter's, because each
+ * band holds only a share of the sound: in a quiet room most of them sit
+ * well under the 20 dB the meter's scale starts at.
+ */
+export const SPECTRUM_MIN = 0
+export const SPECTRUM_MAX = 100
+
+/**
+ * The analyser's Blackman window, as the power it keeps: Σw²/N.
+ *
+ * The Web Audio specification windows each block with a Blackman window
+ * and scales the FFT by 1/N. Undoing both is what turns a bin's magnitude
+ * back into its share of the signal's mean square — by Parseval, the
+ * one-sided bins sum to half the mean square times this.
+ */
+const BLACKMAN_POWER = 0.42 ** 2 + 0.5 ** 2 / 2 + 0.08 ** 2 / 2
+
+/** Which FFT bins belong to which band, for one sample rate and FFT size. */
+export interface SpectrumLayout {
+   /** Each band's bins, as a half-open range. Empty for a band past Nyquist. */
+   bands: { start: number, end: number }[]
+   /** Each bin's A-weighting, as a power ratio. */
+   weights: Float64Array
+}
+
+/**
+ * Lay the FFT's bins out into the octave bands.
+ *
+ * Band edges are the exact base-ten series — a centre of 1 kHz × 10^(3k/10)
+ * and edges a factor of 10^0.15 either side — so neighbouring bands meet
+ * without a gap or an overlap, and every bin lands in at most one of them.
+ * A context on a Bluetooth headset can run at 16 kHz, where the top band
+ * is past Nyquist and simply has no bins.
+ */
+export function spectrumLayout(sampleRate: number, fftSize: number): SpectrumLayout {
+   const binWidth = sampleRate / fftSize
+   const binCount = fftSize / 2
+   const weights = new Float64Array(binCount)
+
+   // Bin 0 is DC, which A-weighting removes entirely, so it stays at zero.
+   for (let bin = 1; bin < binCount; bin += 1) {
+      weights[bin] = 10 ** (aWeightingDb(bin * binWidth) / 10)
+   }
+
+   const bands = OCTAVE_BANDS.map((_, index) => {
+      const centre = 1000 * 10 ** (3 * (index - 5) / 10)
+      const start = Math.min(binCount, Math.max(1, Math.ceil(centre / 10 ** 0.15 / binWidth)))
+      const end = Math.min(binCount, Math.ceil(centre * 10 ** 0.15 / binWidth))
+
+      return { start, end: Math.max(start, end) }
+   })
+
+   return { bands, weights }
+}
+
+/**
+ * Each band's A-weighted mean square, from the decibels per bin that
+ * `getFloatFrequencyData` fills in. Null for a band with no bins.
+ *
+ * A-weighted like the reading above it, so the bands' energy adds up to
+ * that reading and the tallest bar is the pitch doing most to make it.
+ */
+export function bandMeanSquares(frequencyDb: Float32Array, layout: SpectrumLayout): (number | null)[] {
+   return layout.bands.map(({ start, end }) => {
+      if (end <= start) return null
+
+      let sum = 0
+
+      for (let bin = start; bin < end; bin += 1) {
+         // A bin's decibels are 20·log10 of its magnitude, so this is the
+         // magnitude squared. Silence arrives as -Infinity, which is 0.
+         sum += 10 ** ((frequencyDb[bin] ?? Number.NEGATIVE_INFINITY) / 10) * (layout.weights[bin] ?? 0)
+      }
+
+      return 2 * sum / BLACKMAN_POWER
+   })
+}
+
+/**
+ * The Fast time weighting, applied to the bands between two redraws.
+ *
+ * Averaged as energy, like the meter's own detector: a band estimated from
+ * four bins jumps several decibels from one window to the next, and the
+ * bar would flicker with it.
+ */
+export function smoothBands(
+   previous: readonly (number | null)[] | null,
+   next: readonly (number | null)[],
+   elapsed: number,
+): (number | null)[] {
+   const weight = 1 - Math.exp(-elapsed / FAST_TIME_CONSTANT)
+
+   return next.map((value, index) => {
+      const before = previous?.[index] ?? null
+
+      if (value === null || before === null) return value
+
+      return before + (value - before) * weight
+   })
+}
+
+/**
+ * The loudest band's index, keeping the one already shown unless another
+ * beats it by `margin` dB.
+ *
+ * Two bands within a whisker of each other would otherwise trade places on
+ * every frame, and the label naming the loudest would flicker between
+ * them faster than it could be read. A silent band is never the loudest.
+ */
+export function loudestBand(levels: readonly (number | null)[], current: number | null, margin = 1): number | null {
+   let loudest: number | null = null
+   let loudestLevel = SILENCE_DBFS
+
+   for (let index = 0; index < levels.length; index += 1) {
+      const level = levels[index] ?? null
+
+      if (level !== null && level > loudestLevel) {
+         loudest = index
+         loudestLevel = level
+      }
+   }
+
+   if (loudest === null) return null
+
+   const held = current === null ? null : levels[current] ?? null
+
+   if (held !== null && held > SILENCE_DBFS && loudestLevel - held < margin) return current
+
+   return loudest
 }

@@ -5,22 +5,30 @@ import {
    addReading,
    aWeightingDb,
    aWeightingFilter,
+   bandMeanSquares,
    clampCalibration,
    DEFAULT_OFFSET,
    emptySession,
+   FAST_TIME_CONSTANT,
    filterMagnitude,
    FLOOR_DBFS,
    isSilentReading,
+   loudestBand,
    loudnessZone,
+   meanSquareToDbfs,
    type MeterReading,
    nearestByTime,
    nearestReference,
+   OCTAVE_BANDS,
    REFERENCE_DBFS,
    scalePosition,
    sessionAverage,
    SETTLE_TIME,
+   smoothBands,
    SOUND_REFERENCES,
    SoundLevelMeter,
+   SPECTRUM_FFT_SIZE,
+   spectrumLayout,
    toSoundLevel,
 } from "../../app/utils/decibel"
 
@@ -391,6 +399,175 @@ describe("scalePosition", () => {
       expect(scalePosition(-10)).toBe(0)
       expect(scalePosition(200)).toBe(1)
    })
+
+   it("takes another scale's ends", () => {
+      expect(scalePosition(25, 0, 100)).toBe(0.25)
+      expect(scalePosition(-5, 0, 100)).toBe(0)
+   })
+})
+
+/// --- The spectrum -----------------------------------------------------------
+///
+/// The analyser is emulated to the letter of the Web Audio specification —
+/// a Blackman window with α = 0.16, an FFT scaled by 1/N, 20·log10 of each
+/// magnitude — so the band arithmetic is tested against the same numbers
+/// `getFloatFrequencyData` hands the page.
+
+/** An in-place iterative radix-2 FFT. */
+function fft(real: Float64Array, imag: Float64Array): void {
+   const size = real.length
+   const at = (array: Float64Array, index: number): number => array[index] ?? 0
+
+   for (let index = 1, swap = 0; index < size; index += 1) {
+      let bit = size / 2
+
+      while (swap >= bit && bit >= 1) {
+         swap -= bit
+         bit /= 2
+      }
+
+      swap += bit
+
+      if (index < swap) {
+         [real[index], real[swap]] = [at(real, swap), at(real, index)]
+         ;[imag[index], imag[swap]] = [at(imag, swap), at(imag, index)]
+      }
+   }
+
+   for (let length = 2; length <= size; length *= 2) {
+      const angle = -2 * Math.PI / length
+
+      for (let start = 0; start < size; start += length) {
+         for (let offset = 0; offset < length / 2; offset += 1) {
+            const even = start + offset
+            const odd = even + length / 2
+            const cos = Math.cos(angle * offset)
+            const sin = Math.sin(angle * offset)
+            const oddReal = at(real, odd) * cos - at(imag, odd) * sin
+            const oddImag = at(real, odd) * sin + at(imag, odd) * cos
+
+            real[odd] = at(real, even) - oddReal
+            imag[odd] = at(imag, even) - oddImag
+            real[even] = at(real, even) + oddReal
+            imag[even] = at(imag, even) + oddImag
+         }
+      }
+   }
+}
+
+/** What `getFloatFrequencyData` fills in for one block of samples. */
+function analyse(samples: Float32Array): Float32Array {
+   const size = samples.length
+   const real = new Float64Array(size)
+   const imag = new Float64Array(size)
+
+   for (let index = 0; index < size; index += 1) {
+      const phase = 2 * Math.PI * index / size
+      const window = 0.42 - 0.5 * Math.cos(phase) + 0.08 * Math.cos(2 * phase)
+
+      real[index] = (samples[index] ?? 0) * window
+   }
+
+   fft(real, imag)
+
+   return Float32Array.from({ length: size / 2 }, (_, bin) =>
+      20 * Math.log10(Math.hypot(real[bin] ?? 0, imag[bin] ?? 0) / size))
+}
+
+/** Band levels in dBFS, or null past Nyquist. */
+function bandLevels(samples: Float32Array, sampleRate = 48000): (number | null)[] {
+   const layout = spectrumLayout(sampleRate, samples.length)
+
+   return bandMeanSquares(analyse(samples), layout)
+      .map((meanSquare) => meanSquare === null ? null : meanSquareToDbfs(meanSquare))
+}
+
+/** Several sines summed, each given as [frequency, peak amplitude]. */
+function chord(parts: [number, number][], length: number, sampleRate = 48000): Float32Array {
+   return Float32Array.from({ length }, (_, index) =>
+      parts.reduce((sum, [frequency, amplitude]) =>
+         sum + amplitude * Math.sin(2 * Math.PI * frequency * index / sampleRate), 0))
+}
+
+describe("OCTAVE_BANDS", () => {
+   it("is ten bands, each an octave above the last", () => {
+      expect(OCTAVE_BANDS).toHaveLength(10)
+
+      for (let index = 1; index < OCTAVE_BANDS.length; index += 1) {
+         expect((OCTAVE_BANDS[index] ?? 0) / (OCTAVE_BANDS[index - 1] ?? 1)).toBeCloseTo(2, 0)
+      }
+   })
+})
+
+describe("spectrumLayout", () => {
+   it("lays the bands end to end, with every band holding bins", () => {
+      const { bands } = spectrumLayout(48000, SPECTRUM_FFT_SIZE)
+
+      for (let index = 1; index < bands.length; index += 1) {
+         expect(bands[index]?.start).toBe(bands[index - 1]?.end)
+      }
+
+      for (const { start, end } of bands) expect(end).toBeGreaterThan(start)
+
+      // Four bins in the lowest band is what the FFT size was chosen for.
+      expect((bands[0]?.end ?? 0) - (bands[0]?.start ?? 0)).toBeGreaterThanOrEqual(4)
+   })
+
+   it("leaves a band past Nyquist empty rather than inventing it", () => {
+      const { bands } = spectrumLayout(16000, SPECTRUM_FFT_SIZE)
+      const top = bands.at(-1)
+
+      expect(top?.end).toBe(top?.start)
+   })
+})
+
+describe("bandMeanSquares", () => {
+   it("puts a tone in its own band, at the tone's level", () => {
+      const levels = bandLevels(chord([[1000, 0.5]], SPECTRUM_FFT_SIZE))
+      const toneBand = OCTAVE_BANDS.indexOf(1000)
+
+      expect(levels[toneBand]).toBeCloseTo(sineDbfs(0.5), 1)
+
+      levels.forEach((level, index) => {
+         if (index !== toneBand) expect(level ?? FLOOR_DBFS).toBeLessThan(sineDbfs(0.5) - 50)
+      })
+   })
+
+   it("weights a low tone down, as the reading does", () => {
+      const levels = bandLevels(chord([[100, 0.5]], SPECTRUM_FFT_SIZE))
+
+      expect(levels[OCTAVE_BANDS.indexOf(125)]).toBeCloseTo(sineDbfs(0.5) + aWeightingDb(100), 0)
+   })
+
+   /// The claim the FAQ makes: the bars are a breakdown of the reading. Their
+   /// energy has to add back up to what the meter measures from the same
+   /// sound, through a completely different path.
+   it("adds up to the meter's own reading", () => {
+      const parts: [number, number][] = [[250, 0.3], [1000, 0.2], [4000, 0.1]]
+      const bands = bandLevels(chord(parts, SPECTRUM_FFT_SIZE))
+      const total = meanSquareToDbfs(bands.reduce<number>((sum, level) => sum + 10 ** ((level ?? FLOOR_DBFS) / 10), 0))
+      const meter = last(measure(new SoundLevelMeter(48000), [chord(parts, 48000 * 2)]))
+
+      expect(Math.abs(total - meter.level)).toBeLessThan(0.25)
+   })
+
+   it("floors silence in every band", () => {
+      for (const level of bandLevels(new Float32Array(SPECTRUM_FFT_SIZE))) expect(level).toBe(FLOOR_DBFS)
+   })
+})
+
+describe("smoothBands", () => {
+   it("starts from the first frame, and holds a band that goes missing", () => {
+      expect(smoothBands(null, [1, null], 0.05)).toEqual([1, null])
+      expect(smoothBands([1, 2], [null, 4], 0.05)).toEqual([null, 4 - (4 - 2) * Math.exp(-0.05 / FAST_TIME_CONSTANT)])
+   })
+
+   it("moves by the Fast weighting between frames", () => {
+      const [smoothed] = smoothBands([1], [2], FAST_TIME_CONSTANT)
+
+      expect(smoothed).toBeCloseTo(1 + (1 - Math.exp(-1)), 9)
+      expect(smoothBands([1], [2], 0)).toEqual([1])
+   })
 })
 
 describe("nearestByTime", () => {
@@ -435,5 +612,21 @@ describe("loudnessZone", () => {
       expect(loudnessZone(85)).toBe("risky")
       expect(loudnessZone(99.9)).toBe("risky")
       expect(loudnessZone(100)).toBe("harmful")
+   })
+})
+
+describe("loudestBand", () => {
+   it("picks the loudest band", () => {
+      expect(loudestBand([-60, -30, -45], null)).toBe(1)
+   })
+
+   it("holds the band on show against a rival inside the margin", () => {
+      expect(loudestBand([-30.5, -30], 0)).toBe(0)
+      expect(loudestBand([-32, -30], 0)).toBe(1)
+   })
+
+   it("never calls silence the loudest", () => {
+      expect(loudestBand([FLOOR_DBFS, null, FLOOR_DBFS], null)).toBeNull()
+      expect(loudestBand([FLOOR_DBFS, -40], 0)).toBe(1)
    })
 })
