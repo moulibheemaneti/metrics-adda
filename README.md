@@ -41,7 +41,7 @@ and structured data.
 | `/lorem-ipsum-generator` | Placeholder text by the paragraph, sentence or word |
 | `/uuid-generator` | Random v4 UUIDs, up to 100 at a time, in four formats |
 | `/password-generator` | Strong random passwords with an entropy readout |
-| `/decibel-meter` | Live sound level from the microphone, A-weighted, with a minute of history |
+| `/decibel-meter` | Live sound level from the microphone, A-weighted, with a minute of history and a spectrum |
 
 Adding a tool means three things: an entry in `app/utils/tools.ts`, a copy block
 in `app/utils/copy.ts`, and a page in `app/pages/`. `test/unit/tools.test.ts`

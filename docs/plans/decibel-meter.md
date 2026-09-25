@@ -16,6 +16,12 @@ figure, a bar, and a scrolling history of the last minute.
 It is the site's first tool to use a device, and the first that cannot be
 exact. Both facts shaped more of it than the arithmetic did.
 
+A second pass narrowed the reference to one page: Youlean's online loudness
+and sound meter, the live microphone one. Beyond what was already here it
+has a weighting switch (A, C or none), momentary and short-term LUFS, a
+frequency spectrum and a NIOSH noise-dose panel. Of those four, the
+spectrum was chosen, and the look stays this site's rather than Youlean's.
+
 ---
 
 ## Decisions
@@ -159,6 +165,40 @@ the same minute in words. The number is plain text rather than a live region,
 which would talk without pause, and a polite region announces the start and
 the end of a run with the average and the loudest moment spelled out.
 
+### The spectrum: octave bands from the browser's analyser
+
+Ten octave bands, 31.5 Hz to 16 kHz — the bands of a ten-band graphic
+equaliser. Ten bars stay wide enough to read and to tap on a phone, where
+a third-octave display would squeeze 31 into the same width.
+
+The FFT is the browser's own AnalyserNode rather than code in the worklet.
+The spectrum is a picture, not something averaged over the session, so the
+analyser handing over only its latest window does not matter here the way
+it would for the meter — and its FFT is native. It sits in line ahead of the
+worklet rather than beside it: an analyser passes audio through untouched,
+and being in the chain that reaches the destination keeps every browser
+pulling audio into it. It runs at 8,192 points, a 171 ms window at 48 kHz
+with four bins in the lowest band.
+
+Its built-in smoothing is off, because it averages magnitudes and reads
+noise about a decibel low. The page undoes the analyser's Blackman window
+and 1/N scaling to get each band's share of the mean square, applies the
+Fast weighting to the bands in energy, and redraws on animation frames
+thinned to twenty a second — so a hidden tab does no FFT work at all.
+
+The bars are A-weighted like the reading, so their energy adds up to it,
+and the tallest is the pitch doing most to make the room loud. That is
+tested rather than asserted: a chord through the emulated analyser and the
+same chord through the meter agree within 0.25 dB. The loudest band is
+named above the chart and held until another beats it by a decibel, or the
+label would flicker between two close bands. The bars are hidden from
+assistive technology and repeated as a list of ten levels in words.
+
+The analyser mixes stereo input to mono, where the meter takes the loudest
+channel, so on an interface with one silent channel the bands will sum to
+6 dB under the reading. A rare setup, and the reading is the figure that
+matters.
+
 ### Server-rendered context
 
 The reference table — typical levels of eleven everyday sounds, rounded — and
@@ -203,6 +243,11 @@ calibration among the stored preferences; its date moved with it.
   a full-scale tone reads 109 dB with the clipping notice. No console errors
   or warnings, light and dark, and no horizontal overflow at 320, 390 and
   1280px.
+- The spectrum, the same way: the 1 kHz tone names the 1 kHz band as loudest
+  at 70 dB, and the 100 Hz tone the 125 Hz band at 51 dB — each matching the
+  reading above it.
+- axe-core at WCAG 2.1 AA finds nothing at 320, 390 and 1280px in either
+  theme, idle, running, and with the hearing and clipping notices showing.
 
 ## Open questions
 
