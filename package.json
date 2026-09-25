@@ -54,7 +54,7 @@
       "sass": "^1.102.0",
       "sass-embedded": "^1.102.0",
       "sass-true": "^10.1.0",
-      "satori": "^0.29.0",
+      "satori": "^0.33.4",
       "semantic-release": "^25.0.9",
       "stylelint": "^17.14.1",
       "stylelint-config-standard": "^40.0.0",
