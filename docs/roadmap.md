@@ -17,8 +17,8 @@ work; this is the list they get picked from.
 anything needing a server are deliberately later — see
 [Out of scope](#out-of-scope).
 
-**Where things stand:** 18 tools across 22 pages, plus four category hubs —
-26 URLs in the sitemap. Tier 1 is done; Tier 2 has shipped seven of its
+**Where things stand:** 19 tools across 23 pages, plus four category hubs —
+27 URLs in the sitemap. Tier 1 is done; Tier 2 has shipped seven of its
 panels, with three queued and two deferred. Programmatic SEO has started:
 **step 2 has shipped**, step 1 has not, and they turned out not to depend on
 each other. See [`plans/category-hub-pages.md`](plans/category-hub-pages.md).
@@ -176,6 +176,15 @@ the second one is genuinely trivial; the copy is not.
   does not make the nav wider. That last one is the same move the
   `password-generator` note above parks, and it wants the same treatment — a
   decision of its own, not a side effect of shipping a JSON formatter.
+- **The seventh group went to `"audio"`, with the budget raised to seven
+  for it.** `/decibel-meter` fits none of the six, and raising the budget
+  was chosen over folding BMI into `"calculators"`, so no shipped tool moved.
+  Measured after the change, the top row needs 769px of track, up from 650:
+  it now scrolls below about 1,260px wide, where before it held down to
+  about 1,140px. A developer group would be the eighth, and the single-tool
+  rule above is worth more than it was — changing it would take all three
+  tool names out of the row, "Decibel Meter" included. See
+  [`plans/decibel-meter.md`](plans/decibel-meter.md).
 - **Developer traffic monetises worse than general traffic.** Revenue is one
   AdSense slot per page; ad-blocking among developers runs far above the
   general rate and the CPMs are lower to begin with, so a `/json-formatter`
@@ -195,7 +204,8 @@ the second one is genuinely trivial; the copy is not.
 The nav does not otherwise constrain the order. `ToolNav.vue` lists groups
 rather than tools, so its width is bounded by the number of categories, and
 the rest landing at once does not bring back the horizontal scroll that the
-flat row had at 13 tools — the six-group cap above is the only limit in play.
+flat row had at 13 tools — the group cap above, now seven, is the only limit
+in play.
 
 ### What the case, BMI, lorem and UUID panels taught
 

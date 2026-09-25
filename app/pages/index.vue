@@ -17,12 +17,12 @@
            time, which is the same thing a hub page does except without a
            URL: no page to rank, no sitemap entry, and ten of eighteen
            tool links gone from the most-linked page on the site. This row
-           costs six links and hides nothing. -->
+           costs seven links and hides nothing. -->
       <CategoryChips />
 
       <!-- One section per category rather than one grid of everything.
            Eighteen cards in an undifferentiated grid made the reader read
-           every name to learn what kinds of tool the site has; six
+           every name to learn what kinds of tool the site has; seven
            headings answer that before they read any of them. -->
       <ToolGroupSection
          v-for="group in groups"
