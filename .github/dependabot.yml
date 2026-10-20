@@ -2,12 +2,17 @@ version: 2
 
 updates:
 
-   # ─── Bun / npm dependencies ───────────────────────────────────────────────
-   - package-ecosystem: "npm" # Dependabot uses npm ecosystem for bun projects
+   # ─── Bun dependencies ─────────────────────────────────────────────────────
+   # Must be "bun", not "npm". Both resolve versions from the npm registry, but
+   # only the "bun" ecosystem can rewrite bun.lock. Under "npm" Dependabot bumps
+   # package.json and leaves the lockfile stale, so every PR fails CI at
+   # `bun install --frozen-lockfile`. Requires the text-based bun.lock (not the
+   # legacy binary bun.lockb) and Bun >= 1.1.39.
+   - package-ecosystem: "bun"
      directory: "/"
      schedule:
         interval: "weekly"
-        day: "saturday" # every Monday morning — start the week with fresh deps
+        day: "saturday" # weekend run — review fresh deps before the week starts
         time: "09:00"
         timezone: "Asia/Kolkata"
      open-pull-requests-limit: 10 # max open PRs at once — prevents inbox flooding
