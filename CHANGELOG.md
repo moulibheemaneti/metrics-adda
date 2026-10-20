@@ -3,6 +3,12 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.23.1](https://github.com/moulibheemaneti/metrics-adda/compare/v1.23.0...v1.23.1) (2026-10-20)
+
+### 🐛 Bug Fixes
+
+* **og-image:** keep the card layout under satori 0.63 ([0882086](https://github.com/moulibheemaneti/metrics-adda/commit/08820864be41367fc0efa161b32894d571070799))
+
 ## [1.23.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.22.0...v1.23.0) (2026-10-20)
 
 ### ✨ Features
