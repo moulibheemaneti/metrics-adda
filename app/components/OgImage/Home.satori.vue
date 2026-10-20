@@ -32,6 +32,8 @@ withDefaults(defineProps<{
    assets/scss/base/_global.scss; change them together. */
 .og {
    position: relative;
+   z-index: 0; /* own stacking context, so the glow's -1 stays above the background */
+   box-sizing: border-box; /* keep the padding inside the canvas, not added to it */
    width: 100%;
    height: 100%;
    display: flex;
@@ -55,6 +57,7 @@ withDefaults(defineProps<{
    border-radius: 800px;
    background-image: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
    opacity: 0.42;
+   z-index: -1; /* Satori, like a browser, paints positioned boxes over in-flow text */
 }
 
 .og__brand {
