@@ -54,6 +54,17 @@ updates:
               - "minor"
               - "patch"
 
+     # conventional-changelog-conventionalcommits 10 needs
+     # conventional-changelog-writer 9, but @semantic-release/release-notes-generator
+     # 14 still ships writer 8, so the release job dies with
+     # `Missing helper: "conventional-changelog-conventionalcommits requires
+     # conventional-changelog-writer@9 or newer"`. Lift this once
+     # release-notes-generator 15 is stable.
+     ignore:
+        - dependency-name: "conventional-changelog-conventionalcommits"
+          update-types:
+             - "version-update:semver-major"
+
      # Commit messages follow your conventional commits standard
      commit-message:
         prefix: "chore"
