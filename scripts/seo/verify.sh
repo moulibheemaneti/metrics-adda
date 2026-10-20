@@ -36,7 +36,16 @@ TOOL_ROUTES="$(bun -e 'import { TOOLS } from "./app/utils/tools.ts"; console.log
    echo "could not read the tool registry — is bun on PATH?" >&2
    exit 1
 }
-ROUTES="${ROUTES:-/ $TOOL_ROUTES /about /contact /privacy-policy}"
+
+# The category hubs, derived for the same reason the tool routes are: a
+# group becomes a hub by being added to GROUP_ROUTES and nothing else, and
+# a hand-kept list here would be one more place to forget.
+HUB_ROUTES="$(bun -e 'import { hubGroups, hubPath } from "./app/utils/tools.ts"; console.log(hubGroups().map(hubPath).join(" "))')" || {
+   echo "could not read the hub registry — is bun on PATH?" >&2
+   exit 1
+}
+
+ROUTES="${ROUTES:-/ $TOOL_ROUTES $HUB_ROUTES /about /contact /privacy-policy}"
 SERVER_PID=""
 
 # ── pretty output ────────────────────────────────────────────────────────────

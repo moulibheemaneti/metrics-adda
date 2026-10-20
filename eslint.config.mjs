@@ -83,9 +83,21 @@ export default withNuxt(
          // the filename is a route rather than a component name — "about"
          // and "contact" are the URLs readers and Google expect, and
          // renaming them to satisfy this rule would change /about to
-         // /about-us for no benefit.
+         // /about-us for no benefit. The category hubs are the same case:
+         // "/converters" is the path the search term maps to, and
+         // "converter-tools" would be a worse URL bought with a lint pass.
          "vue/multi-word-component-names": ["error", {
-            ignores: ["index", "default", "error", "[...slug]", "about", "contact"],
+            ignores: [
+               "index",
+               "default",
+               "error",
+               "[...slug]",
+               "about",
+               "contact",
+               "converters",
+               "calculators",
+               "generators",
+            ],
          }],
 
          // Props must have types defined

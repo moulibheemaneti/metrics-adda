@@ -17,9 +17,11 @@ work; this is the list they get picked from.
 anything needing a server are deliberately later — see
 [Out of scope](#out-of-scope).
 
-**Where things stand:** 18 tools. Tier 1 is done; Tier 2 has shipped seven of
-its panels, with three queued and two deferred. Programmatic SEO has not
-started.
+**Where things stand:** 19 tools across 23 pages, plus four category hubs —
+27 URLs in the sitemap. Tier 1 is done; Tier 2 has shipped seven of its
+panels, with three queued and two deferred. Programmatic SEO has started:
+**step 2 has shipped**, step 1 has not, and they turned out not to depend on
+each other. See [`plans/category-hub-pages.md`](plans/category-hub-pages.md).
 
 ---
 
@@ -174,6 +176,15 @@ the second one is genuinely trivial; the copy is not.
   does not make the nav wider. That last one is the same move the
   `password-generator` note above parks, and it wants the same treatment — a
   decision of its own, not a side effect of shipping a JSON formatter.
+- **The seventh group went to `"audio"`, with the budget raised to seven
+  for it.** `/decibel-meter` fits none of the six, and raising the budget
+  was chosen over folding BMI into `"calculators"`, so no shipped tool moved.
+  Measured after the change, the top row needs 769px of track, up from 650:
+  it now scrolls below about 1,260px wide, where before it held down to
+  about 1,140px. A developer group would be the eighth, and the single-tool
+  rule above is worth more than it was — changing it would take all three
+  tool names out of the row, "Decibel Meter" included. See
+  [`plans/decibel-meter.md`](plans/decibel-meter.md).
 - **Developer traffic monetises worse than general traffic.** Revenue is one
   AdSense slot per page; ad-blocking among developers runs far above the
   general rate and the CPMs are lower to begin with, so a `/json-formatter`
@@ -193,7 +204,8 @@ the second one is genuinely trivial; the copy is not.
 The nav does not otherwise constrain the order. `ToolNav.vue` lists groups
 rather than tools, so its width is bounded by the number of categories, and
 the rest landing at once does not bring back the horizontal scroll that the
-flat row had at 13 tools — the six-group cap above is the only limit in play.
+flat row had at 13 tools — the group cap above, now seven, is the only limit
+in play.
 
 ### What the case, BMI, lorem and UUID panels taught
 
@@ -283,9 +295,9 @@ flat row had at 13 tools — the six-group cap above is the only limit in play.
 
 ## Programmatic SEO
 
-**Parked until there is real traffic to reason about.** Nothing here has
-started, and the order below is kept because the dependencies between the
-steps still hold — but step 1 was previously described as an SEO win, and it
+**Step 2 has shipped; the rest is parked until there is real traffic to
+reason about.** The order below is kept because the dependencies between the
+remaining steps still hold — but step 1 was previously described as an SEO win, and it
 is not one. Query parameters do not earn indexable pages: `site.url` in
 `nuxt.config.ts` drives a path-only canonical, so `?from=kg&to=lb` would emit
 `<link rel="canonical">` pointing back at the bare route, telling Google to
@@ -295,22 +307,40 @@ shareability plus the state-hydration refactor that steps 3 and 4 would reuse
 — worth doing for those reasons, not for search.
 
 The page-count play is steps 3 and 4, because a path is a real page: its own
-prerendered HTML, its own title and H1, its own sitemap entry. Step 2 is the
-cheapest genuine win and does not depend on step 1 at all.
+prerendered HTML, its own title and H1, its own sitemap entry. Step 2 was the
+cheapest genuine win and did not depend on step 1 at all — it shipped first,
+and step 1 is still unbuilt.
 
-Each step depends on the one above it.
+**The steps are not a chain, and reading them as one cost time here.** The
+numbering said each depends on the one above it; step 2 shipped on its own
+and never touched query-param state. Only 3 and 4 have a real dependency
+between them, and both want step 1 rather than each other's page shape.
 
 1. **Query-param deep links** — `?from=kg&to=lb&value=70` in
    `UnitConverter.vue`. Prerequisite for everything below, and useful on its
    own: it makes a conversion shareable. Use `router.replace`, not `push`, so
    typing a value doesn't fill the back stack.
-2. **Category hub pages** — `/converters`, `/text-tools`, `/security-tools`.
-   Still the cheapest new pages on this list: `toolsByGroup()` in
-   `app/utils/tools.ts` already returns exactly what a hub page renders, and
-   `ToolNav.vue` and `SiteMenu.vue` prove the grouping holds up in the UI. The
-   win here is crawlable pages and a middle layer of internal linking between
-   the home page and the tools — which matters more now that `/converters`
-   alone would hold eight.
+2. **Category hub pages** — ✅ **shipped.** `/converters`, `/calculators`,
+   `/text-tools` and `/generators`, written up in
+   [`plans/category-hub-pages.md`](plans/category-hub-pages.md). Three
+   things it settled that bear on the steps below.
+
+   - **The sitemap needed no configuration at all.**
+     `prerender.crawlLinks` starts at `/` and the sitemap is built from
+     what was prerendered, so linking the hubs from the home page was the
+     internal-linking win, the prerender trigger and the sitemap entry in
+     one change — `nuxt.config.ts` was not touched. The `server/`
+     directory question further down is a pair-and-value-routes question
+     and stays open; hubs never raised it.
+   - **Not `/security-tools`.** That group holds one tool, and so does
+     `health`; a hub over a single card is thin content competing with
+     the tool page it links to. Four hubs, not six, and `GROUP_ROUTES`
+     being `Partial` is where that rule lives.
+   - **The closed `SEO` map was not the obstacle it looked like.** Four
+     hubs are a fixed set known at authoring time, so they are ordinary
+     entries and the 60/155 budget test covers them for free. The
+     generator-function problem noted below is real for steps 3 and 4 and
+     was not real here.
 3. **Pair routes** — `/weight-converter/kg-to-lb`, one dynamic page per
    dimension. Titles and descriptions generated, not hand-authored.
 4. **Value routes** — `/weight-converter/70-kg-to-lb`. Highest volume of all,

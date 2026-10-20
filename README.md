@@ -41,6 +41,7 @@ and structured data.
 | `/lorem-ipsum-generator` | Placeholder text by the paragraph, sentence or word |
 | `/uuid-generator` | Random v4 UUIDs, up to 100 at a time, in four formats |
 | `/password-generator` | Strong random passwords with an entropy readout |
+| `/decibel-meter` | Live sound level from the microphone, A-weighted, with a minute of history and a spectrum |
 
 Adding a tool means three things: an entry in `app/utils/tools.ts`, a copy block
 in `app/utils/copy.ts`, and a page in `app/pages/`. `test/unit/tools.test.ts`
@@ -66,8 +67,9 @@ Two rules worth knowing before changing them:
   `--accent-contrast` keeps its 6.7:1. Using `--accent` as a fill will fail
   contrast in dark mode.
 - **Indigo is load-bearing.** The password strength meter uses red / amber /
-  green semantically. A brand colour from any of those families would make a
-  meter state indistinguishable from ordinary chrome.
+  green semantically, and the decibel meter's bar turns amber and then red as
+  a level gets loud enough to harm hearing. A brand colour from any of those
+  families would make a meter state indistinguishable from ordinary chrome.
 
 Theme preference is system / light / dark, stored in `localStorage` under
 `ma-theme`, where "system" is the *absence* of the key and of the `data-theme`
@@ -185,7 +187,7 @@ is cached there is no second thing to make work.
 Two pieces make it true, and both live in `nuxt.config.ts`:
 
 - **Every route is prerendered.** `nitro.prerender` crawls from `/`, which
-  reaches all 22 pages because every tool cross-links every other one. A
+  reaches all 27 pages because every tool cross-links every other one. A
   service worker can only precache files that exist at build time, so without
   this an offline visit to a page you had not already opened would miss.
 - **The worker precaches the shell** — markup, JS, CSS, both webfonts, the
@@ -243,7 +245,7 @@ bun pwa:verify
 ```
 
 Asserts the manifest, the icons it promises, the worker, and a precache entry
-plus a `<link rel="manifest">` for all 22 routes. It runs in CI after the
+plus a `<link rel="manifest">` for all 23 routes. It runs in CI after the
 build, reading `.output/public` directly, so it costs no extra build.
 
 It exists because **Lighthouse cannot check any of this any more** — the PWA
