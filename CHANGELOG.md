@@ -3,6 +3,12 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.23.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.22.0...v1.23.0) (2026-10-20)
+
+### ✨ Features
+
+* **tools:** add the url encoder and hash generator ([c1d7601](https://github.com/moulibheemaneti/metrics-adda/commit/c1d760123b4248f6a6857fa659a2ec24da24a028))
+
 ## [1.22.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.21.0...v1.22.0) (2026-09-25)
 
 ### ✨ Features
