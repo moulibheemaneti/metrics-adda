@@ -52,7 +52,7 @@
       "conventional-changelog-conventionalcommits": "^9.3.1",
       "happy-dom": "^21.0.3",
       "sass": "^1.105.2",
-      "sass-embedded": "^1.105.2",
+      "sass-embedded": "^1.106.0",
       "sass-true": "^10.1.0",
       "satori": "^0.63.0",
       "semantic-release": "^25.0.9",
