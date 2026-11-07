@@ -28,7 +28,7 @@
       "@nuxt/eslint": "1.17.0",
       "@vercel/analytics": "^2.0.1",
       "@vercel/speed-insights": "^2.0.0",
-      "eslint": "^10.13.0",
+      "eslint": "^10.14.0",
       "nuxt": "^4.6.2",
       "vue": "^3.5.44",
       "vue-router": "^5.4.0"
