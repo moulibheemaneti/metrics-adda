@@ -56,7 +56,7 @@
       "sass-true": "^10.1.0",
       "satori": "^0.63.0",
       "semantic-release": "^25.0.9",
-      "stylelint": "^17.16.0",
+      "stylelint": "^18.0.0",
       "stylelint-config-standard": "^40.0.0",
       "stylelint-config-standard-scss": "^17.0.0",
       "typescript": "^6.0.3",
