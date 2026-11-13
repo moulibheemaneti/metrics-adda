@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 // the Nuxt/Vite environment, and these tests run in plain Node.
 import {
    encodeQr,
-   QR_BYTE_CAPACITY,
+   QR_CAPACITY,
    QR_DEFAULT_LEVEL,
    QR_LEVELS,
    QR_LOGO_DEFAULT,
@@ -14,7 +14,8 @@ import {
    QR_PNG_TARGET,
    QR_QUIET_ZONE,
    QR_RECOVERY,
-   qrByteLength,
+   qrLength,
+   qrMode,
    qrExtent,
    qrFitLogo,
    qrLevelAt,
@@ -65,13 +66,22 @@ describe("QR levels", () => {
       expect(QR_DEFAULT_LEVEL).toBe("M")
    })
 
-   /// The fault message quotes these, so they have to be the real limits.
-   it("states each level's capacity exactly", () => {
-      for (const level of QR_LEVELS) {
-         const limit = QR_BYTE_CAPACITY[level]
+   /// The fault message quotes these, so they have to be the real limits —
+   /// in every mode, and for the mode `uqr` actually picks. A digit string
+   /// that fits 7,089 long proves `uqr` chose numeric mode, which is the
+   /// check that `qrMode` and the library still agree.
+   it("states each mode's capacity at each level exactly", () => {
+      const filler = { numeric: "1", alphanumeric: "A", byte: "x" } as const
 
-         expect(encodeQr("x".repeat(limit), level).ok, `${level} at its limit`).toBe(true)
-         expect(encodeQr("x".repeat(limit + 1), level).ok, `${level} past its limit`).toBe(false)
+      for (const mode of ["numeric", "alphanumeric", "byte"] as const) {
+         for (const level of QR_LEVELS) {
+            const limit = QR_CAPACITY[mode][level]
+            const label = `${mode} at ${level}`
+
+            expect(qrMode(filler[mode].repeat(limit)), label).toBe(mode)
+            expect(encodeQr(filler[mode].repeat(limit), level).ok, `${label}, at its limit`).toBe(true)
+            expect(encodeQr(filler[mode].repeat(limit + 1), level).ok, `${label}, past it`).toBe(false)
+         }
       }
    })
 })
@@ -194,11 +204,31 @@ describe("qrPngScale", () => {
    })
 })
 
-describe("qrByteLength", () => {
-   it("counts UTF-8 bytes, not characters", () => {
-      expect(qrByteLength("abc")).toBe(3)
-      expect(qrByteLength("é")).toBe(2)
-      expect(qrByteLength("🎉")).toBe(4)
+describe("qrMode", () => {
+   it("picks the densest mode the whole text fits", () => {
+      expect(qrMode("0123456789")).toBe("numeric")
+      expect(qrMode("HTTPS://METRICSADDA.COM/QR")).toBe("alphanumeric")
+      expect(qrMode("$5 + 10% OFF: A-B.C/D*E")).toBe("alphanumeric")
+      expect(qrMode("https://www.metricsadda.com")).toBe("byte")
+      expect(qrMode("café")).toBe("byte")
+   })
+
+   /// Lower-case is the trap the tutorial calls out: alphanumeric mode has
+   /// capitals only, so one lower-case letter sends the whole text to bytes.
+   it("sends lower-case and other symbols to byte mode", () => {
+      expect(qrMode("ABCd")).toBe("byte")
+      expect(qrMode("A#B")).toBe("byte")
+      expect(qrMode("12 34")).toBe("alphanumeric")
+   })
+})
+
+describe("qrLength", () => {
+   it("counts in each mode's own unit", () => {
+      expect(qrLength("12345")).toBe(5)
+      expect(qrLength("ABC 1")).toBe(5)
+      expect(qrLength("abc")).toBe(3)
+      expect(qrLength("é")).toBe(2)
+      expect(qrLength("🎉")).toBe(4)
    })
 })
 

@@ -707,6 +707,27 @@ describe("QrCodeGeneratorPanel", () => {
       expect(panel.text()).not.toContain(COPY.qr.downloadPng)
    })
 
+   /// Digits pack into numeric mode, which holds well over twice what bytes
+   /// do. Quoting the byte limit here was the bug: 7,090 digits read as
+   /// "7,090 bytes against a limit of 2,953".
+   it("quotes the limit of the mode the text is in", async() => {
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+
+      await panel.find("input[type=\"range\"]").setValue("0")
+      await panel.find("textarea").setValue("1".repeat(7090))
+
+      const fault = panel.find(".qr__fault").text()
+
+      expect(fault).toContain(`7,090 ${COPY.qr.units.numeric}`)
+      expect(fault).toContain(QR_CAPACITY.numeric.L.toLocaleString("en"))
+      expect(fault).not.toContain(QR_CAPACITY.byte.L.toLocaleString("en"))
+
+      // One digit fewer is the exact limit, and fits.
+      await panel.find("textarea").setValue("1".repeat(7089))
+
+      expect(panel.find(".qr__fault").exists()).toBe(false)
+   })
+
    it("starts the text box at a single row", async() => {
       const panel = await mountSuspended(QrCodeGeneratorPanel)
 
@@ -724,7 +745,8 @@ describe("QrCodeGeneratorPanel", () => {
 
       expect(fault).toContain("level M")
       expect(fault).toContain("2,400")
-      expect(fault).toContain(QR_BYTE_CAPACITY.M.toLocaleString("en"))
+      expect(fault).toContain(`2,400 ${COPY.qr.units.byte}`)
+      expect(fault).toContain(QR_CAPACITY.byte.M.toLocaleString("en"))
       expect(panel.find(".qr__code").exists()).toBe(false)
 
       // The same text fits at L, which is the fix the message suggests.

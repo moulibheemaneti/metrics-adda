@@ -28,7 +28,7 @@ import type { MeterFault, SoundReferenceId } from "./decibel"
 import type { HashAlgorithm, HashFormat } from "./hash"
 import type { LoremUnit } from "./lorem"
 import type { PercentageMode, PercentageReadout } from "./percentage"
-import type { QrFault, QrLevel, QrLogoFault } from "./qr"
+import type { QrFault, QrLevel, QrLogoFault, QrMode } from "./qr"
 import type { CaseId } from "./textCase"
 // Type-only, and `tools.ts` imports `ToolKey` back from here. The cycle is
 // erased at compile time, which is what keeps each module's names defined
@@ -1896,11 +1896,20 @@ export const COPY = {
       },
       empty: "Type or paste a link or some text to make a QR code.",
       faults: {
-         /// `{bytes}` and `{limit}` are filled in, so the gap is a number
-         /// rather than a vague "too long".
-         tooLong: "That is more than one QR code holds at level {level}: {bytes} bytes against a limit of {limit}. Shorten it, or open Error correction and choose a lower level.",
+         /// `{count}`, `{unit}` and `{limit}` are filled in, so the gap is a
+         /// number rather than a vague "too long" — and in the unit the
+         /// text was actually encoded in, from `units` below.
+         tooLong: "That is more than one QR code holds at level {level}: {count} {unit} against a limit of {limit}. Shorten it, or open Error correction and choose a lower level.",
          loneSurrogate: "This text carries half of a character — one piece of an emoji or other symbol, with its other half missing — so it cannot be encoded. Retyping or re-pasting that character usually fixes it.",
       } satisfies Record<QrFault, string>,
+      /// What the fault message counts in. Digits and capitals pack
+      /// tighter than ordinary text, so each mode has its own limit and
+      /// its own unit — see `QR_CAPACITY`.
+      units: {
+         numeric: "digits",
+         alphanumeric: "characters",
+         byte: "bytes",
+      } satisfies Record<QrMode, string>,
    },
    uuid: {
       outputLabel: "Generated UUIDs",

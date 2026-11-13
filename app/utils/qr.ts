@@ -46,14 +46,42 @@ export const QR_DEFAULT_LEVEL: QrLevel = "M"
 export const QR_RECOVERY: Record<QrLevel, number> = { L: 7, M: 15, Q: 25, H: 30 }
 
 /**
- * The most bytes one QR code holds at each level, in byte mode.
+ * How the text is packed into bits.
  *
- * Version 40's capacity, from the standard's table. Digits and upper-case
- * text pack tighter than this, so it is the honest limit for ordinary text
- * rather than the absolute one — which is the number someone who has just
- * hit it needs.
+ * The standard has four modes and `uqr` uses three of them, picking one
+ * for the whole text: numeric when it is all digits, alphanumeric when it
+ * is all digits, capitals, space and `$%*+-./:`, and byte (UTF-8) for
+ * anything else. Kanji mode is the fourth; Japanese text is stored as
+ * UTF-8 bytes instead, which costs capacity but not readability.
  */
-export const QR_BYTE_CAPACITY: Record<QrLevel, number> = { L: 2953, M: 2331, Q: 1663, H: 1273 }
+export const QR_MODES = ["numeric", "alphanumeric", "byte"] as const
+
+export type QrMode = typeof QR_MODES[number]
+
+/**
+ * `uqr`'s own tests, copied so the panel can tell which limit applies.
+ * They have to stay identical to the library's, or a fault message would
+ * quote the limit of a mode the text was not encoded in; the capacity
+ * tests in `test/unit/qr.test.ts` fail if they drift.
+ */
+const NUMERIC = /^\d*$/u
+const ALPHANUMERIC = /^[A-Z0-9 $%*+./:-]*$/u
+
+/**
+ * The most one QR code holds at each level, per mode — version 40's row
+ * of the standard's capacity table.
+ *
+ * Counted in digits for numeric, characters for alphanumeric and bytes for
+ * byte mode, because that is the unit each mode spends: a digit costs
+ * about 3⅓ bits, a capital 5½, and a byte 8 whatever character it is part
+ * of. Quoting the byte limit for a string of digits would understate what
+ * fits by more than half.
+ */
+export const QR_CAPACITY: Record<QrMode, Record<QrLevel, number>> = {
+   numeric: { L: 7089, M: 5596, Q: 3993, H: 3057 },
+   alphanumeric: { L: 4296, M: 3391, Q: 2420, H: 1852 },
+   byte: { L: 2953, M: 2331, Q: 1663, H: 1273 },
+}
 
 /**
  * The light margin around the code, in modules.
@@ -395,7 +423,18 @@ export function qrPngScale(matrix: QrMatrix): number {
    return Math.max(1, Math.ceil(QR_PNG_TARGET / qrExtent(matrix)))
 }
 
-/** UTF-8 length of `text`, for telling someone how far over the limit they are. */
-export function qrByteLength(text: string): number {
-   return new TextEncoder().encode(text).length
+/** The mode `uqr` will encode `text` in. */
+export function qrMode(text: string): QrMode {
+   if (NUMERIC.test(text)) return "numeric"
+   if (ALPHANUMERIC.test(text)) return "alphanumeric"
+
+   return "byte"
+}
+
+/**
+ * How long `text` is in its own mode's unit — digits, characters or UTF-8
+ * bytes — so it can be set against that mode's row of `QR_CAPACITY`.
+ */
+export function qrLength(text: string, mode: QrMode = qrMode(text)): number {
+   return mode === "byte" ? new TextEncoder().encode(text).length : text.length
 }

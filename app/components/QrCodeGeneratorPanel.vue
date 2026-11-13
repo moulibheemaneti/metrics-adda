@@ -245,10 +245,13 @@ const faultMessage = computed(() => {
 
    if (result.value.fault === "loneSurrogate") return COPY.qr.faults.loneSurrogate
 
+   const mode = qrMode(text.value)
+
    return COPY.qr.faults.tooLong
       .replace("{level}", level.value)
-      .replace("{bytes}", qrByteLength(text.value).toLocaleString("en"))
-      .replace("{limit}", QR_BYTE_CAPACITY[level.value].toLocaleString("en"))
+      .replace("{count}", qrLength(text.value, mode).toLocaleString("en"))
+      .replace("{unit}", COPY.qr.units[mode])
+      .replace("{limit}", QR_CAPACITY[mode][level.value].toLocaleString("en"))
 })
 
 // ---- Logo -----------------------------------------------------------
