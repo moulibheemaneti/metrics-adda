@@ -28,7 +28,7 @@ import type { MeterFault, SoundReferenceId } from "./decibel"
 import type { HashAlgorithm, HashFormat } from "./hash"
 import type { LoremUnit } from "./lorem"
 import type { PercentageMode, PercentageReadout } from "./percentage"
-import type { QrFault, QrLevel } from "./qr"
+import type { QrFault, QrLevel, QrLogoFault } from "./qr"
 import type { CaseId } from "./textCase"
 // Type-only, and `tools.ts` imports `ToolKey` back from here. The cycle is
 // erased at compile time, which is what keeps each module's names defined
@@ -327,9 +327,12 @@ export const SEO: Record<PageKey, SeoCopy> = {
          "Generate SHA-256, SHA-1, SHA-384 and SHA-512 hashes of any text, in hex or base64, and check one against a published checksum. Runs in your browser.",
    },
    qrCodeGenerator: {
-      title: "QR Code Generator: Links & Text to PNG or SVG",
+      /// "with logo" earns its place: it is how a large share of people
+      /// searching for a QR code generator phrase the query, and the page
+      /// now does it.
+      title: "QR Code Generator with Logo: PNG or SVG",
       description:
-         "Turn a link or any text into a QR code and download it as a PNG or SVG. Free, no sign-up, no expiry, and made in your browser — nothing is uploaded.",
+         "Turn a link or any text into a QR code, put your logo in the middle, and download a PNG or SVG. Free, no sign-up, no expiry, and nothing is uploaded.",
    },
    passwordGenerator: {
       title: "Strong Random Password Generator",
@@ -460,9 +463,9 @@ const TOOL_COPY: Record<ToolKey, ToolCopy> = {
    },
    qrCodeGenerator: {
       name: "QR Code Generator",
-      tagline: "Links and text as a QR code, saved as PNG or SVG",
+      tagline: "Links and text as a QR code, with your logo if you like",
       heading: "QR code generator",
-      lede: "Type or paste a link or any text and the QR code redraws as you go. Download it as a PNG for a document or a message, or as an SVG for print. It is drawn by your browser, so whatever you encode is never sent anywhere.",
+      lede: "Type or paste a link or any text and the QR code redraws as you go. Add your logo to the middle if you like, then download a PNG for a document or a message, or an SVG for print. It is all drawn by your browser, so neither your text nor your logo is sent anywhere.",
    },
    passwordGenerator: {
       name: "Password Generator",
@@ -913,7 +916,11 @@ const FAQ_COPY: Record<ToolKey, FaqEntry[]> = {
       },
       {
          question: "What does error correction do?",
-         answer: "It stores part of the data twice over, so a code that is scratched, creased or partly covered still reads. Level L recovers about 7% of the code, M 15%, Q 25% and H 30%. The cost is density: a stronger level packs more squares into the same space, so it needs a sharper print. M, the default, suits most uses; choose H if a logo is going over the middle.",
+         answer: "It stores part of the data twice over, so a code that is scratched, creased or partly covered still reads. Level L recovers about 7% of the code, M 15%, Q 25% and H 30%. The cost is density: a stronger level packs more squares into the same space, so it needs a sharper print. M, the default, suits most uses, and adding a logo moves the code to H for you.",
+      },
+      {
+         question: "Can I put my logo in the middle?",
+         answer: "Yes. Open Logo and choose an image. The squares behind it are cleared so it sits on white, and the code switches to error correction H so it still scans with part of it covered. The size slider stops at the biggest logo each level can carry: about a quarter of the code's width at H, less at Q and M, and none at L. A wide logo gets the same area in a wider space.",
       },
       {
          question: "Should I download the PNG or the SVG?",
@@ -925,7 +932,7 @@ const FAQ_COPY: Record<ToolKey, FaqEntry[]> = {
       },
       {
          question: "Is what I type sent anywhere?",
-         answer: "No. The code is generated in this tab, and both downloads are made from it there too. Nothing is uploaded, logged or stored, so a private link stays on your device.",
+         answer: "No. The code is generated in this tab, and both downloads are made from it there too. Nothing is uploaded, logged or stored, so a private link or an unreleased logo stays on your device.",
       },
    ],
    passwordGenerator: [
@@ -1860,6 +1867,33 @@ export const COPY = {
          H: "For a code with a logo over its middle, or one that has to last outdoors.",
       } satisfies Record<QrLevel, string>,
       levelNote: "A higher level is sturdier but packs more squares into the same space, so it needs a sharper print to scan.",
+      /// The second collapsible. Its own section rather than more rows
+      /// under error correction, so the default view stays one field and
+      /// two buttons.
+      logo: {
+         summary: "Logo",
+         /// The badge on the closed section while a logo is in the code.
+         on: "On",
+         choose: "Choose an image",
+         replace: "Replace",
+         remove: "Remove",
+         hint: "PNG, JPG, SVG or WebP. It is read in this tab and never uploaded.",
+         sizeLabel: "Size",
+         /// Not "of the code's width": a wide logo is given the same area
+         /// as a square one at the same setting, so it is wider than this.
+         sizeValue: "{percent}%",
+         levelNote: "Adding a logo sets error correction to H, the level that survives the most damage.",
+         /// Shown under the code, not in either section, because the
+         /// level that triggers it is changed in the other one and both
+         /// may be shut.
+         shrunk: "Level {level} leaves room for a logo up to {max}% wide, so it has been shrunk to fit. Choose a higher level to make it bigger.",
+         hidden: "Level {level} has no error correction to spare for a logo, so it is hidden. Choose M or higher to show it.",
+         faults: {
+            notImage: "That file is not an image. Choose a PNG, JPG, SVG or WebP.",
+            tooLarge: "That image is over 10 MB. Choose a smaller file — a logo needs far less than that.",
+            unreadable: "That image could not be read. Try saving it as a PNG and choosing it again.",
+         } satisfies Record<QrLogoFault, string>,
+      },
       empty: "Type or paste a link or some text to make a QR code.",
       faults: {
          /// `{bytes}` and `{limit}` are filled in, so the gap is a number

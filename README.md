@@ -42,7 +42,7 @@ and structured data.
 | `/lorem-ipsum-generator` | Placeholder text by the paragraph, sentence or word |
 | `/uuid-generator` | Random v4 UUIDs, up to 100 at a time, in four formats |
 | `/hash-generator` | SHA-1, SHA-256, SHA-384 and SHA-512, with a checksum check |
-| `/qr-code-generator` | Links and text as a QR code, downloaded as PNG or SVG, with an error-correction slider |
+| `/qr-code-generator` | Links and text as a QR code with an optional centre logo, downloaded as PNG or SVG |
 | `/password-generator` | Strong random passwords with an entropy readout |
 | `/decibel-meter` | Live sound level from the microphone, A-weighted, with a minute of history and a spectrum |
 

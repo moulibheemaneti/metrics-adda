@@ -6,12 +6,20 @@ import {
    QR_BYTE_CAPACITY,
    QR_DEFAULT_LEVEL,
    QR_LEVELS,
+   QR_LOGO_DEFAULT,
+   QR_LOGO_LEVEL,
+   QR_LOGO_MAX,
+   QR_LOGO_MAX_ASPECT,
+   QR_LOGO_MIN,
    QR_PNG_TARGET,
    QR_QUIET_ZONE,
    QR_RECOVERY,
    qrByteLength,
    qrExtent,
+   qrFitLogo,
    qrLevelAt,
+   qrLogoBox,
+   qrLogoHole,
    qrPath,
    qrPngScale,
    qrSvg,
@@ -191,5 +199,185 @@ describe("qrByteLength", () => {
       expect(qrByteLength("abc")).toBe(3)
       expect(qrByteLength("é")).toBe(2)
       expect(qrByteLength("🎉")).toBe(4)
+   })
+})
+
+describe("logo caps", () => {
+   /// A stronger level can always carry at least as big a logo.
+   it("never shrink as the level rises", () => {
+      const caps = QR_LEVELS.map((level) => QR_LOGO_MAX[level])
+
+      expect(caps).toEqual([...caps].sort((a, b) => a - b))
+   })
+
+   it("allow no logo at L, and stay under each level's recovery", () => {
+      expect(QR_LOGO_MAX.L).toBe(0)
+
+      // A logo w wide covers about w² of the code; that has to sit well
+      // inside the share the level can recover.
+      for (const level of QR_LEVELS) {
+         expect((QR_LOGO_MAX[level] / 100) ** 2 * 100).toBeLessThan(QR_RECOVERY[level])
+      }
+   })
+
+   /// The slider's range has to be non-empty at every level that has one,
+   /// and the starting size has to be inside the range at the logo level.
+   it("leave the slider a usable range", () => {
+      for (const level of QR_LEVELS) {
+         if (QR_LOGO_MAX[level] > 0) expect(QR_LOGO_MAX[level]).toBeGreaterThanOrEqual(QR_LOGO_MIN)
+      }
+
+      expect(QR_LOGO_DEFAULT).toBeGreaterThanOrEqual(QR_LOGO_MIN)
+      expect(QR_LOGO_DEFAULT).toBeLessThanOrEqual(QR_LOGO_MAX[QR_LOGO_LEVEL])
+      expect(QR_LOGO_LEVEL).toBe("H")
+   })
+})
+
+describe("qrLogoHole", () => {
+   const matrices = ["a", "https://www.metricsadda.com", "x".repeat(400), "x".repeat(1200)]
+      .map((text) => matrixOf(text, "H"))
+
+   /// The rule the measured caps depend on: whatever shape the logo, the
+   /// space cleared for it never exceeds the cap's area.
+   it("is odd on each side, centred, and inside the level's cap at any shape", () => {
+      for (const matrix of matrices) {
+         for (const aspect of [1, 3, 0.25, 2, 0.5, 1.6]) {
+            for (const level of ["M", "Q", "H"] as const) {
+               const cap = QR_LOGO_MAX[level]
+
+               for (let percent = QR_LOGO_MIN; percent <= cap; percent += 1) {
+                  const hole = qrLogoHole(matrix, percent, aspect, cap)
+                  const label = `${percent}% at ${aspect}:1 on ${matrix.size}`
+
+                  expect(hole.width % 2, label).toBe(1)
+                  expect(hole.height % 2, label).toBe(1)
+                  expect(hole.x * 2 + hole.width, label).toBe(matrix.size)
+                  expect(hole.y * 2 + hole.height, label).toBe(matrix.size)
+                  expect(hole.width * hole.height, label)
+                     .toBeLessThanOrEqual(Math.max(((matrix.size * cap) / 100) ** 2, 9))
+               }
+            }
+         }
+      }
+   })
+
+   it("gives a square logo a square space", () => {
+      for (const matrix of matrices) {
+         const hole = qrLogoHole(matrix, QR_LOGO_DEFAULT, 1, QR_LOGO_MAX.H)
+
+         expect(hole.width).toBe(hole.height)
+      }
+   })
+
+   /// A wordmark gets a wide space, but no wider than the 2:1 that was
+   /// measured — a 3:1 logo gets the same space as a 2:1 one.
+   it("gives a wide logo a wider space, up to 2:1", () => {
+      for (const matrix of matrices.slice(1)) {
+         const wide = qrLogoHole(matrix, QR_LOGO_DEFAULT, 3, QR_LOGO_MAX.H)
+         const tall = qrLogoHole(matrix, QR_LOGO_DEFAULT, 1 / 3, QR_LOGO_MAX.H)
+
+         expect(wide.width).toBeGreaterThan(wide.height)
+         expect(wide).toEqual(qrLogoHole(matrix, QR_LOGO_DEFAULT, QR_LOGO_MAX_ASPECT, QR_LOGO_MAX.H))
+         expect(wide.width / wide.height).toBeLessThan(QR_LOGO_MAX_ASPECT + 0.5)
+         expect([tall.width, tall.height]).toEqual([wide.height, wide.width])
+      }
+   })
+
+   /// Rounding down drew a "20%" logo at 15% on a short link. A 33-module
+   /// code at 20% is 6.6 modules, and the nearest odd span is 7.
+   it("tracks the slider rather than always rounding down", () => {
+      const matrix = matrixOf("https://www.metricsadda.com", "H")
+
+      expect(matrix.size).toBe(33)
+      expect(qrLogoHole(matrix, 20, 1, QR_LOGO_MAX.H).width).toBe(7)
+   })
+
+   it("keeps at least three modules, so there is room to show an image", () => {
+      const hole = qrLogoHole(matrixOf("a", "H"), 1)
+
+      expect([hole.width, hole.height]).toEqual([3, 3])
+   })
+
+   /// 3 × 3 is the floor on the smallest code there is, and it must not
+   /// break the smallest cap — or M would show a logo bigger than it allows.
+   it("keeps the three-module floor under the smallest cap", () => {
+      expect(3 * 3).toBeLessThanOrEqual(((21 * QR_LOGO_MAX.M) / 100) ** 2)
+   })
+})
+
+describe("qrPath with a logo", () => {
+   it("leaves the cleared rectangle empty and draws everything else", () => {
+      const matrix = matrixOf("https://www.metricsadda.com", "H")
+      const hole = qrLogoHole(matrix, QR_LOGO_MAX.H, 2)
+      const painted = paint(qrPath(matrix, hole), qrExtent(matrix))
+
+      for (let y = 0; y < matrix.size; y += 1) {
+         for (let x = 0; x < matrix.size; x += 1) {
+            const cleared = x >= hole.x && x < hole.x + hole.width
+              && y >= hole.y && y < hole.y + hole.height
+            const expected = cleared ? false : matrix.modules[y]?.[x] ?? false
+
+            expect(painted[y + QR_QUIET_ZONE]?.[x + QR_QUIET_ZONE], `module ${x},${y}`).toBe(expected)
+         }
+      }
+   })
+})
+
+describe("qrLogoBox", () => {
+   it("sits inside the cleared rectangle, inset evenly from its edges", () => {
+      const hole = { x: 10, y: 12, width: 9, height: 5 }
+      const box = qrLogoBox(hole)
+      const left = hole.x + QR_QUIET_ZONE
+      const top = hole.y + QR_QUIET_ZONE
+
+      expect(box.x).toBeGreaterThan(left)
+      expect(box.y).toBeGreaterThan(top)
+      expect(box.x - left).toBeCloseTo(box.y - top)
+      expect(box.x - left).toBeCloseTo(left + hole.width - (box.x + box.width))
+      expect(box.y - top).toBeCloseTo(top + hole.height - (box.y + box.height))
+   })
+})
+
+describe("qrFitLogo", () => {
+   const box = { x: 10, y: 10, width: 6, height: 6 }
+
+   it("keeps a wide logo's shape and centres it vertically", () => {
+      expect(qrFitLogo(box, 300, 100)).toEqual({ x: 10, y: 12, width: 6, height: 2 })
+   })
+
+   it("keeps a tall logo's shape and centres it horizontally", () => {
+      expect(qrFitLogo(box, 100, 200)).toEqual({ x: 11.5, y: 10, width: 3, height: 6 })
+   })
+
+   it("fills the box with a logo of the box's own shape", () => {
+      expect(qrFitLogo({ x: 2, y: 3, width: 8, height: 4 }, 200, 100))
+         .toEqual({ x: 2, y: 3, width: 8, height: 4 })
+   })
+})
+
+describe("qrSvg with a logo", () => {
+   it("embeds the image over the cleared square, readable by older tools too", () => {
+      const matrix = matrixOf("hello", "H")
+      const hole = qrLogoHole(matrix, QR_LOGO_DEFAULT)
+      const box = qrLogoBox(hole)
+      const svg = qrSvg(matrix, { hole, href: "data:image/png;base64,AAAA" })
+
+      expect(svg).toContain("xmlns:xlink=\"http://www.w3.org/1999/xlink\"")
+      expect(svg).toContain(" href=\"data:image/png;base64,AAAA\"")
+      expect(svg).toContain("xlink:href=\"data:image/png;base64,AAAA\"")
+      expect(svg).toContain(`x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}"`)
+      expect(svg).toContain(qrPath(matrix, hole))
+   })
+
+   it("escapes the href so it cannot close its own attribute", () => {
+      const matrix = matrixOf("hello", "H")
+      const svg = qrSvg(matrix, { hole: qrLogoHole(matrix, 20), href: "a\"><script>&" })
+
+      expect(svg).not.toContain("<script>")
+      expect(svg).toContain("a&quot;>&lt;script>&amp;")
+   })
+
+   it("has no image without a logo", () => {
+      expect(qrSvg(matrixOf("hello"))).not.toContain("<image")
    })
 })

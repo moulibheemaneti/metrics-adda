@@ -141,6 +141,14 @@ still the shape to avoid; two that share a structure is not.
   `uqr` hits through `encodeURI`). The error-correction slider defaults to M
   and sits in a closed `<details>`, so the common case is one field and a
   download button.
+
+  The centre logo followed. Its size caps per level (none at L, then 15%, 20%
+  and 25% of the width) were measured rather than borrowed: codes at every
+  version from 1 to 25 were covered with growing noise-filled squares until a
+  decoder stopped reading them, and the caps sit about a fifth under the worst
+  case. Equal-area rectangles to 2:1 were checked the same way, which is what
+  lets a wordmark have a wide space instead of a square one. The image is
+  flattened to a PNG on arrival and never leaves the tab.
 - **`/markdown-preview`** — the obvious sixth developer tool, and the one that
   does not fit. A preview needs a parser *and* an HTML sanitizer, neither of
   which can be hand-rolled safely, so it is a two-dependency ask where the QR

@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest"
-import { flushPromises } from "@vue/test-utils"
+import { afterEach, describe, expect, it, vi } from "vitest"
+import { type DOMWrapper, flushPromises } from "@vue/test-utils"
 import { mountSuspended } from "@nuxt/test-utils/runtime"
 import AgeCalculatorPanel from "../../app/components/AgeCalculatorPanel.vue"
 import Base64EncoderPanel from "../../app/components/Base64EncoderPanel.vue"
@@ -707,6 +707,12 @@ describe("QrCodeGeneratorPanel", () => {
       expect(panel.text()).not.toContain(COPY.qr.downloadPng)
    })
 
+   it("starts the text box at a single row", async() => {
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+
+      expect(panel.find("textarea").attributes("rows")).toBe("1")
+   })
+
    /// The message quotes the level and both numbers, so someone over the
    /// limit knows by how much and what to change.
    it("says how far over the limit too much text is", async() => {
@@ -726,6 +732,130 @@ describe("QrCodeGeneratorPanel", () => {
 
       expect(panel.find(".qr__fault").exists()).toBe(false)
       expect(panel.find(".qr__code").exists()).toBe(true)
+   })
+})
+
+describe("QrCodeGeneratorPanel logo", () => {
+   type Panel = Awaited<ReturnType<typeof mountSuspended<typeof QrCodeGeneratorPanel>>>
+
+   const LOGO_HREF = "data:image/png;base64,TE9HTw=="
+
+   /// happy-dom decodes no images and draws on no canvas, and the test
+   /// runtime's own `URL.createObjectURL` rejects happy-dom's `File`, so
+   /// those calls are stood in for. What is under test is what the panel
+   /// does with a logo, not the browser's PNG encoder.
+   const stubDecoding = (): void => {
+      vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:logo")
+      vi.spyOn(URL, "revokeObjectURL").mockReturnValue(undefined)
+      vi.spyOn(HTMLImageElement.prototype, "decode").mockResolvedValue(undefined)
+      vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
+         drawImage: () => undefined,
+         imageSmoothingQuality: "low",
+      } as unknown as ReturnType<HTMLCanvasElement["getContext"]>)
+      vi.spyOn(HTMLCanvasElement.prototype, "toDataURL").mockReturnValue(LOGO_HREF)
+   }
+
+   afterEach(() => {
+      vi.restoreAllMocks()
+   })
+
+   const choose = async(panel: Panel, file: File): Promise<void> => {
+      const input = panel.find("input[type=\"file\"]")
+
+      Object.defineProperty(input.element, "files", { value: [file], configurable: true })
+      await input.trigger("change")
+      await flushPromises()
+   }
+
+   const logoFile = (): File => new File(["<svg/>"], "brand.svg", { type: "image/svg+xml" })
+   const levelSlider = (panel: Panel): DOMWrapper<Element> | undefined =>
+      panel.findAll("input[type=\"range\"]")[0]
+   const levelBadge = (panel: Panel): string => panel.findAll(".qr__summary-value")[0]?.text() ?? ""
+
+   it("starts with the logo section shut and no logo in the code", async() => {
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+      const sections = panel.findAll("details")
+
+      expect(sections).toHaveLength(2)
+      expect(sections[1]?.attributes("open")).toBeUndefined()
+      expect(sections[1]?.text()).toContain(COPY.qr.logo.choose)
+      expect(panel.find(".qr__code image").exists()).toBe(false)
+   })
+
+   /// The decision the panel was built around: a logo moves the code to
+   /// H, and the squares behind it are cleared rather than painted over.
+   it("raises the level to H and clears the middle for a logo", async() => {
+      stubDecoding()
+
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+
+      await choose(panel, logoFile())
+
+      expect(levelBadge(panel)).toBe(QR_LOGO_LEVEL)
+      expect(panel.find(".qr__code image").attributes("href")).toBe(LOGO_HREF)
+      expect(panel.find(".qr__logo-name").text()).toBe("brand.svg")
+
+      const encoded = encodeQr(COPY.qr.sample, QR_LOGO_LEVEL)
+
+      if (!encoded.ok) throw new Error("the sample does not encode at H")
+
+      // The stub reports no natural size, so the logo is drawn square.
+      const hole = qrLogoHole(encoded.matrix, QR_LOGO_DEFAULT, 1, QR_LOGO_MAX[QR_LOGO_LEVEL])
+
+      expect(panel.find(".qr__code path").attributes("d")).toBe(qrPath(encoded.matrix, hole))
+   })
+
+   it("shrinks the logo at a weaker level and hides it at L", async() => {
+      stubDecoding()
+
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+
+      await choose(panel, logoFile())
+      await levelSlider(panel)?.setValue(String(QR_LEVELS.indexOf("M")))
+
+      const sizeSlider = panel.findAll("input[type=\"range\"]")[1]
+
+      expect((sizeSlider?.element as HTMLInputElement).value).toBe(String(QR_LOGO_MAX.M))
+      expect(panel.find(".qr__logo-note").text()).toContain(`up to ${QR_LOGO_MAX.M}% wide`)
+      expect(panel.find(".qr__code image").exists()).toBe(true)
+
+      await levelSlider(panel)?.setValue(String(QR_LEVELS.indexOf("L")))
+
+      expect(panel.find(".qr__code image").exists()).toBe(false)
+      expect(panel.find(".qr__logo-note").text())
+         .toBe(COPY.qr.logo.hidden.replace("{level}", "L"))
+
+      // Raising the level again gives back the size that was asked for.
+      await levelSlider(panel)?.setValue(String(QR_LEVELS.indexOf("H")))
+
+      expect(panel.find(".qr__logo-note").exists()).toBe(false)
+      expect((panel.findAll("input[type=\"range\"]")[1]?.element as HTMLInputElement).value)
+         .toBe(String(QR_LOGO_DEFAULT))
+   })
+
+   it("puts the level back when the logo is removed", async() => {
+      stubDecoding()
+
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+
+      await choose(panel, logoFile())
+
+      expect(levelBadge(panel)).toBe("H")
+
+      await panel.findAll("details")[1]?.find("button").trigger("click")
+
+      expect(levelBadge(panel)).toBe(QR_DEFAULT_LEVEL)
+      expect(panel.find(".qr__code image").exists()).toBe(false)
+   })
+
+   it("refuses a file that is not an image and leaves the code alone", async() => {
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+
+      await choose(panel, new File(["%PDF"], "brief.pdf", { type: "application/pdf" }))
+
+      expect(panel.find(".qr__logo-fault").text()).toBe(COPY.qr.logo.faults.notImage)
+      expect(levelBadge(panel)).toBe(QR_DEFAULT_LEVEL)
+      expect(panel.find(".qr__code image").exists()).toBe(false)
    })
 })
 
