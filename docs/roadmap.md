@@ -149,6 +149,13 @@ still the shape to avoid; two that share a structure is not.
   case. Equal-area rectangles to 2:1 were checked the same way, which is what
   lets a wordmark have a wide space instead of a square one. The image is
   flattened to a PNG on arrival and never leaves the tab.
+
+  A later check against the thonky.com QR tutorial found the logo covers
+  alignment patterns from version 7 up. ZXing, reading simulated photos at
+  tilts to 70° and on cylinders to 180°, broke at the same point with or
+  without those patterns kept visible, so they stay covered. The same review
+  fixed the "too long" message, which had quoted byte-mode limits for text
+  stored in numeric or alphanumeric mode.
 - **`/markdown-preview`** — the obvious sixth developer tool, and the one that
   does not fit. A preview needs a parser *and* an HTML sanitizer, neither of
   which can be hand-rolled safely, so it is a two-dependency ask where the QR

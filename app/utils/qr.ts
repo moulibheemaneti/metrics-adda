@@ -110,6 +110,16 @@ export const QR_PNG_TARGET = 1024
  * Phone scanners are better decoders than the one used, so the margin is
  * real rather than nominal.
  *
+ * From version 7 up the cleared space also covers alignment patterns —
+ * function patterns, which error correction does not repair, and which a
+ * scanner uses to follow the grid across a tilted or curved code. That was
+ * measured too, with ZXing: versions 7, 13 and 25 at H and M, photographed
+ * at tilts up to 70° and wrapped round cylinders up to 180°, blurred and
+ * noised. Keeping the alignment patterns visible through the logo changed
+ * the breaking point in none of the 24 cases, so they are not preserved.
+ * The logo itself costs one 15° step of curvature in 2 of 12 codes, and
+ * nothing at any tilt.
+ *
  * L has no cap because it has no logo. Its worst case was 17%, which
  * after a margin leaves a square too small to hold anything recognisable,
  * and a 7% recovery level has no business being spent on decoration.
