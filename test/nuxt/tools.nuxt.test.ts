@@ -8,6 +8,7 @@ import HashGeneratorPanel from "../../app/components/HashGeneratorPanel.vue"
 import HeightConverter from "../../app/components/HeightConverter.vue"
 import PasswordGeneratorPanel from "../../app/components/PasswordGeneratorPanel.vue"
 import PercentageCalculatorPanel from "../../app/components/PercentageCalculatorPanel.vue"
+import QrCodeGeneratorPanel from "../../app/components/QrCodeGeneratorPanel.vue"
 import SiteMenu from "../../app/components/SiteMenu.vue"
 import TextStatsPanel from "../../app/components/TextStatsPanel.vue"
 import ToolNav from "../../app/components/ToolNav.vue"
@@ -643,6 +644,88 @@ describe("HashGeneratorPanel", () => {
 
       expect(panel.find(".hash__note").text()).toBe(COPY.hash.empty)
       expect(digests(panel)).toHaveLength(0)
+   })
+})
+
+describe("QrCodeGeneratorPanel", () => {
+   type Panel = Awaited<ReturnType<typeof mountSuspended<typeof QrCodeGeneratorPanel>>>
+
+   const path = (panel: Panel): string | undefined => panel.find(".qr__code path").attributes("d")
+
+   /// A QR code is a pure function of its text, so the sample's code is in
+   /// the server HTML. A crawler, and anyone before hydration, sees a code.
+   it("draws the sample's code before any interaction", async() => {
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+      const expected = encodeQr(COPY.qr.sample, QR_DEFAULT_LEVEL)
+
+      if (!expected.ok) throw new Error("the sample does not encode")
+
+      expect(panel.find("textarea").element.value).toBe(COPY.qr.sample)
+      expect(path(panel)).toBe(qrPath(expected.matrix))
+   })
+
+   it("redraws when the text changes", async() => {
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+      const before = path(panel)
+
+      await panel.find("textarea").setValue("hello")
+
+      expect(path(panel)).not.toBe(before)
+   })
+
+   /// The options are there but out of the way: shut on arrival, with the
+   /// level in force shown on the row that opens them.
+   it("keeps the error-correction controls collapsed at the default level", async() => {
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+      const details = panel.find("details")
+
+      expect(details.exists()).toBe(true)
+      expect(details.attributes("open")).toBeUndefined()
+      expect(details.find("input[type=\"range\"]").exists()).toBe(true)
+      expect(panel.find(".qr__summary-value").text()).toBe(QR_DEFAULT_LEVEL)
+   })
+
+   it("re-encodes at the level the slider picks", async() => {
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+      const expected = encodeQr(COPY.qr.sample, "H")
+
+      if (!expected.ok) throw new Error("the sample does not encode at H")
+
+      await panel.find("input[type=\"range\"]").setValue(String(QR_LEVELS.indexOf("H")))
+
+      expect(panel.find(".qr__summary-value").text()).toBe("H")
+      expect(path(panel)).toBe(qrPath(expected.matrix))
+   })
+
+   it("offers no downloads for an empty box", async() => {
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+
+      await panel.find("textarea").setValue("")
+
+      expect(panel.find(".qr__note").text()).toBe(COPY.qr.empty)
+      expect(panel.find(".qr__code").exists()).toBe(false)
+      expect(panel.text()).not.toContain(COPY.qr.downloadPng)
+   })
+
+   /// The message quotes the level and both numbers, so someone over the
+   /// limit knows by how much and what to change.
+   it("says how far over the limit too much text is", async() => {
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+
+      await panel.find("textarea").setValue("x".repeat(2400))
+
+      const fault = panel.find(".qr__fault").text()
+
+      expect(fault).toContain("level M")
+      expect(fault).toContain("2,400")
+      expect(fault).toContain(QR_BYTE_CAPACITY.M.toLocaleString("en"))
+      expect(panel.find(".qr__code").exists()).toBe(false)
+
+      // The same text fits at L, which is the fix the message suggests.
+      await panel.find("input[type=\"range\"]").setValue("0")
+
+      expect(panel.find(".qr__fault").exists()).toBe(false)
+      expect(panel.find(".qr__code").exists()).toBe(true)
    })
 })
 
