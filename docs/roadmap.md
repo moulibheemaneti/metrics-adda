@@ -99,6 +99,7 @@ small batches for the same reasons. Two conclusions still bind on future work.
 | `/base64-encoder` | Both directions, UTF-8 throughout; filed under `"text"` |
 | `/url-encoder` | Percent-encoding both ways, with the value-or-whole-URL choice made visible |
 | `/hash-generator` | Four SHA digests at once and a checksum check; filed under `"generators"` |
+| `/qr-code-generator` | The first tool to need a dependency, `uqr`; server-rendered, PNG and SVG downloads |
 
 The generators added a `"generators"` group, and the percentage calculator a
 `"calculators"` one — which takes the header's top level to six, the cap
@@ -131,10 +132,30 @@ still the shape to avoid; two that share a structure is not.
 
 ### Deferred, and why
 
-- **`/qr-code-generator`** — deferred on the dependency. It is the only item
-  above needing one, and the call is to stay dependency-free for now. `uqr`
-  (unjs, zero-dep, MIT, SVG output) is the candidate when that is revisited;
-  the alternatives are heavier and drag in Node-only code.
+- ~~**`/qr-code-generator`**~~ — **shipped.** It was deferred on the
+  dependency, and the call was revisited rather than worked around: `uqr`
+  (unjs, zero-dep, MIT) does the encoding, because Reed–Solomon and mask
+  scoring are exactly the code that looks right and scans wrong. Everything
+  around it is in `app/utils/qr.ts` — the quiet zone, the run-merged SVG path
+  and the two faults (too long for the level, and a lone surrogate, which
+  `uqr` hits through `encodeURI`). The error-correction slider defaults to M
+  and sits in a closed `<details>`, so the common case is one field and a
+  download button.
+
+  The centre logo followed. Its size caps per level (none at L, then 15%, 20%
+  and 25% of the width) were measured rather than borrowed: codes at every
+  version from 1 to 25 were covered with growing noise-filled squares until a
+  decoder stopped reading them, and the caps sit about a fifth under the worst
+  case. Equal-area rectangles to 2:1 were checked the same way, which is what
+  lets a wordmark have a wide space instead of a square one. The image is
+  flattened to a PNG on arrival and never leaves the tab.
+
+  A later check against the thonky.com QR tutorial found the logo covers
+  alignment patterns from version 7 up. ZXing, reading simulated photos at
+  tilts to 70° and on cylinders to 180°, broke at the same point with or
+  without those patterns kept visible, so they stay covered. The same review
+  fixed the "too long" message, which had quoted byte-mode limits for text
+  stored in numeric or alphanumeric mode.
 - **`/markdown-preview`** — the obvious sixth developer tool, and the one that
   does not fit. A preview needs a parser *and* an HTML sanitizer, neither of
   which can be hand-rolled safely, so it is a two-dependency ask where the QR
