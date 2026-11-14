@@ -37,7 +37,7 @@
       "@moulibheemaneti/commitguard": "^0.1.4",
       "@nuxt/fonts": "^1.0.1",
       "@nuxt/image": "^2.2.0",
-      "@nuxt/test-utils": "^4.3.4",
+      "@nuxt/test-utils": "^4.4.0",
       "@nuxtjs/seo": "^5.3.16",
       "@resvg/resvg-js": "^2.6.2",
       "@semantic-release/changelog": "^7.0.0",
@@ -50,7 +50,7 @@
       "@vite-pwa/nuxt": "^1.1.1",
       "@vue/test-utils": "^2.5.1",
       "conventional-changelog-conventionalcommits": "^9.3.1",
-      "happy-dom": "^21.0.3",
+      "happy-dom": "^21.0.4",
       "sass": "^1.105.2",
       "sass-embedded": "^1.105.2",
       "sass-true": "^10.1.0",
@@ -60,7 +60,7 @@
       "stylelint-config-standard": "^40.0.0",
       "stylelint-config-standard-scss": "^17.0.0",
       "typescript": "^6.0.3",
-      "vitest": "^5.0.5",
+      "vitest": "^5.1.0",
       "vue-tsc": "^3.3.13"
    }
 }
