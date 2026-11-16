@@ -3,6 +3,21 @@
 All notable changes to this project will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.24.0](https://github.com/moulibheemaneti/metrics-adda/compare/v1.23.1...v1.24.0) (2026-11-16)
+
+### ✨ Features
+
+* **qr:** add a centre logo and start the text box at one row ([6d28691](https://github.com/moulibheemaneti/metrics-adda/commit/6d2869108960aba9dac0787625947b5837f602b0))
+* **qr:** add a qr code generator ([a417024](https://github.com/moulibheemaneti/metrics-adda/commit/a417024e3272823146dabea826183c4295922f27))
+
+### 🐛 Bug Fixes
+
+* **qr:** quote the capacity of the mode the text is encoded in ([1261146](https://github.com/moulibheemaneti/metrics-adda/commit/12611461b285db888c3355ee53b77e3151bb4058))
+
+### 📚 Documentation
+
+* **qr:** record that covered alignment patterns do not hurt scanning ([605bb86](https://github.com/moulibheemaneti/metrics-adda/commit/605bb8636a372b1cf76ff528c2847de10546ec4f))
+
 ## [1.23.1](https://github.com/moulibheemaneti/metrics-adda/compare/v1.23.0...v1.23.1) (2026-10-20)
 
 ### 🐛 Bug Fixes
