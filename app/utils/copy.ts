@@ -28,6 +28,7 @@ import type { MeterFault, SoundReferenceId } from "./decibel"
 import type { HashAlgorithm, HashFormat } from "./hash"
 import type { LoremUnit } from "./lorem"
 import type { PercentageMode, PercentageReadout } from "./percentage"
+import type { QrFault, QrLevel, QrLogoFault, QrMode } from "./qr"
 import type { CaseId } from "./textCase"
 // Type-only, and `tools.ts` imports `ToolKey` back from here. The cycle is
 // erased at compile time, which is what keeps each module's names defined
@@ -57,6 +58,7 @@ export type ToolKey
      | "loremIpsumGenerator"
      | "uuidGenerator"
      | "hashGenerator"
+     | "qrCodeGenerator"
      | "passwordGenerator"
      | "decibelMeter"
 
@@ -219,9 +221,9 @@ export const SEO: Record<PageKey, SeoCopy> = {
          "Count words and characters, switch between ten letter cases, encode and decode base64 and URLs, and time your typing. Whatever you paste stays in the tab.",
    },
    generatorsHub: {
-      title: "Free Generators: Lorem Ipsum, UUID & Hash",
+      title: "Free Generators: Lorem Ipsum, UUID, Hash & QR Code",
       description:
-         "Generate placeholder text by paragraph, sentence or word, version 4 UUIDs in batches, and SHA-256 hashes of any text. All run in your browser.",
+         "Generate placeholder text, version 4 UUIDs in batches, SHA-256 hashes of any text, and QR codes for any link as PNG or SVG. All run in your browser.",
    },
    weightConverter: {
       title: "Weight Converter: kg, lb, oz, g & stone",
@@ -323,6 +325,14 @@ export const SEO: Record<PageKey, SeoCopy> = {
       title: "Hash Generator: SHA-256, SHA-1, SHA-384 & SHA-512",
       description:
          "Generate SHA-256, SHA-1, SHA-384 and SHA-512 hashes of any text, in hex or base64, and check one against a published checksum. Runs in your browser.",
+   },
+   qrCodeGenerator: {
+      /// "with logo" earns its place: it is how a large share of people
+      /// searching for a QR code generator phrase the query, and the page
+      /// now does it.
+      title: "QR Code Generator with Logo: PNG or SVG",
+      description:
+         "Turn a link or any text into a QR code, put your logo in the middle, and download a PNG or SVG. Free, no sign-up, no expiry, and nothing is uploaded.",
    },
    passwordGenerator: {
       title: "Strong Random Password Generator",
@@ -450,6 +460,12 @@ const TOOL_COPY: Record<ToolKey, ToolCopy> = {
       tagline: "SHA-256, SHA-1, SHA-384 and SHA-512 at once",
       heading: "Hash generator",
       lede: "Paste text and read all four SHA digests of it at once, in hex or base64. Paste a published checksum underneath and the page will tell you which algorithm it matches. Everything is computed by your browser and sent nowhere.",
+   },
+   qrCodeGenerator: {
+      name: "QR Code Generator",
+      tagline: "Links and text as a QR code, with your logo if you like",
+      heading: "QR code generator",
+      lede: "Type or paste a link or any text and the QR code redraws as you go. Add your logo to the middle if you like, then download a PNG for a document or a message, or an SVG for print. It is all drawn by your browser, so neither your text nor your logo is sent anywhere.",
    },
    passwordGenerator: {
       name: "Password Generator",
@@ -893,6 +909,32 @@ const FAQ_COPY: Record<ToolKey, FaqEntry[]> = {
          answer: "You can, but do not store the result. A plain SHA digest is far too fast: a single GPU works through billions of guesses a second, so a stolen table of them falls quickly. Password storage needs a deliberately slow algorithm with a per-user salt \u2014 bcrypt, scrypt or Argon2 \u2014 not a general-purpose hash.",
       },
    ],
+   qrCodeGenerator: [
+      {
+         question: "Do these QR codes expire?",
+         answer: "No. The link or text is written into the pattern itself, so there is no server to look it up on and nothing that can be switched off. A code made here works for as long as whatever it points to does. The flip side is that it cannot be edited once printed: to change where it leads, make a new one.",
+      },
+      {
+         question: "What does error correction do?",
+         answer: "It stores part of the data twice over, so a code that is scratched, creased or partly covered still reads. Level L recovers about 7% of the code, M 15%, Q 25% and H 30%. The cost is density: a stronger level packs more squares into the same space, so it needs a sharper print. M, the default, suits most uses, and adding a logo moves the code to H for you.",
+      },
+      {
+         question: "Can I put my logo in the middle?",
+         answer: "Yes. Open Logo and choose an image. The squares behind it are cleared so it sits on white, and the code switches to error correction H so it still scans with part of it covered. The size slider stops at the biggest logo each level can carry: about a quarter of the code's width at H, less at Q and M, and none at L. A wide logo gets the same area in a wider space.",
+      },
+      {
+         question: "Should I download the PNG or the SVG?",
+         answer: "The PNG for a document, a slide or a message: it is an ordinary image about 1,000 pixels across. The SVG for print: it is drawn from shapes rather than pixels, so it stays sharp at any size, from a business card to a poster.",
+      },
+      {
+         question: "How much text fits in one QR code?",
+         answer: "Up to 2,953 bytes at level L, falling to 1,273 at H. Plain English is a byte a character; accented letters take two and emoji four. The more you put in, the denser and harder to scan the code becomes, so for a link, shorter is better.",
+      },
+      {
+         question: "Is what I type sent anywhere?",
+         answer: "No. The code is generated in this tab, and both downloads are made from it there too. Nothing is uploaded, logged or stored, so a private link or an unreleased logo stays on your device.",
+      },
+   ],
    passwordGenerator: [
       {
          question: "Are these passwords safe to use?",
@@ -993,7 +1035,7 @@ export const COPY = {
       },
       generators: {
          heading: "Generators",
-         lede: "Placeholder copy measured in paragraphs, sentences, words or characters, version 4 UUIDs drawn from the browser's own randomness, and SHA digests of whatever you paste.",
+         lede: "Placeholder copy measured in paragraphs, sentences, words or characters, version 4 UUIDs drawn from the browser's own randomness, SHA digests of whatever you paste, and QR codes for any link.",
          plural: "generators",
       },
       health: {
@@ -1092,7 +1134,7 @@ export const COPY = {
       headingLead: "Everyday tools that are",
       headingAccent: "instant and exact",
       heading: "Everyday tools that are instant and exact",
-      tagline: "Converters for weight, height, temperature, speed, volume, area, time and data, plus a word counter, a case converter, a typing speed test, a BMI calculator, a decibel meter, and generators for passwords, UUIDs and placeholder text. Nothing to install, and nothing you type ever leaves your browser.",
+      tagline: "Converters for weight, height, temperature, speed, volume, area, time and data, plus a word counter, a case converter, a typing speed test, a BMI calculator, a decibel meter, and generators for passwords, UUIDs, QR codes and placeholder text. Nothing to install, and nothing you type ever leaves your browser.",
       // No "All tools" heading any more: the grid under it became one
       // section per category, and each of those carries its own heading
       // from `COPY.groups`. A wrapper heading over six headings would add
@@ -1790,6 +1832,84 @@ export const COPY = {
       /// Split from the label for the same reason as the counter's tile —
       /// see `stats.noSpaces`.
       characterCountNoSpaces: "Characters (no spaces)",
+   },
+   qr: {
+      inputLabel: "Text or link",
+      sample: "https://www.metricsadda.com",
+      /// The accessible name of the preview. It does not repeat the text:
+      /// that is in the field directly above, and a long URL read aloud a
+      /// second time helps nobody.
+      previewLabel: "QR code for the text above",
+      downloadPng: "Download PNG",
+      downloadSvg: "Download SVG",
+      /// The download's name, before its extension.
+      filename: "qr-code",
+      /// The collapsible section. Closed by default: M is right for most
+      /// codes, and someone who only wants a link as a QR code should not
+      /// have to read about Reed–Solomon to get one.
+      optionsSummary: "Error correction",
+      levelLabel: "Level",
+      levels: {
+         L: "Low",
+         M: "Medium",
+         Q: "Quartile",
+         H: "High",
+      } satisfies Record<QrLevel, string>,
+      /// `{level}` is the letter, `{name}` the word above and `{percent}`
+      /// the recovery figure from `QR_RECOVERY`, so the number cannot drift
+      /// from the one the code applies. Used for the slider's visible
+      /// readout and its `aria-valuetext` alike.
+      levelValue: "{level} ({name}) — survives up to {percent}% damage",
+      levelHints: {
+         L: "The smallest grid, and the least forgiving. For a clean screen, or when space is tight.",
+         M: "The default. Copes with light wear on a print and still scans quickly.",
+         Q: "For codes that get handled — packaging, labels, anything that lives in a pocket.",
+         H: "For a code with a logo over its middle, or one that has to last outdoors.",
+      } satisfies Record<QrLevel, string>,
+      levelNote: "A higher level is sturdier but packs more squares into the same space, so it needs a sharper print to scan.",
+      /// The second collapsible. Its own section rather than more rows
+      /// under error correction, so the default view stays one field and
+      /// two buttons.
+      logo: {
+         summary: "Logo",
+         /// The badge on the closed section while a logo is in the code.
+         on: "On",
+         choose: "Choose an image",
+         replace: "Replace",
+         remove: "Remove",
+         hint: "PNG, JPG, SVG or WebP. It is read in this tab and never uploaded.",
+         sizeLabel: "Size",
+         /// Not "of the code's width": a wide logo is given the same area
+         /// as a square one at the same setting, so it is wider than this.
+         sizeValue: "{percent}%",
+         levelNote: "Adding a logo sets error correction to H, the level that survives the most damage.",
+         /// Shown under the code, not in either section, because the
+         /// level that triggers it is changed in the other one and both
+         /// may be shut.
+         shrunk: "Level {level} leaves room for a logo up to {max}% wide, so it has been shrunk to fit. Choose a higher level to make it bigger.",
+         hidden: "Level {level} has no error correction to spare for a logo, so it is hidden. Choose M or higher to show it.",
+         faults: {
+            notImage: "That file is not an image. Choose a PNG, JPG, SVG or WebP.",
+            tooLarge: "That image is over 10 MB. Choose a smaller file — a logo needs far less than that.",
+            unreadable: "That image could not be read. Try saving it as a PNG and choosing it again.",
+         } satisfies Record<QrLogoFault, string>,
+      },
+      empty: "Type or paste a link or some text to make a QR code.",
+      faults: {
+         /// `{count}`, `{unit}` and `{limit}` are filled in, so the gap is a
+         /// number rather than a vague "too long" — and in the unit the
+         /// text was actually encoded in, from `units` below.
+         tooLong: "That is more than one QR code holds at level {level}: {count} {unit} against a limit of {limit}. Shorten it, or open Error correction and choose a lower level.",
+         loneSurrogate: "This text carries half of a character — one piece of an emoji or other symbol, with its other half missing — so it cannot be encoded. Retyping or re-pasting that character usually fixes it.",
+      } satisfies Record<QrFault, string>,
+      /// What the fault message counts in. Digits and capitals pack
+      /// tighter than ordinary text, so each mode has its own limit and
+      /// its own unit — see `QR_CAPACITY`.
+      units: {
+         numeric: "digits",
+         alphanumeric: "characters",
+         byte: "bytes",
+      } satisfies Record<QrMode, string>,
    },
    uuid: {
       outputLabel: "Generated UUIDs",

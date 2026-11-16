@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest"
-import { flushPromises } from "@vue/test-utils"
+import { afterEach, describe, expect, it, vi } from "vitest"
+import { type DOMWrapper, flushPromises } from "@vue/test-utils"
 import { mountSuspended } from "@nuxt/test-utils/runtime"
 import AgeCalculatorPanel from "../../app/components/AgeCalculatorPanel.vue"
 import Base64EncoderPanel from "../../app/components/Base64EncoderPanel.vue"
@@ -8,6 +8,7 @@ import HashGeneratorPanel from "../../app/components/HashGeneratorPanel.vue"
 import HeightConverter from "../../app/components/HeightConverter.vue"
 import PasswordGeneratorPanel from "../../app/components/PasswordGeneratorPanel.vue"
 import PercentageCalculatorPanel from "../../app/components/PercentageCalculatorPanel.vue"
+import QrCodeGeneratorPanel from "../../app/components/QrCodeGeneratorPanel.vue"
 import SiteMenu from "../../app/components/SiteMenu.vue"
 import TextStatsPanel from "../../app/components/TextStatsPanel.vue"
 import ToolNav from "../../app/components/ToolNav.vue"
@@ -643,6 +644,240 @@ describe("HashGeneratorPanel", () => {
 
       expect(panel.find(".hash__note").text()).toBe(COPY.hash.empty)
       expect(digests(panel)).toHaveLength(0)
+   })
+})
+
+describe("QrCodeGeneratorPanel", () => {
+   type Panel = Awaited<ReturnType<typeof mountSuspended<typeof QrCodeGeneratorPanel>>>
+
+   const path = (panel: Panel): string | undefined => panel.find(".qr__code path").attributes("d")
+
+   /// A QR code is a pure function of its text, so the sample's code is in
+   /// the server HTML. A crawler, and anyone before hydration, sees a code.
+   it("draws the sample's code before any interaction", async() => {
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+      const expected = encodeQr(COPY.qr.sample, QR_DEFAULT_LEVEL)
+
+      if (!expected.ok) throw new Error("the sample does not encode")
+
+      expect(panel.find("textarea").element.value).toBe(COPY.qr.sample)
+      expect(path(panel)).toBe(qrPath(expected.matrix))
+   })
+
+   it("redraws when the text changes", async() => {
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+      const before = path(panel)
+
+      await panel.find("textarea").setValue("hello")
+
+      expect(path(panel)).not.toBe(before)
+   })
+
+   /// The options are there but out of the way: shut on arrival, with the
+   /// level in force shown on the row that opens them.
+   it("keeps the error-correction controls collapsed at the default level", async() => {
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+      const details = panel.find("details")
+
+      expect(details.exists()).toBe(true)
+      expect(details.attributes("open")).toBeUndefined()
+      expect(details.find("input[type=\"range\"]").exists()).toBe(true)
+      expect(panel.find(".qr__summary-value").text()).toBe(QR_DEFAULT_LEVEL)
+   })
+
+   it("re-encodes at the level the slider picks", async() => {
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+      const expected = encodeQr(COPY.qr.sample, "H")
+
+      if (!expected.ok) throw new Error("the sample does not encode at H")
+
+      await panel.find("input[type=\"range\"]").setValue(String(QR_LEVELS.indexOf("H")))
+
+      expect(panel.find(".qr__summary-value").text()).toBe("H")
+      expect(path(panel)).toBe(qrPath(expected.matrix))
+   })
+
+   it("offers no downloads for an empty box", async() => {
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+
+      await panel.find("textarea").setValue("")
+
+      expect(panel.find(".qr__note").text()).toBe(COPY.qr.empty)
+      expect(panel.find(".qr__code").exists()).toBe(false)
+      expect(panel.text()).not.toContain(COPY.qr.downloadPng)
+   })
+
+   /// Digits pack into numeric mode, which holds well over twice what bytes
+   /// do. Quoting the byte limit here was the bug: 7,090 digits read as
+   /// "7,090 bytes against a limit of 2,953".
+   it("quotes the limit of the mode the text is in", async() => {
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+
+      await panel.find("input[type=\"range\"]").setValue("0")
+      await panel.find("textarea").setValue("1".repeat(7090))
+
+      const fault = panel.find(".qr__fault").text()
+
+      expect(fault).toContain(`7,090 ${COPY.qr.units.numeric}`)
+      expect(fault).toContain(QR_CAPACITY.numeric.L.toLocaleString("en"))
+      expect(fault).not.toContain(QR_CAPACITY.byte.L.toLocaleString("en"))
+
+      // One digit fewer is the exact limit, and fits.
+      await panel.find("textarea").setValue("1".repeat(7089))
+
+      expect(panel.find(".qr__fault").exists()).toBe(false)
+   })
+
+   it("starts the text box at a single row", async() => {
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+
+      expect(panel.find("textarea").attributes("rows")).toBe("1")
+   })
+
+   /// The message quotes the level and both numbers, so someone over the
+   /// limit knows by how much and what to change.
+   it("says how far over the limit too much text is", async() => {
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+
+      await panel.find("textarea").setValue("x".repeat(2400))
+
+      const fault = panel.find(".qr__fault").text()
+
+      expect(fault).toContain("level M")
+      expect(fault).toContain("2,400")
+      expect(fault).toContain(`2,400 ${COPY.qr.units.byte}`)
+      expect(fault).toContain(QR_CAPACITY.byte.M.toLocaleString("en"))
+      expect(panel.find(".qr__code").exists()).toBe(false)
+
+      // The same text fits at L, which is the fix the message suggests.
+      await panel.find("input[type=\"range\"]").setValue("0")
+
+      expect(panel.find(".qr__fault").exists()).toBe(false)
+      expect(panel.find(".qr__code").exists()).toBe(true)
+   })
+})
+
+describe("QrCodeGeneratorPanel logo", () => {
+   type Panel = Awaited<ReturnType<typeof mountSuspended<typeof QrCodeGeneratorPanel>>>
+
+   const LOGO_HREF = "data:image/png;base64,TE9HTw=="
+
+   /// happy-dom decodes no images and draws on no canvas, and the test
+   /// runtime's own `URL.createObjectURL` rejects happy-dom's `File`, so
+   /// those calls are stood in for. What is under test is what the panel
+   /// does with a logo, not the browser's PNG encoder.
+   const stubDecoding = (): void => {
+      vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:logo")
+      vi.spyOn(URL, "revokeObjectURL").mockReturnValue(undefined)
+      vi.spyOn(HTMLImageElement.prototype, "decode").mockResolvedValue(undefined)
+      vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
+         drawImage: () => undefined,
+         imageSmoothingQuality: "low",
+      } as unknown as ReturnType<HTMLCanvasElement["getContext"]>)
+      vi.spyOn(HTMLCanvasElement.prototype, "toDataURL").mockReturnValue(LOGO_HREF)
+   }
+
+   afterEach(() => {
+      vi.restoreAllMocks()
+   })
+
+   const choose = async(panel: Panel, file: File): Promise<void> => {
+      const input = panel.find("input[type=\"file\"]")
+
+      Object.defineProperty(input.element, "files", { value: [file], configurable: true })
+      await input.trigger("change")
+      await flushPromises()
+   }
+
+   const logoFile = (): File => new File(["<svg/>"], "brand.svg", { type: "image/svg+xml" })
+   const levelSlider = (panel: Panel): DOMWrapper<Element> | undefined =>
+      panel.findAll("input[type=\"range\"]")[0]
+   const levelBadge = (panel: Panel): string => panel.findAll(".qr__summary-value")[0]?.text() ?? ""
+
+   it("starts with the logo section shut and no logo in the code", async() => {
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+      const sections = panel.findAll("details")
+
+      expect(sections).toHaveLength(2)
+      expect(sections[1]?.attributes("open")).toBeUndefined()
+      expect(sections[1]?.text()).toContain(COPY.qr.logo.choose)
+      expect(panel.find(".qr__code image").exists()).toBe(false)
+   })
+
+   /// The decision the panel was built around: a logo moves the code to
+   /// H, and the squares behind it are cleared rather than painted over.
+   it("raises the level to H and clears the middle for a logo", async() => {
+      stubDecoding()
+
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+
+      await choose(panel, logoFile())
+
+      expect(levelBadge(panel)).toBe(QR_LOGO_LEVEL)
+      expect(panel.find(".qr__code image").attributes("href")).toBe(LOGO_HREF)
+      expect(panel.find(".qr__logo-name").text()).toBe("brand.svg")
+
+      const encoded = encodeQr(COPY.qr.sample, QR_LOGO_LEVEL)
+
+      if (!encoded.ok) throw new Error("the sample does not encode at H")
+
+      // The stub reports no natural size, so the logo is drawn square.
+      const hole = qrLogoHole(encoded.matrix, QR_LOGO_DEFAULT, 1, QR_LOGO_MAX[QR_LOGO_LEVEL])
+
+      expect(panel.find(".qr__code path").attributes("d")).toBe(qrPath(encoded.matrix, hole))
+   })
+
+   it("shrinks the logo at a weaker level and hides it at L", async() => {
+      stubDecoding()
+
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+
+      await choose(panel, logoFile())
+      await levelSlider(panel)?.setValue(String(QR_LEVELS.indexOf("M")))
+
+      const sizeSlider = panel.findAll("input[type=\"range\"]")[1]
+
+      expect((sizeSlider?.element as HTMLInputElement).value).toBe(String(QR_LOGO_MAX.M))
+      expect(panel.find(".qr__logo-note").text()).toContain(`up to ${QR_LOGO_MAX.M}% wide`)
+      expect(panel.find(".qr__code image").exists()).toBe(true)
+
+      await levelSlider(panel)?.setValue(String(QR_LEVELS.indexOf("L")))
+
+      expect(panel.find(".qr__code image").exists()).toBe(false)
+      expect(panel.find(".qr__logo-note").text())
+         .toBe(COPY.qr.logo.hidden.replace("{level}", "L"))
+
+      // Raising the level again gives back the size that was asked for.
+      await levelSlider(panel)?.setValue(String(QR_LEVELS.indexOf("H")))
+
+      expect(panel.find(".qr__logo-note").exists()).toBe(false)
+      expect((panel.findAll("input[type=\"range\"]")[1]?.element as HTMLInputElement).value)
+         .toBe(String(QR_LOGO_DEFAULT))
+   })
+
+   it("puts the level back when the logo is removed", async() => {
+      stubDecoding()
+
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+
+      await choose(panel, logoFile())
+
+      expect(levelBadge(panel)).toBe("H")
+
+      await panel.findAll("details")[1]?.find("button").trigger("click")
+
+      expect(levelBadge(panel)).toBe(QR_DEFAULT_LEVEL)
+      expect(panel.find(".qr__code image").exists()).toBe(false)
+   })
+
+   it("refuses a file that is not an image and leaves the code alone", async() => {
+      const panel = await mountSuspended(QrCodeGeneratorPanel)
+
+      await choose(panel, new File(["%PDF"], "brief.pdf", { type: "application/pdf" }))
+
+      expect(panel.find(".qr__logo-fault").text()).toBe(COPY.qr.logo.faults.notImage)
+      expect(levelBadge(panel)).toBe(QR_DEFAULT_LEVEL)
+      expect(panel.find(".qr__code image").exists()).toBe(false)
    })
 })
 

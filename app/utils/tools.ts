@@ -153,6 +153,12 @@ export const TOOLS: ToolEntry[] = [
       group: "generators",
    },
    {
+      slug: "qr-code-generator",
+      path: "/qr-code-generator",
+      key: "qrCodeGenerator",
+      group: "generators",
+   },
+   {
       slug: "password-generator",
       path: "/password-generator",
       key: "passwordGenerator",
